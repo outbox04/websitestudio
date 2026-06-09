@@ -1,6 +1,7 @@
 create type public.user_role as enum ('customer', 'staff', 'admin');
 create type public.photo_status as enum ('pending_selection', 'selected', 'editing', 'completed');
 create type public.ai_request_status as enum ('queued', 'processing', 'completed', 'failed');
+create type public.gallery_photo_kind as enum ('raw', 'edited');
 
 create table public.profiles (
   id uuid primary key references auth.users(id) on delete cascade,
@@ -74,6 +75,41 @@ create table public.ai_requests (
   created_at timestamptz not null default now()
 );
 
+create table public.customer_galleries (
+  id uuid primary key default gen_random_uuid(),
+  customer_name text not null,
+  customer_name_slug text unique not null,
+  shoot_date date not null,
+  cover_url text,
+  root_drive_folder_id text not null,
+  raw_drive_folder_id text not null,
+  edited_drive_folder_id text not null,
+  root_drive_folder_url text not null,
+  raw_drive_folder_url text not null,
+  edited_drive_folder_url text not null,
+  raw_download_enabled boolean not null default false,
+  edited_download_enabled boolean not null default true,
+  created_by uuid references public.profiles(id) on delete set null,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create table public.customer_gallery_photos (
+  id uuid primary key default gen_random_uuid(),
+  gallery_id uuid not null references public.customer_galleries(id) on delete cascade,
+  drive_file_id text not null,
+  file_name text not null,
+  thumbnail_url text,
+  preview_url text,
+  download_url text,
+  kind public.gallery_photo_kind not null default 'raw',
+  selected boolean not null default false,
+  edit_note text,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  unique (gallery_id, drive_file_id)
+);
+
 alter table public.profiles enable row level security;
 alter table public.posts enable row level security;
 alter table public.post_likes enable row level security;
@@ -81,6 +117,8 @@ alter table public.post_comments enable row level security;
 alter table public.albums enable row level security;
 alter table public.album_photos enable row level security;
 alter table public.ai_requests enable row level security;
+alter table public.customer_galleries enable row level security;
+alter table public.customer_gallery_photos enable row level security;
 
 create or replace function public.set_updated_at()
 returns trigger
@@ -94,6 +132,14 @@ $$;
 
 create trigger set_profiles_updated_at
 before update on public.profiles
+for each row execute function public.set_updated_at();
+
+create trigger set_customer_galleries_updated_at
+before update on public.customer_galleries
+for each row execute function public.set_updated_at();
+
+create trigger set_customer_gallery_photos_updated_at
+before update on public.customer_gallery_photos
 for each row execute function public.set_updated_at();
 
 create or replace function public.handle_new_user()
@@ -156,3 +202,7 @@ create policy "Users can read own AI requests" on public.ai_requests for select 
 create policy "Users can create own AI requests" on public.ai_requests for insert with check (auth.uid() = user_id);
 create policy "Admins can manage posts" on public.posts for all using (public.current_user_role() in ('admin', 'staff'));
 create policy "Admins can read AI requests" on public.ai_requests for select using (public.current_user_role() in ('admin', 'staff'));
+create policy "Public can read customer galleries" on public.customer_galleries for select using (true);
+create policy "Public can read customer gallery photos" on public.customer_gallery_photos for select using (true);
+create policy "Admins can manage customer galleries" on public.customer_galleries for all using (public.current_user_role() in ('admin', 'staff'));
+create policy "Admins can manage customer gallery photos" on public.customer_gallery_photos for all using (public.current_user_role() in ('admin', 'staff'));

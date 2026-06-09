@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { BarChart3, FolderSync, ImageUp, Newspaper, Settings, Users, type LucideIcon } from "lucide-react";
+import { CustomerGalleryCreator } from "@/components/admin/customer-gallery-creator";
 import { adminMenu } from "@/lib/site-data";
 
 export const metadata: Metadata = {
@@ -41,7 +42,6 @@ export default function AdminStudioPage() {
               <h1 className="text-3xl font-extrabold">Dashboard</h1>
               <p className="mt-2 text-sm text-zinc-600">Chỉ `admin` và `staff` truy cập được qua middleware Supabase.</p>
             </div>
-            <button className="min-h-11 rounded-md bg-zinc-950 px-5 py-3 text-sm font-semibold text-white">Đồng bộ Google Drive</button>
           </div>
           <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
             {stats.map(({ label, value, icon: Icon }) => (
@@ -51,6 +51,19 @@ export default function AdminStudioPage() {
                 <p className="mt-1 text-3xl font-extrabold">{value}</p>
               </article>
             ))}
+          </div>
+          <div className="mt-6 grid gap-6 xl:grid-cols-[1fr_0.9fr]">
+            <CustomerGalleryCreator />
+            <section className="rounded-md border border-zinc-200 bg-white p-5 shadow-sm">
+              <h2 className="text-xl font-bold">Quy trình TLORA</h2>
+              <div className="mt-4 space-y-4 text-sm leading-6 text-zinc-600">
+                <p>1. Tạo thư mục khách hàng trong thư mục gốc TLORA.</p>
+                <p>2. Upload ảnh vào link FILE GỐC, sau đó bấm đồng bộ ảnh.</p>
+                <p>3. Gửi link khách hàng dạng `/ten-khach` để khách chọn ảnh và nhập ghi chú.</p>
+                <p>4. Chỉ mở tải FILE GỐC khi khách đã thanh toán đủ.</p>
+                <p>5. Upload ảnh hoàn thiện vào FILE CHỈNH SỬA để khách tải ở tab cuối.</p>
+              </div>
+            </section>
           </div>
           <div className="mt-6 grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
             <section className="rounded-md border border-zinc-200 bg-white p-5 shadow-sm">
@@ -75,10 +88,10 @@ export default function AdminStudioPage() {
               </div>
             </section>
             <section className="rounded-md border border-zinc-200 bg-white p-5 shadow-sm">
-              <h2 className="text-xl font-bold">Nhập Google Drive Folder ID</h2>
-              <p className="mt-2 text-sm leading-6 text-zinc-600">API `/api/google-drive/sync` lấy ảnh và lưu metadata vào Supabase.</p>
-              <input className="mt-5 h-11 w-full rounded-md border border-zinc-200 px-3 outline-none focus:border-zinc-900" placeholder="1AbCDriveFolderId..." />
-              <button className="mt-3 min-h-11 w-full rounded-md bg-zinc-950 px-5 py-3 text-sm font-semibold text-white">Đồng bộ album</button>
+              <h2 className="text-xl font-bold">Cài đặt Google Drive</h2>
+              <p className="mt-2 text-sm leading-6 text-zinc-600">
+                Cần service account có quyền ghi vào thư mục gốc TLORA và biến `TLORA_DRIVE_ROOT_FOLDER_ID`.
+              </p>
             </section>
           </div>
         </section>

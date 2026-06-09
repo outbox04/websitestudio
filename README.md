@@ -19,6 +19,9 @@ Next.js App Router website for a concept photo studio with public pages, custome
 - `/cong-khach-hang` protected customer portal
 - `/ai-concept` protected AI generator
 - `/admin-studio` protected admin/staff dashboard
+- `/{ten-khach}` customer gallery generated from the customer name slug
+- `/api/admin/customer-galleries` creates TLORA Google Drive folders
+- `/api/customer-galleries/[slug]/sync` syncs FILE GỐC and FILE CHỈNH SỬA images
 - `/api/google-drive/sync` Google Drive folder image sync
 - `/api/ai/generate` OpenAI Images API request entrypoint
 
@@ -28,9 +31,21 @@ Next.js App Router website for a concept photo studio with public pages, custome
 2. Create Supabase tables from `supabase/schema.sql`.
 3. If you already ran an older schema, run `supabase/upgrade-admin-auth.sql`.
 4. Create the first admin in Supabase Auth, then run `supabase/admin-auth.sql` after replacing `admin@example.com`.
-5. Configure Google Drive API key or replace `src/lib/google-drive.ts` with service-account auth for private folders.
+5. Configure Google Drive service account credentials and `TLORA_DRIVE_ROOT_FOLDER_ID`.
 6. Add `OPENAI_API_KEY` for `/api/ai/generate`; optionally change `OPENAI_IMAGE_MODEL`.
 7. Persist completed OpenAI results in `ai_requests` and Supabase Storage when moving from scaffold to production.
+
+## TLORA Gallery Flow
+
+1. In Google Drive, create the root folder `TLORA`.
+2. Share that folder with `GOOGLE_DRIVE_CLIENT_EMAIL` as Editor.
+3. Copy the TLORA folder ID into `TLORA_DRIVE_ROOT_FOLDER_ID`.
+4. In `/admin-studio`, create a customer gallery with name and shoot date.
+5. The app creates `{Tên khách}` with two child folders: `FILE GỐC` and `FILE CHỈNH SỬA`.
+6. Upload original photos into `FILE GỐC`, then click sync.
+7. Send the customer link, for example `/nguyen-minh-anh`.
+8. Keep FILE GỐC downloads locked until payment is complete, then enable the raw download button from admin.
+9. Upload final edited photos into `FILE CHỈNH SỬA`, sync again, and the customer can download them in the final tab.
 
 ## Development
 

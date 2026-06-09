@@ -2,19 +2,23 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
 const protectedPrefixes = ["/cong-khach-hang", "/ai-concept"];
-const adminPrefix = "/admin-studio";
+const adminPrefixes = ["/admin-studio", "/api/admin"];
 
 export async function updateSession(request: NextRequest) {
   let response = NextResponse.next({ request });
   const pathname = request.nextUrl.pathname;
   const isProtected = protectedPrefixes.some((prefix) => pathname.startsWith(prefix));
-  const isAdmin = pathname.startsWith(adminPrefix);
+  const isAdmin = adminPrefixes.some((prefix) => pathname.startsWith(prefix));
+  const isAdminApi = pathname.startsWith("/api/admin");
 
   if (!isProtected && !isAdmin) {
     return response;
   }
 
   if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+    if (isAdminApi) {
+      return NextResponse.json({ error: "Missing Supabase environment variables" }, { status: 500 });
+    }
     const url = request.nextUrl.clone();
     url.pathname = "/dang-nhap";
     url.searchParams.set("redirect", pathname);
@@ -43,6 +47,9 @@ export async function updateSession(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   if ((isProtected || isAdmin) && !user) {
+    if (isAdminApi) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
     const url = request.nextUrl.clone();
     url.pathname = "/dang-nhap";
     url.searchParams.set("redirect", pathname);
@@ -58,6 +65,9 @@ export async function updateSession(request: NextRequest) {
     const role = profile?.role || user.app_metadata?.role || user.user_metadata?.role;
 
     if (!profile?.is_active || !["admin", "staff"].includes(role)) {
+      if (isAdminApi) {
+        return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      }
       const url = request.nextUrl.clone();
       url.pathname = "/cong-khach-hang";
       return NextResponse.redirect(url);
