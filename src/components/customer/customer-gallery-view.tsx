@@ -1,8 +1,8 @@
 "use client";
 
 import Image from "next/image";
-import { Check, Download, Expand, ImageOff, Loader2, RefreshCw, X } from "lucide-react";
-import { useMemo, useRef, useState } from "react";
+import { Check, ChevronLeft, ChevronRight, Download, Expand, ImageOff, Loader2, RefreshCw, X } from "lucide-react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 type Gallery = {
   id: string;
@@ -47,7 +47,44 @@ export function CustomerGalleryView({
 
   const selectedPhotos = useMemo(() => photos.filter((photo) => photo.selected), [photos]);
   const visiblePhotos = tab === "selected" ? selectedPhotos : photos;
+  const previewPhotos = tab === "edited" ? editedPhotos : visiblePhotos;
+  const previewIndex = preview ? previewPhotos.findIndex((photo) => photo.id === preview.id) : -1;
   const cover = gallery.cover_url || photos[0]?.thumbnail_url || editedPhotos[0]?.thumbnail_url;
+
+  const showPreviousPhoto = useCallback(() => {
+    if (!preview || previewPhotos.length === 0) return;
+    const currentIndex = previewIndex >= 0 ? previewIndex : 0;
+    const previousIndex = (currentIndex - 1 + previewPhotos.length) % previewPhotos.length;
+    setPreview(previewPhotos[previousIndex]);
+  }, [preview, previewIndex, previewPhotos]);
+
+  const showNextPhoto = useCallback(() => {
+    if (!preview || previewPhotos.length === 0) return;
+    const currentIndex = previewIndex >= 0 ? previewIndex : 0;
+    const nextIndex = (currentIndex + 1) % previewPhotos.length;
+    setPreview(previewPhotos[nextIndex]);
+  }, [preview, previewIndex, previewPhotos]);
+
+  useEffect(() => {
+    if (!preview) return;
+
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "ArrowLeft") {
+        showPreviousPhoto();
+      }
+
+      if (event.key === "ArrowRight") {
+        showNextPhoto();
+      }
+
+      if (event.key === "Escape") {
+        setPreview(null);
+      }
+    }
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [preview, showNextPhoto, showPreviousPhoto]);
 
   async function patchPhoto(photoId: string, body: { selected?: boolean; editNote?: string }) {
     await fetch(`/api/customer-galleries/photos/${photoId}`, {
@@ -164,6 +201,27 @@ export function CustomerGalleryView({
             <button onClick={() => setPreview(null)} className="absolute right-3 top-3 grid size-10 place-items-center rounded-md bg-white text-zinc-950">
               <X size={20} />
             </button>
+            {previewPhotos.length > 1 && (
+              <>
+                <button
+                  onClick={showPreviousPhoto}
+                  className="absolute left-3 top-1/2 grid size-12 -translate-y-1/2 place-items-center rounded-md bg-white/95 text-zinc-950 shadow-lg transition hover:bg-white md:left-5"
+                  aria-label="Ảnh trước"
+                >
+                  <ChevronLeft size={26} />
+                </button>
+                <button
+                  onClick={showNextPhoto}
+                  className="absolute right-3 top-1/2 grid size-12 -translate-y-1/2 place-items-center rounded-md bg-white/95 text-zinc-950 shadow-lg transition hover:bg-white md:right-5"
+                  aria-label="Ảnh tiếp theo"
+                >
+                  <ChevronRight size={26} />
+                </button>
+                <div className="absolute bottom-3 left-1/2 -translate-x-1/2 rounded-md bg-zinc-950/75 px-3 py-2 text-sm font-semibold text-white">
+                  {Math.max(previewIndex + 1, 1)} / {previewPhotos.length}
+                </div>
+              </>
+            )}
           </div>
         </div>
       )}
