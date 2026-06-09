@@ -1,36 +1,54 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Lumi Concept Studio
 
-## Getting Started
+Next.js App Router website for a concept photo studio with public pages, customer album portal, admin dashboard, Google Drive album sync and AI concept workflow scaffolding.
 
-First, run the development server:
+## Stack
+
+- Next.js App Router, TypeScript, Tailwind CSS v4
+- Supabase Auth, Database and Storage
+- Google Drive API sync through Vercel API routes
+- OpenAI Images API for AI concept generation
+- Deploy target: Vercel
+
+## Routes
+
+- `/` public homepage
+- `/dich-vu` services
+- `/bang-gia` pricing
+- `/tin-tuc` and `/tin-tuc/[slug]` mini news channel
+- `/cong-khach-hang` protected customer portal
+- `/ai-concept` protected AI generator
+- `/admin-studio` protected admin/staff dashboard
+- `/api/google-drive/sync` Google Drive folder image sync
+- `/api/ai/generate` OpenAI Images API request entrypoint
+
+## Setup
+
+1. Copy `.env.example` values into `.env.local`.
+2. Create Supabase tables from `supabase/schema.sql`.
+3. Set Supabase Auth app metadata role to `admin` or `staff` for users who can access `/admin-studio`.
+4. Configure Google Drive API key or replace `src/lib/google-drive.ts` with service-account auth for private folders.
+5. Add `OPENAI_API_KEY` for `/api/ai/generate`; optionally change `OPENAI_IMAGE_MODEL`.
+6. Persist completed OpenAI results in `ai_requests` and Supabase Storage when moving from scaffold to production.
+
+## Development
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm run lint
+npm run build
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Deployment
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Push the repository to GitHub, import it in Vercel, add the same environment variables and attach the production domain in Vercel Project Settings.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Structure
 
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```text
+src/app              App Router pages, route groups and API routes
+src/components       Shared UI, shell, album gallery and AI wizard
+src/lib              Supabase, Google Drive and seed UI data helpers
+supabase             Database schema
+workflows            Prompt, rule, preset and workflow assets for AI generation
+```

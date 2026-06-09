@@ -1,0 +1,8 @@
+{
+  "outfits": [
+    { "id": "white-blazer", "label": "Blazer trắng", "prompt": "minimal white blazer, clean premium styling" },
+    { "id": "modern-ao-dai", "label": "Áo dài hiện đại", "prompt": "modern Vietnamese ao dai, elegant silhouette" },
+    { "id": "evening-dress", "label": "Váy dạ hội tối giản", "prompt": "minimal evening dress, refined fabric texture" },
+    { "id": "black-suit", "label": "Suit đen editorial", "prompt": "black tailored suit, editorial fashion profile" }
+  ]
+}

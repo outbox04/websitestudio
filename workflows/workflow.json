@@ -1,0 +1,14 @@
+{
+  "name": "studio-ai-concept-generator",
+  "version": "1.0.0",
+  "steps": [
+    "validate-authenticated-user",
+    "upload-face-reference-to-private-storage",
+    "select-outfit-preset",
+    "select-background-preset",
+    "select-style-preset",
+    "compose-prompt-from-workflows/prompts/concept-generator.md",
+    "submit-to-openai-images-api",
+    "store-result-and-status-in-supabase"
+  ]
+}
