@@ -192,13 +192,61 @@ export function CustomerGalleryView({
 
       {preview && (
         <div className="fixed inset-0 z-50 grid place-items-center bg-zinc-950/90 p-4">
-          <div className="relative h-[88vh] w-full max-w-6xl overflow-hidden rounded-md bg-zinc-900">
-            {preview.preview_url || preview.thumbnail_url ? (
-              <Image src={preview.preview_url || preview.thumbnail_url || ""} alt={preview.file_name} fill sizes="90vw" className="object-contain" unoptimized />
-            ) : (
-              <div className="grid h-full place-items-center text-white">Không có preview</div>
-            )}
-            <button onClick={() => setPreview(null)} className="absolute right-3 top-3 grid size-10 place-items-center rounded-md bg-white text-zinc-950">
+          <div className="relative grid h-[92vh] w-full max-w-7xl overflow-hidden rounded-md bg-zinc-900 lg:grid-cols-[minmax(0,1fr)_360px]">
+            <div className="relative min-h-[55vh] lg:min-h-0">
+              {preview.preview_url || preview.thumbnail_url ? (
+                <Image src={preview.preview_url || preview.thumbnail_url || ""} alt={preview.file_name} fill sizes="(min-width: 1024px) calc(100vw - 360px), 100vw" className="object-contain" unoptimized />
+              ) : (
+                <div className="grid h-full place-items-center text-white">Không có preview</div>
+              )}
+            </div>
+            <aside className="border-t border-white/10 bg-white p-4 text-zinc-950 lg:border-l lg:border-t-0">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-[0.16em] text-rose-600">{preview.kind === "edited" ? "File chỉnh sửa" : "File gốc"}</p>
+                  <h2 className="mt-2 break-words text-lg font-bold">{preview.file_name}</h2>
+                </div>
+              </div>
+              {preview.kind === "raw" ? (
+                <div className="mt-5 space-y-4">
+                  <button
+                    onClick={() => {
+                      toggleSelected(preview);
+                      setPreview((current) => current ? { ...current, selected: !current.selected } : current);
+                    }}
+                    className={`inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-md px-4 text-sm font-semibold ${preview.selected ? "bg-emerald-600 text-white" : "bg-zinc-950 text-white"}`}
+                  >
+                    {preview.selected ? <Check size={18} /> : <span className="size-4 rounded border border-current" />}
+                    {preview.selected ? "Đã chọn ảnh này" : "Chọn ảnh này"}
+                  </button>
+                  <label className="block text-sm font-semibold" htmlFor={`modal-note-${preview.id}`}>
+                    Mô tả cần chỉnh sửa
+                  </label>
+                  <textarea
+                    id={`modal-note-${preview.id}`}
+                    value={preview.edit_note || ""}
+                    onChange={(event) => {
+                      const editNote = event.target.value;
+                      updateNote(preview, editNote);
+                      setPreview((current) => current ? { ...current, edit_note: editNote } : current);
+                    }}
+                    placeholder="Ví dụ: làm da nhẹ, giữ màu tóc, crop ngang..."
+                    className="min-h-40 w-full resize-none rounded-md border border-zinc-200 bg-stone-50 p-3 text-sm outline-none focus:border-zinc-900 focus:bg-white"
+                  />
+                  <p className="text-xs font-medium text-emerald-700">Ghi chú tự động lưu khi khách nhập.</p>
+                </div>
+              ) : (
+                <div className="mt-5 space-y-3">
+                  <p className="text-sm leading-6 text-zinc-600">Ảnh đã chỉnh sửa từ thư mục FILE CHỈNH SỬA.</p>
+                  {preview.download_url && (
+                    <a href={preview.download_url} target="_blank" rel="noreferrer" className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-md bg-zinc-950 px-4 text-sm font-semibold text-white">
+                      <Download size={16} /> Tải ảnh
+                    </a>
+                  )}
+                </div>
+              )}
+            </aside>
+            <button onClick={() => setPreview(null)} className="absolute right-3 top-3 grid size-10 place-items-center rounded-md bg-white text-zinc-950 shadow">
               <X size={20} />
             </button>
             {previewPhotos.length > 1 && (
@@ -212,7 +260,7 @@ export function CustomerGalleryView({
                 </button>
                 <button
                   onClick={showNextPhoto}
-                  className="absolute right-3 top-1/2 grid size-12 -translate-y-1/2 place-items-center rounded-md bg-white/95 text-zinc-950 shadow-lg transition hover:bg-white md:right-5"
+                  className="absolute right-3 top-[30%] grid size-12 -translate-y-1/2 place-items-center rounded-md bg-white/95 text-zinc-950 shadow-lg transition hover:bg-white md:right-5 lg:right-[380px] lg:top-1/2"
                   aria-label="Ảnh tiếp theo"
                 >
                   <ChevronRight size={26} />
