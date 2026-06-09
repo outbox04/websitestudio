@@ -4,6 +4,7 @@ export type DrivePhoto = {
   id: string;
   name: string;
   thumbnailLink?: string;
+  largeThumbnailLink?: string;
   webViewLink?: string;
   webContentLink?: string;
   mimeType: string;
@@ -43,6 +44,10 @@ function getDriveClient() {
 
 function driveFolderUrl(folderId: string) {
   return `https://drive.google.com/drive/folders/${folderId}`;
+}
+
+export function driveImageUrl(fileId: string, width: number) {
+  return `https://drive.google.com/thumbnail?id=${fileId}&sz=w${width}`;
 }
 
 async function createFolder(name: string, parentId: string) {
@@ -113,7 +118,8 @@ export async function listDriveImages(folderId: string): Promise<DrivePhoto[]> {
   return response.data.files?.map((file) => ({
     id: file.id || "",
     name: file.name || "Untitled",
-    thumbnailLink: file.thumbnailLink || undefined,
+    thumbnailLink: file.id ? driveImageUrl(file.id, 900) : file.thumbnailLink || undefined,
+    largeThumbnailLink: file.id ? driveImageUrl(file.id, 2400) : file.thumbnailLink || undefined,
     webViewLink: file.webViewLink || undefined,
     webContentLink: file.webContentLink || undefined,
     mimeType: file.mimeType || "image/jpeg",

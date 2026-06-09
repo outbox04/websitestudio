@@ -156,8 +156,8 @@ export function CustomerGalleryView({
       {preview && (
         <div className="fixed inset-0 z-50 grid place-items-center bg-zinc-950/90 p-4">
           <div className="relative h-[88vh] w-full max-w-6xl overflow-hidden rounded-md bg-zinc-900">
-            {preview.thumbnail_url ? (
-              <Image src={preview.thumbnail_url} alt={preview.file_name} fill sizes="90vw" className="object-contain" unoptimized />
+            {preview.preview_url || preview.thumbnail_url ? (
+              <Image src={preview.preview_url || preview.thumbnail_url || ""} alt={preview.file_name} fill sizes="90vw" className="object-contain" unoptimized />
             ) : (
               <div className="grid h-full place-items-center text-white">Không có preview</div>
             )}
