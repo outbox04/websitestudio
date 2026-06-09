@@ -6,9 +6,9 @@ set
   role = 'admin',
   is_active = true,
   updated_at = now()
-where email = 'admin@example.com';
+where email = 'decaztran@gmail.com';
 
 -- Verify admin account.
 select id, email, full_name, role, is_active, created_at
 from public.profiles
-where email = 'admin@example.com';
+where email = 'decaztran@gmail.com';
