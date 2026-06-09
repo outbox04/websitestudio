@@ -4,10 +4,14 @@ create type public.ai_request_status as enum ('queued', 'processing', 'completed
 
 create table public.profiles (
   id uuid primary key references auth.users(id) on delete cascade,
+  email text unique,
   full_name text,
   phone text,
+  avatar_url text,
   role public.user_role not null default 'customer',
-  created_at timestamptz not null default now()
+  is_active boolean not null default true,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
 );
 
 create table public.posts (
@@ -78,9 +82,63 @@ alter table public.albums enable row level security;
 alter table public.album_photos enable row level security;
 alter table public.ai_requests enable row level security;
 
+create or replace function public.set_updated_at()
+returns trigger
+language plpgsql
+as $$
+begin
+  new.updated_at = now();
+  return new;
+end;
+$$;
+
+create trigger set_profiles_updated_at
+before update on public.profiles
+for each row execute function public.set_updated_at();
+
+create or replace function public.handle_new_user()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  insert into public.profiles (id, email, full_name, role)
+  values (
+    new.id,
+    new.email,
+    coalesce(new.raw_user_meta_data->>'full_name', new.raw_user_meta_data->>'name'),
+    coalesce((new.raw_user_meta_data->>'role')::public.user_role, 'customer')
+  )
+  on conflict (id) do update set
+    email = excluded.email,
+    full_name = coalesce(public.profiles.full_name, excluded.full_name),
+    updated_at = now();
+
+  return new;
+end;
+$$;
+
+create trigger on_auth_user_created
+after insert on auth.users
+for each row execute function public.handle_new_user();
+
+create or replace function public.current_user_role()
+returns public.user_role
+language sql
+security definer
+set search_path = public
+stable
+as $$
+  select role from public.profiles where id = auth.uid() and is_active = true
+$$;
+
 create policy "Public can read published posts" on public.posts for select using (published = true);
 create policy "Users can read own profile" on public.profiles for select using (auth.uid() = id);
+create policy "Admins can read profiles" on public.profiles for select using (public.current_user_role() in ('admin', 'staff'));
+create policy "Admins can update profiles" on public.profiles for update using (public.current_user_role() = 'admin');
 create policy "Users can read own albums" on public.albums for select using (auth.uid() = customer_id);
+create policy "Admins can manage albums" on public.albums for all using (public.current_user_role() in ('admin', 'staff'));
 create policy "Users can read own album photos" on public.album_photos for select using (
   exists (
     select 1 from public.albums
@@ -93,5 +151,8 @@ create policy "Users can update own photo selection" on public.album_photos for 
     where albums.id = album_photos.album_id and albums.customer_id = auth.uid()
   )
 );
+create policy "Admins can manage album photos" on public.album_photos for all using (public.current_user_role() in ('admin', 'staff'));
 create policy "Users can read own AI requests" on public.ai_requests for select using (auth.uid() = user_id);
 create policy "Users can create own AI requests" on public.ai_requests for insert with check (auth.uid() = user_id);
+create policy "Admins can manage posts" on public.posts for all using (public.current_user_role() in ('admin', 'staff'));
+create policy "Admins can read AI requests" on public.ai_requests for select using (public.current_user_role() in ('admin', 'staff'));

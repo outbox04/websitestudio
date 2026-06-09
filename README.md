@@ -26,10 +26,11 @@ Next.js App Router website for a concept photo studio with public pages, custome
 
 1. Copy `.env.example` values into `.env.local`.
 2. Create Supabase tables from `supabase/schema.sql`.
-3. Set Supabase Auth app metadata role to `admin` or `staff` for users who can access `/admin-studio`.
-4. Configure Google Drive API key or replace `src/lib/google-drive.ts` with service-account auth for private folders.
-5. Add `OPENAI_API_KEY` for `/api/ai/generate`; optionally change `OPENAI_IMAGE_MODEL`.
-6. Persist completed OpenAI results in `ai_requests` and Supabase Storage when moving from scaffold to production.
+3. If you already ran an older schema, run `supabase/upgrade-admin-auth.sql`.
+4. Create the first admin in Supabase Auth, then run `supabase/admin-auth.sql` after replacing `admin@example.com`.
+5. Configure Google Drive API key or replace `src/lib/google-drive.ts` with service-account auth for private folders.
+6. Add `OPENAI_API_KEY` for `/api/ai/generate`; optionally change `OPENAI_IMAGE_MODEL`.
+7. Persist completed OpenAI results in `ai_requests` and Supabase Storage when moving from scaffold to production.
 
 ## Development
 

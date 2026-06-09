@@ -50,8 +50,14 @@ export async function updateSession(request: NextRequest) {
   }
 
   if (isAdmin && user) {
-    const role = user.app_metadata?.role || user.user_metadata?.role;
-    if (!["admin", "staff"].includes(role)) {
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("role,is_active")
+      .eq("id", user.id)
+      .maybeSingle();
+    const role = profile?.role || user.app_metadata?.role || user.user_metadata?.role;
+
+    if (!profile?.is_active || !["admin", "staff"].includes(role)) {
       const url = request.nextUrl.clone();
       url.pathname = "/cong-khach-hang";
       return NextResponse.redirect(url);
