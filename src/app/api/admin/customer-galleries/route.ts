@@ -5,6 +5,27 @@ import { createAdminClient } from "@/lib/supabase/admin";
 
 export const runtime = "nodejs";
 
+function getErrorMessage(error: unknown) {
+  if (error instanceof Error) {
+    return error.message;
+  }
+
+  if (typeof error === "object" && error !== null) {
+    const record = error as Record<string, unknown>;
+    const message = [record.message, record.details, record.hint, record.code]
+      .filter(Boolean)
+      .join(" - ");
+
+    if (message) {
+      return message;
+    }
+
+    return JSON.stringify(record);
+  }
+
+  return "Không tạo được thư mục khách hàng";
+}
+
 export async function POST(request: Request) {
   const { name, shootDate } = (await request.json()) as {
     name?: string;
@@ -22,9 +43,29 @@ export async function POST(request: Request) {
   }
 
   try {
-    const folders = await createCustomerDriveFolders(name.trim());
     const supabase = createAdminClient();
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
+    const customerUrl = `${siteUrl.replace(/\/$/, "")}/${slug}`;
+
+    const { data: existingGallery, error: existingError } = await supabase
+      .from("customer_galleries")
+      .select("*")
+      .eq("customer_name_slug", slug)
+      .maybeSingle();
+
+    if (existingError) {
+      throw existingError;
+    }
+
+    if (existingGallery) {
+      return NextResponse.json({
+        gallery: existingGallery,
+        customerUrl,
+        reused: true,
+      });
+    }
+
+    const folders = await createCustomerDriveFolders(name.trim());
 
     const { data, error } = await supabase
       .from("customer_galleries")
@@ -48,11 +89,12 @@ export async function POST(request: Request) {
 
     return NextResponse.json({
       gallery: data,
-      customerUrl: `${siteUrl.replace(/\/$/, "")}/${slug}`,
+      customerUrl,
+      reused: false,
     });
   } catch (error) {
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Không tạo được thư mục khách hàng" },
+      { error: getErrorMessage(error) },
       { status: 500 },
     );
   }

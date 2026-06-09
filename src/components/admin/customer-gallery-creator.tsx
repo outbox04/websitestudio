@@ -5,6 +5,7 @@ import { useState } from "react";
 
 type CreatedGallery = {
   customerUrl: string;
+  reused?: boolean;
   gallery: {
     customer_name: string;
     raw_drive_folder_url: string;
@@ -21,10 +22,12 @@ export function CustomerGalleryCreator() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [copied, setCopied] = useState("");
+  const [notice, setNotice] = useState("");
 
   async function createGallery() {
     setLoading(true);
     setError("");
+    setNotice("");
     setResult(null);
 
     try {
@@ -40,6 +43,9 @@ export function CustomerGalleryCreator() {
       }
 
       setResult(data);
+      if (data.reused) {
+        setNotice("Thư mục này đã tồn tại trong database, hệ thống đang hiển thị lại các đường link đã lưu.");
+      }
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "Không tạo được thư mục");
     } finally {
@@ -105,6 +111,7 @@ export function CustomerGalleryCreator() {
         </label>
       </div>
       {error && <div className="mt-4 rounded-md border border-red-200 bg-red-50 p-3 text-sm font-medium text-red-700">{error}</div>}
+      {notice && <div className="mt-4 rounded-md border border-amber-200 bg-amber-50 p-3 text-sm font-medium text-amber-800">{notice}</div>}
       <button
         onClick={createGallery}
         disabled={loading}
