@@ -18,16 +18,28 @@ export function LoginForm() {
     setLoading(true);
     setError("");
 
+    if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+      setLoading(false);
+      setError("Chưa cấu hình Supabase URL hoặc publishable key trong .env.local.");
+      return;
+    }
+
     const supabase = createClient();
     const { error: signInError } = await supabase.auth.signInWithPassword({
-      email,
+      email: email.trim().toLowerCase(),
       password,
     });
 
     setLoading(false);
 
     if (signInError) {
-      setError("Email hoặc mật khẩu không đúng.");
+      if (signInError.message.toLowerCase().includes("email not confirmed")) {
+        setError("Email chưa được xác nhận trong Supabase Auth.");
+      } else if (signInError.message.toLowerCase().includes("invalid login credentials")) {
+        setError("Email hoặc mật khẩu không đúng, hoặc user chưa được tạo trong Supabase Auth.");
+      } else {
+        setError(signInError.message);
+      }
       return;
     }
 
