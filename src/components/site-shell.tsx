@@ -1,4 +1,4 @@
-import { Camera, LogIn, Menu, Sparkles } from "lucide-react";
+import { Camera, Menu, Sparkles } from "lucide-react";
 import Link from "next/link";
 import { ButtonLink } from "@/components/ui";
 
@@ -31,9 +31,6 @@ export function SiteHeader() {
           ))}
         </nav>
         <div className="hidden items-center gap-3 md:flex">
-          <ButtonLink href="/cong-khach-hang" className="border border-white/10 bg-white/[0.04] text-white shadow-none hover:bg-white/10">
-            <LogIn size={16} /> Cổng khách hàng
-          </ButtonLink>
           <ButtonLink href="/ai-concept">
             <Sparkles size={16} /> Tạo ảnh AI
           </ButtonLink>
