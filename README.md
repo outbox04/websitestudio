@@ -1,6 +1,8 @@
-# Lumi Concept Studio
+# TLORA Studio
 
-Next.js App Router website for a concept photo studio with public pages, customer album portal, admin dashboard, Google Drive album sync and AI concept workflow scaffolding.
+Next.js App Router website for TLORA Studio, a concept photo studio with public pages, customer album portal, admin dashboard, Google Drive album sync and AI concept workflow scaffolding.
+
+Brand tagline: `Nơi cá tính trở thành nghệ thuật`.
 
 ## Stack
 
@@ -35,7 +37,7 @@ Next.js App Router website for a concept photo studio with public pages, custome
 6. Add `OPENAI_API_KEY` for `/api/ai/generate`; optionally change `OPENAI_IMAGE_MODEL`.
 7. Persist completed OpenAI results in `ai_requests` and Supabase Storage when moving from scaffold to production.
 
-## TLORA Gallery Flow
+## TLORA Studio Gallery Flow
 
 1. In Google Drive, create the root folder `TLORA`.
 2. Share that folder with `GOOGLE_DRIVE_CLIENT_EMAIL` as Editor.

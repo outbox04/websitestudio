@@ -20,8 +20,9 @@ export default function HomePage() {
         <div className="absolute inset-0 bg-gradient-to-t from-[#07080a] via-transparent to-transparent" />
         <div className="relative mx-auto grid min-h-[680px] max-w-7xl items-end px-4 pb-14 pt-24 sm:px-6 lg:px-8">
           <div className="max-w-3xl">
-            <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#d8b766]">Studio chụp ảnh concept</p>
-            <h1 className="mt-4 font-heading text-5xl font-extrabold leading-tight text-white md:text-7xl">Lumi Concept Studio</h1>
+            <Image src="/brand/tlora-logo.png" alt="TLORA Studio" width={1536} height={1024} priority className="mb-6 h-auto w-full max-w-lg object-contain" />
+            <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#d8b766]">Nơi cá tính trở thành nghệ thuật</p>
+            <h1 className="mt-4 font-heading text-5xl font-extrabold leading-tight text-white md:text-7xl">TLORA Studio</h1>
             <p className="mt-5 max-w-2xl text-lg leading-8 text-zinc-300">
               Trải nghiệm chụp ảnh, chọn album và gửi yêu cầu chỉnh sửa trong một giao diện cao cấp, trực quan và đồng bộ với workflow studio.
             </p>

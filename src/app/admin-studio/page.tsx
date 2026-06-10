@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import {
-  BarChart3,
   FolderSync,
   ImageUp,
   Newspaper,
@@ -9,12 +8,13 @@ import {
   Users,
   type LucideIcon,
 } from "lucide-react";
+import Image from "next/image";
 import { CustomerGalleryCreator } from "@/components/admin/customer-gallery-creator";
 import { CustomerGalleryManager } from "@/components/admin/customer-gallery-manager";
 import { adminMenu } from "@/lib/site-data";
 
 export const metadata: Metadata = {
-  title: "Admin Studio",
+  title: "TLORA Admin",
   description: "Dashboard quản lý khách hàng, album, ảnh cần sửa, tin tức và AI workflow.",
 };
 
@@ -47,11 +47,9 @@ export default function AdminStudioPage() {
       <div className="grid lg:grid-cols-[288px_1fr]">
         <aside className="border-r border-zinc-200/80 bg-white px-4 py-5 lg:sticky lg:top-0 lg:min-h-screen">
           <div className="flex items-center gap-3 rounded-md bg-zinc-950 p-3 text-white">
-            <span className="grid size-11 place-items-center rounded-md bg-white/10">
-              <BarChart3 size={21} />
-            </span>
+            <Image src="/brand/tlora-logo.png" alt="TLORA Studio" width={1536} height={1024} className="h-11 w-auto object-contain" />
             <div>
-              <p className="font-heading text-base font-bold">Admin Studio</p>
+              <p className="font-heading text-base font-bold">TLORA Admin</p>
               <p className="text-xs text-zinc-300">Management Console</p>
             </div>
           </div>

@@ -16,15 +16,16 @@ const body = Inter({
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"),
   title: {
-    default: "Lumi Concept Studio | Chụp ảnh concept chuyên nghiệp",
-    template: "%s | Lumi Concept Studio",
+    default: "TLORA Studio | Nơi cá tính trở thành nghệ thuật",
+    template: "%s | TLORA Studio",
   },
-  description: "Studio chụp ảnh concept, quản lý album khách hàng và tạo ảnh AI theo workflow chuyên nghiệp.",
+  description: "TLORA Studio chụp ảnh concept, quản lý album khách hàng và tạo ảnh AI theo workflow chuyên nghiệp.",
   openGraph: {
-    title: "Lumi Concept Studio",
-    description: "Chụp ảnh concept trong studio với album riêng, chọn ảnh chỉnh sửa và AI concept generator.",
+    title: "TLORA Studio",
+    description: "Nơi cá tính trở thành nghệ thuật, với album riêng, chọn ảnh chỉnh sửa và AI concept generator.",
     type: "website",
     locale: "vi_VN",
+    images: ["/brand/tlora-logo.png"],
   },
 };
 

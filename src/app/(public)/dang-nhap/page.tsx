@@ -4,7 +4,7 @@ import { LoginForm } from "@/components/login-form";
 
 export const metadata: Metadata = {
   title: "Đăng nhập",
-  description: "Đăng nhập cổng khách hàng và admin Lumi Concept Studio.",
+  description: "Đăng nhập cổng khách hàng và admin TLORA Studio.",
 };
 
 export default function LoginPage() {

@@ -174,7 +174,7 @@ export function CustomerGalleryView({
                 <span>Album chọn ảnh trực tuyến</span>
               </div>
               <p className="mt-6 max-w-md text-sm leading-7 text-zinc-300">
-                Cảm ơn anh/chị đã tin tưởng Lumi Concept. Ghi chú chỉnh sửa được tự động lưu khi nhập trong phần xem ảnh.
+                Cảm ơn anh/chị đã tin tưởng TLORA Studio. Ghi chú chỉnh sửa được tự động lưu khi nhập trong phần xem ảnh.
               </p>
               <div className="mt-7 flex flex-wrap gap-3">
                 <button onClick={() => setPreview(visiblePhotos[0] || null)} className="inline-flex min-h-12 items-center gap-3 rounded-md bg-[#d8b766] px-5 text-sm font-semibold text-black shadow-lg shadow-[#d8b766]/20">

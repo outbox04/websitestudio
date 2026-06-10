@@ -17,10 +17,10 @@ export async function generateMetadata({ params }: { params: Promise<{ customerS
       .maybeSingle();
 
     return {
-      title: data?.customer_name ? `${data.customer_name} - TLORA Gallery` : "TLORA Gallery",
+      title: data?.customer_name ? `${data.customer_name} - TLORA Studio Gallery` : "TLORA Studio Gallery",
     };
   } catch {
-    return { title: "TLORA Gallery" };
+    return { title: "TLORA Studio Gallery" };
   }
 }
 
