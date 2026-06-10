@@ -1,4 +1,4 @@
-import { Menu, Sparkles } from "lucide-react";
+import { CalendarCheck, Menu } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { ButtonLink } from "@/components/ui";
@@ -8,7 +8,7 @@ const nav = [
   { href: "/dich-vu", label: "Dịch vụ" },
   { href: "/bang-gia", label: "Bảng giá" },
   { href: "/tin-tuc", label: "Tin tức" },
-  { href: "/ai-concept", label: "AI Concept" },
+  { href: "/cong-khach-hang", label: "Album khách hàng" },
 ];
 
 export function SiteHeader() {
@@ -26,8 +26,8 @@ export function SiteHeader() {
           ))}
         </nav>
         <div className="hidden items-center gap-3 md:flex">
-          <ButtonLink href="/ai-concept">
-            <Sparkles size={16} /> Tạo ảnh AI
+          <ButtonLink href="/bang-gia">
+            <CalendarCheck size={16} /> Đặt lịch tư vấn
           </ButtonLink>
         </div>
         <button className="grid size-10 place-items-center rounded-md border border-white/10 bg-white/[0.04] text-white lg:hidden" aria-label="Mở menu">
@@ -45,7 +45,7 @@ export function SiteFooter() {
         <div>
           <p className="font-heading text-lg font-bold text-white">TLORA Studio</p>
           <p className="mt-3 max-w-md text-sm leading-6 text-zinc-400">
-            Nơi cá tính trở thành nghệ thuật, với album khách hàng, chọn ảnh trực tuyến và workflow tạo ảnh AI.
+            Nơi cá tính trở thành nghệ thuật, với album khách hàng, chọn ảnh trực tuyến và quy trình retouch rõ ràng.
           </p>
         </div>
         <div className="text-sm text-zinc-400">

@@ -17,9 +17,9 @@ export const services = [
     icon: ImagePlus,
   },
   {
-    title: "AI concept preview",
-    description: "Tạo bản xem trước trang phục, background và phong cách trước khi đặt lịch chụp thật.",
-    icon: Sparkles,
+    title: "Retouch và bàn giao album",
+    description: "Chọn ảnh online, ghi chú chỉnh sửa từng file và nhận album hoàn thiện theo đúng tiến độ.",
+    icon: Palette,
   },
 ];
 
@@ -65,10 +65,10 @@ export const posts = [
     comments: 9,
   },
   {
-    slug: "ai-concept-preview-la-gi",
-    title: "AI concept preview giúp tiết kiệm thời gian sản xuất như thế nào?",
-    excerpt: "Từ ảnh rõ mặt đến preset trang phục và background, AI giúp khách hình dung concept trước khi đặt lịch.",
-    category: "AI Workflow",
+    slug: "quy-trinh-chon-anh-online",
+    title: "Quy trình chọn ảnh online giúp buổi retouch chính xác hơn",
+    excerpt: "Cách album riêng, ghi chú từng ảnh và quyền tải file giúp khách kiểm soát quá trình bàn giao rõ ràng.",
+    category: "Workflow Studio",
     readTime: "6 phút đọc",
     likes: 204,
     comments: 31,
@@ -115,7 +115,7 @@ export const adminMenu = [
   "Album",
   "Ảnh cần sửa",
   "Tin tức",
-  "AI Workflow",
+  "Quy trình sản xuất",
   "Cài đặt",
 ];
 

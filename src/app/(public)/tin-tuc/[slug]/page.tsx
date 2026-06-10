@@ -37,7 +37,7 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
           nội dung nên lấy từ bảng `posts`, lượt thích từ `post_likes`, bình luận từ `post_comments`.
         </p>
         <p>
-          Với studio ảnh, mỗi bài nên có ảnh cover tối ưu kích thước, tiêu đề rõ ý định tìm kiếm và CTA đặt lịch hoặc mở AI concept preview.
+          Với studio ảnh, mỗi bài nên có ảnh cover tối ưu kích thước, tiêu đề rõ ý định tìm kiếm và CTA đặt lịch tư vấn concept phù hợp.
         </p>
       </div>
     </article>

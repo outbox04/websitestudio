@@ -4,7 +4,7 @@ import { services } from "@/lib/site-data";
 
 export const metadata: Metadata = {
   title: "Dịch vụ chụp ảnh concept",
-  description: "Các gói chụp concept cá nhân, gia đình, lookbook và AI preview trong studio.",
+  description: "Các gói chụp concept cá nhân, gia đình, lookbook và retouch hậu kỳ trong studio.",
 };
 
 export default function ServicesPage() {

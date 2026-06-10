@@ -6,7 +6,7 @@ import { posts } from "@/lib/site-data";
 
 export const metadata: Metadata = {
   title: "Tin tức studio",
-  description: "Kênh thông tin về chụp ảnh concept, studio tips và AI workflow.",
+  description: "Kênh thông tin về chụp ảnh concept, studio tips và quy trình chọn ảnh, retouch.",
 };
 
 export default function NewsPage() {
