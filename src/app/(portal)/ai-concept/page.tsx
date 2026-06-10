@@ -4,7 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 
 export const metadata: Metadata = {
   title: "AI Concept",
-  description: "Đăng ký, nạp tiền và tạo ảnh ghép concept AI với giá 50.000đ mỗi ảnh.",
+  description: "Tạo bản tham khảo concept 50.000đ/ảnh trước khi đặt lịch chụp chất lượng cao tại TLORA Studio.",
 };
 
 export default async function AiConceptPage() {

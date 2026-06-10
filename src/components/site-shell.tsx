@@ -7,6 +7,7 @@ const nav = [
   { href: "/", label: "Trang chủ" },
   { href: "/dich-vu", label: "Dịch vụ" },
   { href: "/bang-gia", label: "Bảng giá" },
+  { href: "/ai-concept", label: "AI Concept" },
   { href: "/tin-tuc", label: "Tin tức" },
   { href: "/cong-khach-hang", label: "Album khách hàng" },
 ];
