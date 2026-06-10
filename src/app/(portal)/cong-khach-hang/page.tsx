@@ -8,12 +8,12 @@ export const metadata: Metadata = {
 
 export default function CustomerPortalPage() {
   return (
-    <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+    <main className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
       <div className="mb-8 flex flex-col justify-between gap-4 md:flex-row md:items-end">
         <div>
-          <p className="text-sm font-semibold uppercase tracking-[0.18em] text-rose-600">Cổng khách hàng</p>
-          <h1 className="mt-3 text-3xl font-extrabold md:text-4xl">Album ảnh cá nhân</h1>
-          <p className="mt-3 max-w-2xl text-zinc-600">Ảnh được đồng bộ từ Google Drive Folder, chọn ảnh cần chỉnh và gửi ghi chú ngay dưới từng ảnh.</p>
+          <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#d8b766]">Cổng khách hàng</p>
+          <h1 className="mt-3 font-heading text-3xl font-extrabold text-white md:text-5xl">Album ảnh cá nhân</h1>
+          <p className="mt-3 max-w-2xl text-zinc-400">Ảnh được đồng bộ từ Google Drive Folder, chọn ảnh cần chỉnh và gửi ghi chú ngay dưới từng ảnh.</p>
         </div>
       </div>
       <AlbumGallery />

@@ -1,7 +1,26 @@
 "use client";
 
 import Image from "next/image";
-import { Check, ChevronLeft, ChevronRight, Download, Expand, ImageOff, Loader2, RefreshCw, X } from "lucide-react";
+import {
+  Check,
+  ChevronDown,
+  ChevronLeft,
+  ChevronRight,
+  Download,
+  Edit3,
+  Heart,
+  Image as ImageIcon,
+  ImageOff,
+  Loader2,
+  MessageSquare,
+  Play,
+  RefreshCw,
+  Search,
+  Share2,
+  Sparkles,
+  UploadCloud,
+  X,
+} from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 type Gallery = {
@@ -28,7 +47,14 @@ type GalleryPhoto = {
   edit_note?: string | null;
 };
 
-type Tab = "all" | "selected" | "edited";
+type Tab = "all" | "selected" | "noted" | "edited";
+
+const tabs: Array<{ value: Tab; label: string; icon: typeof ImageIcon }> = [
+  { value: "all", label: "Tất cả", icon: ImageIcon },
+  { value: "selected", label: "Đã chọn", icon: MessageSquare },
+  { value: "noted", label: "Cần chỉnh sửa", icon: Edit3 },
+  { value: "edited", label: "File đã chỉnh", icon: UploadCloud },
+];
 
 export function CustomerGalleryView({
   gallery,
@@ -43,43 +69,47 @@ export function CustomerGalleryView({
   const [photos, setPhotos] = useState(rawPhotos);
   const [preview, setPreview] = useState<GalleryPhoto | null>(null);
   const [syncing, setSyncing] = useState(false);
+  const [query, setQuery] = useState("");
   const saveTimers = useRef<Record<string, number>>({});
 
   const selectedPhotos = useMemo(() => photos.filter((photo) => photo.selected), [photos]);
-  const visiblePhotos = tab === "selected" ? selectedPhotos : photos;
-  const previewPhotos = tab === "edited" ? editedPhotos : visiblePhotos;
+  const notedPhotos = useMemo(() => photos.filter((photo) => Boolean(photo.edit_note?.trim())), [photos]);
+  const filteredRawPhotos = useMemo(() => {
+    const source = tab === "selected" ? selectedPhotos : tab === "noted" ? notedPhotos : photos;
+    const normalizedQuery = query.trim().toLowerCase();
+    if (!normalizedQuery) return source;
+    return source.filter((photo) => photo.file_name.toLowerCase().includes(normalizedQuery));
+  }, [notedPhotos, photos, query, selectedPhotos, tab]);
+  const filteredEditedPhotos = useMemo(() => {
+    const normalizedQuery = query.trim().toLowerCase();
+    if (!normalizedQuery) return editedPhotos;
+    return editedPhotos.filter((photo) => photo.file_name.toLowerCase().includes(normalizedQuery));
+  }, [editedPhotos, query]);
+  const visiblePhotos = tab === "edited" ? filteredEditedPhotos : filteredRawPhotos;
+  const previewPhotos = visiblePhotos.length > 0 ? visiblePhotos : tab === "edited" ? editedPhotos : photos;
   const previewIndex = preview ? previewPhotos.findIndex((photo) => photo.id === preview.id) : -1;
   const cover = gallery.cover_url || photos[0]?.thumbnail_url || editedPhotos[0]?.thumbnail_url;
+  const shootDate = new Date(gallery.shoot_date).toLocaleDateString("vi-VN");
 
   const showPreviousPhoto = useCallback(() => {
     if (!preview || previewPhotos.length === 0) return;
     const currentIndex = previewIndex >= 0 ? previewIndex : 0;
-    const previousIndex = (currentIndex - 1 + previewPhotos.length) % previewPhotos.length;
-    setPreview(previewPhotos[previousIndex]);
+    setPreview(previewPhotos[(currentIndex - 1 + previewPhotos.length) % previewPhotos.length]);
   }, [preview, previewIndex, previewPhotos]);
 
   const showNextPhoto = useCallback(() => {
     if (!preview || previewPhotos.length === 0) return;
     const currentIndex = previewIndex >= 0 ? previewIndex : 0;
-    const nextIndex = (currentIndex + 1) % previewPhotos.length;
-    setPreview(previewPhotos[nextIndex]);
+    setPreview(previewPhotos[(currentIndex + 1) % previewPhotos.length]);
   }, [preview, previewIndex, previewPhotos]);
 
   useEffect(() => {
     if (!preview) return;
 
     function handleKeyDown(event: KeyboardEvent) {
-      if (event.key === "ArrowLeft") {
-        showPreviousPhoto();
-      }
-
-      if (event.key === "ArrowRight") {
-        showNextPhoto();
-      }
-
-      if (event.key === "Escape") {
-        setPreview(null);
-      }
+      if (event.key === "ArrowLeft") showPreviousPhoto();
+      if (event.key === "ArrowRight") showNextPhoto();
+      if (event.key === "Escape") setPreview(null);
     }
 
     window.addEventListener("keydown", handleKeyDown);
@@ -96,12 +126,12 @@ export function CustomerGalleryView({
 
   function toggleSelected(photo: GalleryPhoto) {
     const nextSelected = !photo.selected;
-    setPhotos((current) => current.map((item) => item.id === photo.id ? { ...item, selected: nextSelected } : item));
+    setPhotos((current) => current.map((item) => (item.id === photo.id ? { ...item, selected: nextSelected } : item)));
     void patchPhoto(photo.id, { selected: nextSelected });
   }
 
   function updateNote(photo: GalleryPhoto, editNote: string) {
-    setPhotos((current) => current.map((item) => item.id === photo.id ? { ...item, edit_note: editNote } : item));
+    setPhotos((current) => current.map((item) => (item.id === photo.id ? { ...item, edit_note: editNote } : item)));
     window.clearTimeout(saveTimers.current[photo.id]);
     saveTimers.current[photo.id] = window.setTimeout(() => {
       void patchPhoto(photo.id, { editNote });
@@ -115,255 +145,377 @@ export function CustomerGalleryView({
   }
 
   return (
-    <div className="bg-stone-50">
-      <section className="relative min-h-[360px] overflow-hidden bg-zinc-950 text-white">
-        {cover && <Image src={cover} alt={gallery.customer_name} fill priority sizes="100vw" className="object-cover opacity-55" unoptimized />}
-        <div className="absolute inset-0 bg-zinc-950/35" />
-        <div className="relative mx-auto flex min-h-[360px] max-w-7xl flex-col justify-end px-4 py-10 sm:px-6 lg:px-8">
-          <p className="text-sm font-semibold uppercase tracking-[0.18em] text-rose-200">TLORA Studio Gallery</p>
-          <h1 className="mt-3 text-4xl font-extrabold md:text-6xl">{gallery.customer_name}</h1>
-          <p className="mt-4 text-sm text-zinc-200">Ngày chụp: {new Date(gallery.shoot_date).toLocaleDateString("vi-VN")}</p>
-        </div>
-      </section>
-
-      <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-        <div className="grid gap-4 md:grid-cols-4">
-          <Stat label="Số lượng ảnh" value={photos.length} />
-          <Stat label="Ảnh đã chọn" value={selectedPhotos.length} />
-          <Stat label="Ảnh chỉnh sửa" value={editedPhotos.length} />
-          <div className="rounded-md border border-zinc-200 bg-white p-4 shadow-sm">
-            <p className="text-sm font-semibold text-zinc-500">Tải FILE GỐC</p>
-            <p className={`mt-2 text-lg font-extrabold ${gallery.raw_download_enabled ? "text-emerald-600" : "text-rose-600"}`}>
-              {gallery.raw_download_enabled ? "Đã mở" : "Đang khóa"}
-            </p>
+    <div className="min-h-screen bg-[#07080a] text-white">
+      <aside className="fixed left-0 top-0 z-40 hidden h-screen w-[270px] border-r border-white/10 bg-[#090a0d]/95 px-5 py-8 xl:block">
+        <Logo />
+        <nav className="mt-10 space-y-2 text-sm font-medium text-zinc-300">
+          <SideItem active icon={ImageIcon} label="Album" />
+          <SideItem icon={Heart} label="Yêu thích" />
+          <SideItem icon={Check} label="Đã chọn" badge={selectedPhotos.length} />
+          <SideItem icon={Download} label="Tải xuống" />
+          <SideItem icon={MessageSquare} label="Ghi chú" />
+        </nav>
+        <div className="absolute bottom-8 left-5 right-5">
+          <div className="rounded-lg border border-white/10 bg-white/[0.04] p-5 shadow-2xl shadow-black/30">
+            <Sparkles className="text-[#d8b766]" size={26} />
+            <p className="mt-4 font-heading text-sm font-semibold text-[#f0d48a]">Trải nghiệm cao cấp</p>
+            <p className="mt-3 text-xs leading-5 text-zinc-400">Lưu trữ ảnh chất lượng cao và thao tác chọn ảnh trực tuyến.</p>
+            <button className="mt-5 min-h-10 w-full rounded-md border border-[#d8b766]/30 bg-[#d8b766]/15 text-sm font-semibold text-[#f3d88e]">
+              Nâng cấp ngay
+            </button>
+          </div>
+          <div className="mt-8 space-y-4 text-sm text-zinc-400">
+            <p>Hỗ trợ khách hàng</p>
+            <p>0901 234 567</p>
+            <p>hello@lumiconcept.vn</p>
           </div>
         </div>
+      </aside>
 
-        <div className="mt-6 flex flex-wrap items-center justify-between gap-3">
-          <div className="flex rounded-md border border-zinc-200 bg-white p-1">
-            {[
-              ["all", "Tất cả ảnh"],
-              ["selected", "Ảnh đã chọn"],
-              ["edited", "File ảnh chỉnh sửa"],
-            ].map(([value, label]) => (
-              <button
-                key={value}
-                onClick={() => setTab(value as Tab)}
-                className={`rounded px-4 py-2 text-sm font-semibold ${tab === value ? "bg-zinc-950 text-white" : "text-zinc-600 hover:bg-zinc-100"}`}
-              >
-                {label}
+      <div className="xl:pl-[270px]">
+        <header className="sticky top-0 z-30 border-b border-white/10 bg-[#090a0d]/80 backdrop-blur-xl">
+          <div className="flex h-20 items-center justify-between px-4 sm:px-8">
+            <div className="flex items-center gap-3 text-sm text-zinc-400">
+              <span>Album</span>
+              <ChevronRight size={15} />
+              <span className="font-semibold text-white">{gallery.customer_name}</span>
+            </div>
+            <div className="flex items-center gap-3">
+              <button className="hidden min-h-10 items-center gap-2 rounded-full border border-white/15 px-4 text-sm text-zinc-200 sm:inline-flex">
+                <Sparkles size={16} />
+                Chủ đề
               </button>
-            ))}
+              <div className="grid size-10 place-items-center rounded-full bg-white/10 text-sm font-semibold">PV</div>
+              <span className="hidden text-sm font-medium md:inline">{gallery.customer_name}</span>
+              <ChevronDown size={16} />
+            </div>
           </div>
-          <button onClick={syncPhotos} className="inline-flex min-h-10 items-center gap-2 rounded-md border border-zinc-200 bg-white px-4 text-sm font-semibold">
-            {syncing ? <Loader2 className="animate-spin" size={16} /> : <RefreshCw size={16} />}
-            Làm mới ảnh
-          </button>
-        </div>
+        </header>
 
-        {tab !== "edited" && (
-          <>
-            <div className="mt-4 flex flex-wrap gap-3">
-              {gallery.raw_download_enabled ? (
-                <a href={gallery.raw_drive_folder_url} target="_blank" rel="noreferrer" className="inline-flex min-h-11 items-center gap-2 rounded-md bg-zinc-950 px-5 py-3 text-sm font-semibold text-white">
-                  <Download size={16} /> Tải xuống FILE GỐC
-                </a>
-              ) : (
-                <button disabled className="inline-flex min-h-11 items-center gap-2 rounded-md bg-zinc-300 px-5 py-3 text-sm font-semibold text-zinc-600">
-                  <Download size={16} /> Tải xuống sau khi thanh toán
-                </button>
-              )}
-            </div>
-            <PhotoGrid photos={visiblePhotos} onPreview={setPreview} onToggle={toggleSelected} onNote={updateNote} />
-          </>
-        )}
-
-        {tab === "edited" && (
-          <>
-            <div className="mt-4 flex flex-wrap gap-3">
-              <a href={gallery.edited_drive_folder_url} target="_blank" rel="noreferrer" className="inline-flex min-h-11 items-center gap-2 rounded-md bg-zinc-950 px-5 py-3 text-sm font-semibold text-white">
-                <Download size={16} /> Tải xuống FILE CHỈNH SỬA
-              </a>
-            </div>
-            <EditedGrid photos={editedPhotos} onPreview={setPreview} />
-          </>
-        )}
-      </main>
-
-      {preview && (
-        <div className="fixed inset-0 z-50 grid place-items-center bg-zinc-950/90 p-4">
-          <div className="relative grid h-[92vh] w-full max-w-7xl overflow-hidden rounded-md bg-zinc-900 lg:grid-cols-[minmax(0,1fr)_360px]">
-            <div className="relative min-h-[55vh] lg:min-h-0">
-              {preview.preview_url || preview.thumbnail_url ? (
-                <Image src={preview.preview_url || preview.thumbnail_url || ""} alt={preview.file_name} fill sizes="(min-width: 1024px) calc(100vw - 360px), 100vw" className="object-contain" unoptimized />
-              ) : (
-                <div className="grid h-full place-items-center text-white">Không có preview</div>
-              )}
-            </div>
-            <aside className="border-t border-white/10 bg-white p-4 text-zinc-950 lg:border-l lg:border-t-0">
-              <div className="flex items-start justify-between gap-3">
-                <div>
-                  <p className="text-xs font-semibold uppercase tracking-[0.16em] text-rose-600">{preview.kind === "edited" ? "File chỉnh sửa" : "File gốc"}</p>
-                  <h2 className="mt-2 break-words text-lg font-bold">{preview.file_name}</h2>
+        <main className="px-4 pb-28 sm:px-8">
+          <section className="relative overflow-hidden rounded-b-lg border-x border-b border-white/10">
+            <div className="absolute inset-0 bg-gradient-to-r from-black via-black/55 to-black/10" />
+            {cover ? (
+              <Image src={cover} alt={gallery.customer_name} fill priority sizes="(min-width: 1280px) calc(100vw - 270px), 100vw" className="object-cover opacity-75" unoptimized />
+            ) : (
+              <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_15%,rgba(216,183,102,0.26),transparent_32%),#101216]" />
+            )}
+            <div className="absolute inset-0 bg-gradient-to-t from-[#07080a] via-transparent to-black/30" />
+            <div className="relative min-h-[460px] px-5 py-10 sm:px-10 lg:px-12">
+              <div className="max-w-xl pt-6">
+                <p className="font-heading text-2xl italic text-[#d8b766]">Album ảnh</p>
+                <h1 className="mt-3 font-heading text-4xl font-extrabold leading-tight text-white md:text-6xl">{gallery.customer_name}</h1>
+                <div className="mt-6 flex flex-wrap items-center gap-4 text-sm text-zinc-200">
+                  <span>{shootDate}</span>
+                  <span className="size-1 rounded-full bg-[#d8b766]" />
+                  <span>Album chọn ảnh trực tuyến</span>
+                </div>
+                <p className="mt-6 max-w-md text-sm leading-7 text-zinc-300">
+                  Cảm ơn anh/chị đã tin tưởng Lumi Concept. Hy vọng bộ ảnh này giúp anh/chị chọn file thật nhanh và gửi yêu cầu chỉnh sửa rõ ràng.
+                </p>
+                <div className="mt-7 flex flex-wrap gap-3">
+                  <button onClick={() => setPreview(visiblePhotos[0] || null)} className="inline-flex min-h-12 items-center gap-3 rounded-md bg-[#d8b766] px-5 text-sm font-semibold text-black shadow-lg shadow-[#d8b766]/20">
+                    <Play size={17} fill="currentColor" />
+                    Xem slideshow
+                  </button>
+                  <button className="inline-flex min-h-12 items-center gap-3 rounded-md border border-white/15 bg-white/10 px-5 text-sm font-semibold text-white backdrop-blur">
+                    <Share2 size={17} />
+                    Chia sẻ album
+                  </button>
                 </div>
               </div>
-              {preview.kind === "raw" ? (
-                <div className="mt-5 space-y-4">
-                  <button
-                    onClick={() => {
-                      toggleSelected(preview);
-                      setPreview((current) => current ? { ...current, selected: !current.selected } : current);
-                    }}
-                    className={`inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-md px-4 text-sm font-semibold ${preview.selected ? "bg-emerald-600 text-white" : "bg-zinc-950 text-white"}`}
-                  >
-                    {preview.selected ? <Check size={18} /> : <span className="size-4 rounded border border-current" />}
-                    {preview.selected ? "Đã chọn ảnh này" : "Chọn ảnh này"}
-                  </button>
-                  <label className="block text-sm font-semibold" htmlFor={`modal-note-${preview.id}`}>
-                    Mô tả cần chỉnh sửa
-                  </label>
-                  <textarea
-                    id={`modal-note-${preview.id}`}
-                    value={preview.edit_note || ""}
-                    onChange={(event) => {
-                      const editNote = event.target.value;
-                      updateNote(preview, editNote);
-                      setPreview((current) => current ? { ...current, edit_note: editNote } : current);
-                    }}
-                    placeholder="Ví dụ: làm da nhẹ, giữ màu tóc, crop ngang..."
-                    className="min-h-40 w-full resize-none rounded-md border border-zinc-200 bg-stone-50 p-3 text-sm outline-none focus:border-zinc-900 focus:bg-white"
-                  />
-                  <p className="text-xs font-medium text-emerald-700">Ghi chú tự động lưu khi khách nhập.</p>
+
+              <div className="mt-10 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+                <StatCard icon={ImageIcon} value={photos.length} label="Ảnh trong album" tone="violet" />
+                <StatCard icon={Heart} value={selectedPhotos.length} label="Ảnh đã chọn" tone="rose" />
+                <StatCard icon={Edit3} value={notedPhotos.length} label="Ảnh cần chỉnh sửa" tone="gold" />
+                <StatCard icon={UploadCloud} value={gallery.raw_download_enabled ? "Sẵn sàng" : "Đang khóa"} label="Tải xuống" tone="green" />
+              </div>
+            </div>
+          </section>
+
+          <section className="mt-6 rounded-lg border border-white/10 bg-white/[0.04] p-3 shadow-2xl shadow-black/20 backdrop-blur">
+            <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+              <div className="flex flex-wrap gap-2">
+                {tabs.map((item) => {
+                  const Icon = item.icon;
+                  const count = item.value === "all" ? photos.length : item.value === "selected" ? selectedPhotos.length : item.value === "noted" ? notedPhotos.length : editedPhotos.length;
+                  return (
+                    <button
+                      key={item.value}
+                      onClick={() => setTab(item.value)}
+                      className={`inline-flex min-h-10 items-center gap-2 rounded-md px-4 text-sm font-medium transition ${
+                        tab === item.value ? "bg-[#d8b766]/20 text-[#f3d88e]" : "text-zinc-400 hover:bg-white/5 hover:text-white"
+                      }`}
+                    >
+                      <Icon size={16} />
+                      {item.label} ({count})
+                    </button>
+                  );
+                })}
+              </div>
+              <div className="flex flex-col gap-2 sm:flex-row">
+                <label className="flex min-h-11 items-center gap-2 rounded-full border border-white/10 bg-black/20 px-4 text-sm text-zinc-400">
+                  <Search size={17} />
+                  <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Tìm kiếm" className="w-full bg-transparent text-white outline-none placeholder:text-zinc-500 sm:w-40" />
+                </label>
+                <button onClick={syncPhotos} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-full border border-white/10 bg-black/20 px-4 text-sm font-semibold text-zinc-200">
+                  {syncing ? <Loader2 className="animate-spin" size={16} /> : <RefreshCw size={16} />}
+                  Mới nhất
+                </button>
+              </div>
+            </div>
+          </section>
+
+          <PhotoGrid photos={visiblePhotos} selectedIds={new Set(selectedPhotos.map((photo) => photo.id))} onPreview={setPreview} onToggle={toggleSelected} />
+        </main>
+      </div>
+
+      {selectedPhotos.length > 0 && (
+        <div className="fixed bottom-5 left-4 right-4 z-40 mx-auto flex max-w-5xl flex-col gap-4 rounded-lg border border-white/10 bg-[#17181d]/95 p-4 shadow-2xl shadow-black/50 backdrop-blur-xl md:flex-row md:items-center md:justify-between xl:left-[300px]">
+          <div className="flex items-center gap-4">
+            <div className="hidden gap-2 sm:flex">
+              {selectedPhotos.slice(0, 3).map((photo) => (
+                <div key={photo.id} className="relative size-14 overflow-hidden rounded-md border border-[#d8b766]/40 bg-zinc-900">
+                  {photo.thumbnail_url && <Image src={photo.thumbnail_url} alt={photo.file_name} fill sizes="56px" className="object-cover" unoptimized />}
                 </div>
-              ) : (
-                <div className="mt-5 space-y-3">
-                  <p className="text-sm leading-6 text-zinc-600">Ảnh đã chỉnh sửa từ thư mục FILE CHỈNH SỬA.</p>
-                  {preview.download_url && (
-                    <a href={preview.download_url} target="_blank" rel="noreferrer" className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-md bg-zinc-950 px-4 text-sm font-semibold text-white">
-                      <Download size={16} /> Tải ảnh
-                    </a>
-                  )}
-                </div>
-              )}
-            </aside>
-            <button onClick={() => setPreview(null)} className="absolute right-3 top-3 grid size-10 place-items-center rounded-md bg-white text-zinc-950 shadow">
-              <X size={20} />
+              ))}
+            </div>
+            <div>
+              <p className="font-semibold text-white">{selectedPhotos.length} ảnh đã chọn</p>
+              <p className="mt-1 text-xs leading-5 text-zinc-400">Chọn thêm ảnh để tải về hoặc gửi yêu cầu chỉnh sửa.</p>
+            </div>
+          </div>
+          <div className="flex flex-col gap-2 sm:flex-row">
+            <a href={gallery.raw_download_enabled ? gallery.raw_drive_folder_url : undefined} target="_blank" rel="noreferrer" className="inline-flex min-h-11 items-center justify-center gap-2 rounded-md border border-white/10 px-5 text-sm font-semibold text-white">
+              <Download size={17} />
+              Tải xuống ({selectedPhotos.length})
+            </a>
+            <button onClick={() => setTab("noted")} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-md bg-[#d8b766] px-5 text-sm font-semibold text-black">
+              <Edit3 size={17} />
+              Gửi yêu cầu chỉnh sửa
             </button>
-            {previewPhotos.length > 1 && (
-              <>
-                <button
-                  onClick={showPreviousPhoto}
-                  className="absolute left-3 top-1/2 grid size-12 -translate-y-1/2 place-items-center rounded-md bg-white/95 text-zinc-950 shadow-lg transition hover:bg-white md:left-5"
-                  aria-label="Ảnh trước"
-                >
-                  <ChevronLeft size={26} />
-                </button>
-                <button
-                  onClick={showNextPhoto}
-                  className="absolute right-3 top-[30%] grid size-12 -translate-y-1/2 place-items-center rounded-md bg-white/95 text-zinc-950 shadow-lg transition hover:bg-white md:right-5 lg:right-[380px] lg:top-1/2"
-                  aria-label="Ảnh tiếp theo"
-                >
-                  <ChevronRight size={26} />
-                </button>
-                <div className="absolute bottom-3 left-1/2 -translate-x-1/2 rounded-md bg-zinc-950/75 px-3 py-2 text-sm font-semibold text-white">
-                  {Math.max(previewIndex + 1, 1)} / {previewPhotos.length}
-                </div>
-              </>
-            )}
           </div>
         </div>
+      )}
+
+      {preview && (
+        <PreviewModal
+          photo={preview}
+          photos={previewPhotos}
+          index={previewIndex}
+          onClose={() => setPreview(null)}
+          onPrevious={showPreviousPhoto}
+          onNext={showNextPhoto}
+          onToggle={toggleSelected}
+          onNote={updateNote}
+          setPreview={setPreview}
+        />
       )}
     </div>
   );
 }
 
-function Stat({ label, value }: { label: string; value: number }) {
+function Logo() {
   return (
-    <div className="rounded-md border border-zinc-200 bg-white p-4 shadow-sm">
-      <p className="text-sm font-semibold text-zinc-500">{label}</p>
-      <p className="mt-2 text-3xl font-extrabold">{value}</p>
+    <div className="flex items-center gap-3 text-[#e9c96f]">
+      <div className="grid size-11 place-items-center rounded-md border border-[#e9c96f]/60">
+        <ImageIcon size={22} />
+      </div>
+      <div>
+        <p className="font-heading text-2xl font-bold tracking-[0.18em]">LUMI</p>
+        <p className="text-xs tracking-[0.38em] text-[#f4df9b]">CONCEPT</p>
+      </div>
+    </div>
+  );
+}
+
+function SideItem({ icon: Icon, label, active, badge }: { icon: typeof ImageIcon; label: string; active?: boolean; badge?: number }) {
+  return (
+    <div className={`flex min-h-12 items-center justify-between rounded-md px-4 ${active ? "bg-[#d8b766]/15 text-white" : "hover:bg-white/5"}`}>
+      <span className="flex items-center gap-3">
+        <Icon size={19} className={active ? "text-[#e9c96f]" : "text-zinc-400"} />
+        {label}
+      </span>
+      {typeof badge === "number" && badge > 0 && <span className="rounded-full bg-white/10 px-2 py-1 text-xs text-white">{badge}</span>}
+    </div>
+  );
+}
+
+function StatCard({ icon: Icon, value, label, tone }: { icon: typeof ImageIcon; value: number | string; label: string; tone: "violet" | "rose" | "gold" | "green" }) {
+  const tones = {
+    violet: "bg-violet-500/15 text-violet-300",
+    rose: "bg-rose-500/15 text-rose-300",
+    gold: "bg-[#d8b766]/15 text-[#f3d88e]",
+    green: "bg-emerald-500/15 text-emerald-300",
+  };
+  return (
+    <div className="rounded-lg border border-white/15 bg-black/30 p-5 shadow-xl shadow-black/20 backdrop-blur">
+      <div className="flex items-center gap-4">
+        <span className={`grid size-12 place-items-center rounded-full ${tones[tone]}`}>
+          <Icon size={21} />
+        </span>
+        <div>
+          <p className="text-2xl font-bold text-white">{value}</p>
+          <p className="mt-1 text-sm text-zinc-400">{label}</p>
+        </div>
+      </div>
     </div>
   );
 }
 
 function PhotoGrid({
   photos,
+  selectedIds,
   onPreview,
   onToggle,
-  onNote,
 }: {
   photos: GalleryPhoto[];
+  selectedIds: Set<string>;
   onPreview: (photo: GalleryPhoto) => void;
   onToggle: (photo: GalleryPhoto) => void;
-  onNote: (photo: GalleryPhoto, note: string) => void;
 }) {
   if (photos.length === 0) {
-    return <EmptyState text="Chưa có ảnh trong FILE GỐC hoặc chưa đồng bộ ảnh." />;
+    return <EmptyState text="Chưa có ảnh phù hợp với bộ lọc hiện tại." />;
   }
 
   return (
-    <div className="mt-6 grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-      {photos.map((photo) => (
-        <article key={photo.id} className="overflow-hidden rounded-md border border-zinc-200 bg-white shadow-sm">
-          <div className="relative aspect-[4/5] bg-zinc-100">
-            {photo.thumbnail_url ? <Image src={photo.thumbnail_url} alt={photo.file_name} fill sizes="(min-width: 1280px) 25vw, 50vw" className="object-cover" unoptimized /> : <EmptyImage />}
-            <button onClick={() => onPreview(photo)} className="absolute right-3 top-3 grid size-10 place-items-center rounded-md bg-white/95 text-zinc-950 shadow" aria-label="Xem lớn">
-              <Expand size={18} />
+    <div className="mt-3 columns-1 gap-3 sm:columns-2 lg:columns-3 2xl:columns-4">
+      {photos.map((photo, index) => {
+        const selected = selectedIds.has(photo.id);
+        return (
+          <article key={photo.id} className="group relative mb-3 break-inside-avoid overflow-hidden rounded-lg border border-white/10 bg-white/[0.04]">
+            <button onClick={() => onPreview(photo)} className={`relative block w-full bg-zinc-900 ${index % 5 === 1 ? "aspect-[4/5]" : index % 5 === 3 ? "aspect-[3/4]" : "aspect-[4/3]"}`}>
+              {photo.thumbnail_url ? (
+                <Image src={photo.thumbnail_url} alt={photo.file_name} fill sizes="(min-width: 1536px) 22vw, (min-width: 1024px) 30vw, (min-width: 640px) 48vw, 100vw" className="object-cover transition duration-500 group-hover:scale-105" unoptimized />
+              ) : (
+                <EmptyImage />
+              )}
+              <span className="absolute inset-0 bg-gradient-to-t from-black/45 via-transparent to-black/20 opacity-80" />
             </button>
-            <button onClick={() => onToggle(photo)} className={`absolute left-3 top-3 flex min-h-10 items-center gap-2 rounded-md px-3 text-sm font-semibold shadow ${photo.selected ? "bg-emerald-600 text-white" : "bg-white/95 text-zinc-950"}`}>
-              {photo.selected ? <Check size={18} /> : <span className="size-4 rounded border border-zinc-400" />}
-              {photo.selected ? "Đã chọn" : "Chọn ảnh"}
+            <button
+              onClick={() => onToggle(photo)}
+              className={`absolute left-3 top-3 grid size-8 place-items-center rounded-md border text-sm shadow-lg ${
+                selected ? "border-[#f3d88e] bg-[#d8b766] text-black" : "border-white/50 bg-black/35 text-white backdrop-blur"
+              }`}
+              aria-label={selected ? "Bỏ chọn ảnh" : "Chọn ảnh"}
+            >
+              {selected && <Check size={17} />}
             </button>
-          </div>
-          <div className="p-4">
-            <h3 className="truncate font-semibold">{photo.file_name}</h3>
-            <label className="mt-3 block text-sm font-medium text-zinc-700">Mô tả cần chỉnh sửa</label>
-            <textarea
-              value={photo.edit_note || ""}
-              onChange={(event) => onNote(photo, event.target.value)}
-              placeholder="Ví dụ: làm da nhẹ, giữ màu tóc, crop ngang..."
-              className="mt-2 min-h-24 w-full resize-none rounded-md border border-zinc-200 bg-stone-50 p-3 text-sm outline-none focus:border-zinc-900 focus:bg-white"
-            />
-            <p className="mt-2 text-xs font-medium text-emerald-700">Tự động lưu ghi chú</p>
-          </div>
-        </article>
-      ))}
+            <button className="absolute right-3 top-3 grid size-8 place-items-center rounded-full bg-black/35 text-white backdrop-blur" aria-label="Yêu thích">
+              <Heart size={17} />
+            </button>
+            {photo.edit_note && (
+              <span className="absolute bottom-3 left-3 rounded-full bg-black/55 px-3 py-1 text-xs font-medium text-[#f3d88e] backdrop-blur">
+                Có ghi chú
+              </span>
+            )}
+          </article>
+        );
+      })}
     </div>
   );
 }
 
-function EditedGrid({ photos, onPreview }: { photos: GalleryPhoto[]; onPreview: (photo: GalleryPhoto) => void }) {
-  if (photos.length === 0) {
-    return <EmptyState text="Chưa có ảnh trong FILE CHỈNH SỬA." />;
-  }
-
+function PreviewModal({
+  photo,
+  photos,
+  index,
+  onClose,
+  onPrevious,
+  onNext,
+  onToggle,
+  onNote,
+  setPreview,
+}: {
+  photo: GalleryPhoto;
+  photos: GalleryPhoto[];
+  index: number;
+  onClose: () => void;
+  onPrevious: () => void;
+  onNext: () => void;
+  onToggle: (photo: GalleryPhoto) => void;
+  onNote: (photo: GalleryPhoto, note: string) => void;
+  setPreview: (photo: GalleryPhoto | null) => void;
+}) {
   return (
-    <div className="mt-6 grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-      {photos.map((photo) => (
-        <article key={photo.id} className="overflow-hidden rounded-md border border-zinc-200 bg-white shadow-sm">
-          <div className="relative aspect-[4/5] bg-zinc-100">
-            {photo.thumbnail_url ? <Image src={photo.thumbnail_url} alt={photo.file_name} fill sizes="(min-width: 1280px) 25vw, 50vw" className="object-cover" unoptimized /> : <EmptyImage />}
-            <button onClick={() => onPreview(photo)} className="absolute right-3 top-3 grid size-10 place-items-center rounded-md bg-white/95 text-zinc-950 shadow" aria-label="Xem lớn">
-              <Expand size={18} />
+    <div className="fixed inset-0 z-50 grid place-items-center bg-black/90 p-3" role="dialog" aria-modal="true">
+      <div className="relative grid h-[94vh] w-full max-w-7xl overflow-hidden rounded-lg border border-white/10 bg-[#101115] shadow-2xl lg:grid-cols-[minmax(0,1fr)_360px]">
+        <div className="relative min-h-[55vh] bg-black">
+          {photo.preview_url || photo.thumbnail_url ? (
+            <Image src={photo.preview_url || photo.thumbnail_url || ""} alt={photo.file_name} fill sizes="(min-width: 1024px) calc(100vw - 420px), 100vw" className="object-contain" unoptimized />
+          ) : (
+            <div className="grid h-full place-items-center text-zinc-400">Không có preview</div>
+          )}
+        </div>
+        <aside className="border-t border-white/10 bg-[#14151a] p-5 text-white lg:border-l lg:border-t-0">
+          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#d8b766]">{photo.kind === "edited" ? "File đã chỉnh" : "File gốc"}</p>
+          <h2 className="mt-3 break-words font-heading text-xl font-bold">{photo.file_name}</h2>
+          {photo.kind === "raw" ? (
+            <div className="mt-6 space-y-4">
+              <button
+                onClick={() => {
+                  onToggle(photo);
+                  setPreview({ ...photo, selected: !photo.selected });
+                }}
+                className={`inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-md px-4 text-sm font-semibold ${
+                  photo.selected ? "bg-emerald-500 text-black" : "bg-[#d8b766] text-black"
+                }`}
+              >
+                {photo.selected ? <Check size={18} /> : <span className="size-4 rounded border border-current" />}
+                {photo.selected ? "Đã chọn ảnh này" : "Chọn ảnh này"}
+              </button>
+              <label className="block text-sm font-semibold text-zinc-200" htmlFor={`modal-note-${photo.id}`}>
+                Mô tả cần chỉnh sửa
+              </label>
+              <textarea
+                id={`modal-note-${photo.id}`}
+                value={photo.edit_note || ""}
+                onChange={(event) => {
+                  const editNote = event.target.value;
+                  onNote(photo, editNote);
+                  setPreview({ ...photo, edit_note: editNote });
+                }}
+                placeholder="Ví dụ: làm da nhẹ, giữ màu tóc, crop ngang..."
+                className="min-h-40 w-full resize-none rounded-md border border-white/10 bg-black/25 p-3 text-sm text-white outline-none placeholder:text-zinc-500 focus:border-[#d8b766]"
+              />
+              <p className="text-xs font-medium text-emerald-300">Ghi chú tự động lưu khi khách nhập.</p>
+            </div>
+          ) : (
+            <div className="mt-6 space-y-3">
+              <p className="text-sm leading-6 text-zinc-400">Ảnh đã chỉnh sửa từ thư mục file hoàn thiện.</p>
+              {photo.download_url && (
+                <a href={photo.download_url} target="_blank" rel="noreferrer" className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-md bg-[#d8b766] px-4 text-sm font-semibold text-black">
+                  <Download size={16} /> Tải ảnh
+                </a>
+              )}
+            </div>
+          )}
+        </aside>
+        <button onClick={onClose} className="absolute right-3 top-3 grid size-10 place-items-center rounded-full bg-white/10 text-white backdrop-blur" aria-label="Đóng">
+          <X size={20} />
+        </button>
+        {photos.length > 1 && (
+          <>
+            <button onClick={onPrevious} className="absolute left-3 top-1/2 grid size-11 -translate-y-1/2 place-items-center rounded-full bg-white/10 text-white backdrop-blur" aria-label="Ảnh trước">
+              <ChevronLeft size={25} />
             </button>
-          </div>
-          <div className="p-4">
-            <h3 className="truncate font-semibold">{photo.file_name}</h3>
-            {photo.download_url && (
-              <a href={photo.download_url} target="_blank" rel="noreferrer" className="mt-3 inline-flex min-h-10 items-center gap-2 rounded-md bg-zinc-950 px-4 text-sm font-semibold text-white">
-                <Download size={16} /> Tải ảnh
-              </a>
-            )}
-          </div>
-        </article>
-      ))}
+            <button onClick={onNext} className="absolute right-3 top-[38%] grid size-11 -translate-y-1/2 place-items-center rounded-full bg-white/10 text-white backdrop-blur lg:right-[380px] lg:top-1/2" aria-label="Ảnh tiếp theo">
+              <ChevronRight size={25} />
+            </button>
+            <div className="absolute bottom-3 left-1/2 -translate-x-1/2 rounded-full bg-black/65 px-4 py-2 text-sm font-semibold text-white">
+              {Math.max(index + 1, 1)} / {photos.length}
+            </div>
+          </>
+        )}
+      </div>
     </div>
   );
 }
 
 function EmptyState({ text }: { text: string }) {
   return (
-    <div className="mt-6 grid min-h-64 place-items-center rounded-md border border-dashed border-zinc-300 bg-white p-8 text-center text-zinc-500">
+    <div className="mt-6 grid min-h-64 place-items-center rounded-lg border border-dashed border-white/15 bg-white/[0.03] p-8 text-center text-zinc-400">
       <div>
         <ImageOff className="mx-auto" size={38} />
         <p className="mt-3 text-sm font-semibold">{text}</p>
@@ -374,7 +526,7 @@ function EmptyState({ text }: { text: string }) {
 
 function EmptyImage() {
   return (
-    <div className="grid h-full place-items-center text-zinc-400">
+    <div className="grid h-full place-items-center text-zinc-500">
       <ImageOff size={32} />
     </div>
   );

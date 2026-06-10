@@ -15,10 +15,10 @@ export default function NewsPage() {
       <SectionHeader eyebrow="Tin tức" title="Kênh thông tin studio" description="Nơi đăng bài SEO, cập nhật concept mới và hướng dẫn khách chuẩn bị buổi chụp." />
       <div className="mx-auto mt-10 grid max-w-7xl gap-5 md:grid-cols-3">
         {posts.map((post) => (
-          <Link key={post.slug} href={`/tin-tuc/${post.slug}`} className="rounded-md border border-zinc-200 bg-white p-5 shadow-sm transition hover:shadow-md">
-            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-rose-600">{post.category}</p>
-            <h2 className="mt-3 text-xl font-bold">{post.title}</h2>
-            <p className="mt-3 text-sm leading-6 text-zinc-600">{post.excerpt}</p>
+          <Link key={post.slug} href={`/tin-tuc/${post.slug}`} className="rounded-lg border border-white/10 bg-white/[0.04] p-5 shadow-xl shadow-black/20 transition hover:border-[#d8b766]/40">
+            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#d8b766]">{post.category}</p>
+            <h2 className="mt-3 text-xl font-bold text-white">{post.title}</h2>
+            <p className="mt-3 text-sm leading-6 text-zinc-400">{post.excerpt}</p>
             <div className="mt-5 flex gap-4 text-xs font-semibold text-zinc-500">
               <span className="flex items-center gap-1"><ThumbsUp size={14} /> {post.likes}</span>
               <span className="flex items-center gap-1"><MessageCircle size={14} /> {post.comments}</span>

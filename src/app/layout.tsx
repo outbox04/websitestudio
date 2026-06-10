@@ -19,8 +19,7 @@ export const metadata: Metadata = {
     default: "Lumi Concept Studio | Chụp ảnh concept chuyên nghiệp",
     template: "%s | Lumi Concept Studio",
   },
-  description:
-    "Studio chụp ảnh concept, quản lý album khách hàng và tạo ảnh AI theo workflow chuyên nghiệp.",
+  description: "Studio chụp ảnh concept, quản lý album khách hàng và tạo ảnh AI theo workflow chuyên nghiệp.",
   openGraph: {
     title: "Lumi Concept Studio",
     description: "Chụp ảnh concept trong studio với album riêng, chọn ảnh chỉnh sửa và AI concept generator.",
@@ -36,7 +35,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="vi" className={`${heading.variable} ${body.variable} h-full scroll-smooth`}>
-      <body className="min-h-full bg-stone-50 text-zinc-950 antialiased">{children}</body>
+      <body className="min-h-full bg-[#07080a] text-[#f8f5ee] antialiased">{children}</body>
     </html>
   );
 }

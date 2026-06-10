@@ -1,8 +1,11 @@
 @import "tailwindcss";
 
 :root {
-  --background: #fafaf9;
-  --foreground: #18181b;
+  --background: #07080a;
+  --foreground: #f8f5ee;
+  --brand-gold: #d8b766;
+  --brand-gold-soft: #f3d88e;
+  --surface: #101115;
 }
 
 @theme inline {
@@ -35,4 +38,9 @@ select {
 
 img {
   content-visibility: auto;
+}
+
+::selection {
+  background: color-mix(in srgb, var(--brand-gold) 55%, transparent);
+  color: #07080a;
 }

@@ -8,7 +8,7 @@ export const services = [
   },
   {
     title: "Concept gia đình và couple",
-    description: "Bố cục nhẹ nhàng, màu ảnh sáng, quy trình chọn ảnh riêng qua cổng khách hàng.",
+    description: "Bố cục nhẹ nhàng, màu ảnh sang trọng, quy trình chọn ảnh riêng qua cổng khách hàng.",
     icon: Users,
   },
   {
