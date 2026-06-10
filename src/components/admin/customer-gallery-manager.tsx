@@ -161,10 +161,10 @@ export function CustomerGalleryManager() {
   }
 
   return (
-    <section id="quan-ly-album-khach-hang" className="rounded-md border border-zinc-200 bg-white p-5 shadow-sm">
+    <section id="quan-ly-album-khach-hang" className="rounded-lg border border-zinc-200 bg-white p-5 shadow-sm">
       <div className="flex flex-col justify-between gap-4 lg:flex-row lg:items-start">
         <div>
-          <h2 className="text-xl font-bold">Quản lý album khách hàng</h2>
+          <h2 className="text-xl font-bold text-zinc-950">Quản lý album khách hàng</h2>
           <p className="mt-2 text-sm leading-6 text-zinc-600">
             Quản lý link gửi khách, thư mục Drive, đồng bộ ảnh và quyền tải theo từng album.
           </p>
@@ -173,10 +173,10 @@ export function CustomerGalleryManager() {
           <input
             value={query}
             onChange={(event) => setQuery(event.target.value)}
-            className="h-10 w-full rounded-md border border-zinc-200 px-3 text-sm outline-none focus:border-zinc-900 lg:w-56"
+            className="h-10 w-full rounded-md border border-zinc-200 bg-white px-3 text-sm text-zinc-950 outline-none placeholder:text-zinc-400 focus:border-zinc-900 lg:w-56"
             placeholder="Tìm khách hàng"
           />
-          <button onClick={loadGalleries} className="inline-grid size-10 place-items-center rounded-md border border-zinc-200 bg-white text-zinc-700" aria-label="Tải lại">
+          <button onClick={loadGalleries} className="inline-grid size-10 place-items-center rounded-md border border-zinc-200 bg-white text-zinc-700 hover:bg-zinc-50" aria-label="Tải lại">
             {loading ? <Loader2 className="animate-spin" size={16} /> : <RefreshCw size={16} />}
           </button>
         </div>
@@ -186,7 +186,7 @@ export function CustomerGalleryManager() {
 
       <div className="mt-5 overflow-x-auto">
         <table className="w-full min-w-[980px] text-left text-sm">
-          <thead className="border-b border-zinc-200 text-zinc-500">
+          <thead className="border-b border-zinc-200 bg-zinc-50 text-xs uppercase text-zinc-500">
             <tr>
               <th className="py-3 pr-4">Khách hàng</th>
               <th className="pr-4">Ngày chụp</th>
@@ -198,7 +198,7 @@ export function CustomerGalleryManager() {
           </thead>
           <tbody className="divide-y divide-zinc-100">
             {visibleGalleries.map((gallery) => (
-              <tr key={gallery.id} className="align-top text-zinc-700">
+              <tr key={gallery.id} className="align-top text-zinc-700 hover:bg-zinc-50/70">
                 <td className="py-4 pr-4">
                   <p className="font-semibold text-zinc-950">{gallery.customer_name}</p>
                   <p className="mt-1 text-xs text-zinc-500">/{gallery.customer_name_slug}</p>
@@ -246,7 +246,7 @@ export function CustomerGalleryManager() {
                 <td className="py-4 text-right">
                   <button
                     onClick={() => syncPhotos(gallery.customer_name_slug)}
-                    className="inline-flex min-h-10 items-center gap-2 rounded-md border border-zinc-200 bg-white px-3 text-sm font-semibold text-zinc-800"
+                    className="inline-flex min-h-10 items-center gap-2 rounded-md border border-zinc-200 bg-white px-3 text-sm font-semibold text-zinc-800 hover:bg-zinc-50"
                   >
                     {loadingAction?.slug === gallery.customer_name_slug && loadingAction.key === "sync" ? <Loader2 className="animate-spin" size={16} /> : <RefreshCw size={16} />}
                     Đồng bộ ảnh
@@ -280,14 +280,14 @@ function LinkAction({
 }) {
   return (
     <div className="flex max-w-[280px] items-center gap-2">
-      {label && <span className="shrink-0 rounded bg-zinc-100 px-2 py-1 text-xs font-semibold text-zinc-600">{label}</span>}
-      <a href={href} target="_blank" rel="noreferrer" className="truncate text-zinc-600 underline-offset-4 hover:text-zinc-950 hover:underline">
+      {label && <span className="shrink-0 rounded bg-zinc-100 px-2 py-1 text-xs font-semibold text-zinc-700">{label}</span>}
+      <a href={href} target="_blank" rel="noreferrer" className="truncate text-zinc-700 underline-offset-4 hover:text-zinc-950 hover:underline">
         {href}
       </a>
-      <a href={href} target="_blank" rel="noreferrer" className="grid size-8 shrink-0 place-items-center rounded-md border border-zinc-200 bg-white text-zinc-700" aria-label="Mở link">
+      <a href={href} target="_blank" rel="noreferrer" className="grid size-8 shrink-0 place-items-center rounded-md border border-zinc-200 bg-white text-zinc-700 hover:bg-zinc-50" aria-label="Mở link">
         <ExternalLink size={14} />
       </a>
-      <button onClick={onCopy} className="grid size-8 shrink-0 place-items-center rounded-md bg-zinc-950 text-white" aria-label="Copy link">
+      <button onClick={onCopy} className="grid size-8 shrink-0 place-items-center rounded-md bg-zinc-950 text-white hover:bg-zinc-800" aria-label="Copy link">
         {copied ? <Check size={14} /> : <Copy size={14} />}
       </button>
     </div>
@@ -309,8 +309,8 @@ function DownloadToggle({
     <button
       onClick={onClick}
       disabled={loading}
-      className={`inline-flex min-h-9 items-center justify-center gap-2 rounded-md px-3 text-xs font-semibold ${
-        enabled ? "bg-emerald-50 text-emerald-700" : "bg-zinc-100 text-zinc-500"
+      className={`inline-flex min-h-9 items-center justify-center gap-2 rounded-md px-3 text-xs font-semibold ring-1 ${
+        enabled ? "bg-emerald-50 text-emerald-700 ring-emerald-100" : "bg-zinc-100 text-zinc-600 ring-zinc-200"
       }`}
     >
       {loading ? <Loader2 className="animate-spin" size={14} /> : enabled ? <Unlock size={14} /> : <Lock size={14} />}

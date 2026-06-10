@@ -82,33 +82,35 @@ export function CustomerGalleryCreator() {
   }
 
   return (
-    <section className="rounded-md border border-zinc-200 bg-white p-5 shadow-sm">
+    <section className="rounded-lg border border-zinc-200 bg-white p-5 shadow-sm">
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h2 className="text-xl font-bold">Tạo thư mục khách hàng TLORA</h2>
+          <h2 className="text-xl font-bold text-zinc-950">Tạo thư mục khách hàng TLORA</h2>
           <p className="mt-2 text-sm leading-6 text-zinc-600">
             Tạo thư mục theo tên khách và 2 thư mục con FILE GỐC, FILE CHỈNH SỬA trong Google Drive.
           </p>
         </div>
-        <Plus className="text-rose-600" size={24} />
+        <span className="grid size-10 place-items-center rounded-md bg-zinc-950 text-white">
+          <Plus size={18} />
+        </span>
       </div>
       <div className="mt-5 grid gap-4 md:grid-cols-2">
-        <label className="block text-sm font-semibold">
+        <label className="block text-sm font-semibold text-zinc-700">
           Tên
           <input
             value={name}
             onChange={(event) => setName(event.target.value)}
-            className="mt-2 h-11 w-full rounded-md border border-zinc-200 px-3 outline-none focus:border-zinc-900"
+            className="mt-2 h-11 w-full rounded-md border border-zinc-200 bg-white px-3 text-zinc-950 outline-none placeholder:text-zinc-400 focus:border-zinc-900"
             placeholder="Nguyễn Minh Anh"
           />
         </label>
-        <label className="block text-sm font-semibold">
+        <label className="block text-sm font-semibold text-zinc-700">
           Ngày chụp
           <input
             value={shootDate}
             onChange={(event) => setShootDate(event.target.value)}
             type="date"
-            className="mt-2 h-11 w-full rounded-md border border-zinc-200 px-3 outline-none focus:border-zinc-900"
+            className="mt-2 h-11 w-full rounded-md border border-zinc-200 bg-white px-3 text-zinc-950 outline-none placeholder:text-zinc-400 focus:border-zinc-900"
           />
         </label>
       </div>
@@ -123,15 +125,15 @@ export function CustomerGalleryCreator() {
         Tạo thư mục
       </button>
       {result && (
-        <div className="mt-5 space-y-3 rounded-md bg-stone-50 p-4">
+        <div className="mt-5 space-y-3 rounded-lg border border-zinc-200 bg-zinc-50 p-4">
           <LinkRow label="Link FILE GỐC" value={result.gallery.raw_drive_folder_url} copied={copied === "raw"} onCopy={() => copy(result.gallery.raw_drive_folder_url, "raw")} />
           <LinkRow label="Link FILE CHỈNH SỬA" value={result.gallery.edited_drive_folder_url} copied={copied === "edited"} onCopy={() => copy(result.gallery.edited_drive_folder_url, "edited")} />
           <LinkRow label="Link khách hàng" value={result.customerUrl} copied={copied === "customer"} onCopy={() => copy(result.customerUrl, "customer")} />
           <div className="flex flex-wrap gap-3">
-            <button onClick={syncPhotos} className="inline-flex min-h-10 items-center gap-2 rounded-md border border-zinc-200 bg-white px-4 text-sm font-semibold">
+            <button onClick={syncPhotos} className="inline-flex min-h-10 items-center gap-2 rounded-md border border-zinc-200 bg-white px-4 text-sm font-semibold text-zinc-800 hover:bg-zinc-50">
               <RefreshCw size={16} /> Đồng bộ ảnh sau khi upload
             </button>
-            <button onClick={toggleRawDownload} className="inline-flex min-h-10 items-center gap-2 rounded-md bg-emerald-600 px-4 text-sm font-semibold text-white">
+            <button onClick={toggleRawDownload} className="inline-flex min-h-10 items-center gap-2 rounded-md bg-emerald-600 px-4 text-sm font-semibold text-white hover:bg-emerald-700">
               {result.gallery.raw_download_enabled ? "Tắt tải FILE GỐC" : "Mở tải FILE GỐC khi đã thanh toán"}
             </button>
           </div>
@@ -155,7 +157,7 @@ function LinkRow({
   return (
     <div className="grid gap-2 md:grid-cols-[140px_1fr_auto] md:items-center">
       <span className="text-sm font-semibold text-zinc-700">{label}</span>
-      <a href={value} target="_blank" rel="noreferrer" className="truncate rounded-md border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-600 hover:text-zinc-950">
+      <a href={value} target="_blank" rel="noreferrer" className="truncate rounded-md border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-700 hover:text-zinc-950">
         {value}
       </a>
       <button onClick={onCopy} className="inline-flex min-h-10 items-center justify-center gap-2 rounded-md bg-zinc-950 px-3 text-sm font-semibold text-white">
