@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { BarChart3, FolderSync, ImageUp, Newspaper, Settings, Users, type LucideIcon } from "lucide-react";
 import { CustomerGalleryCreator } from "@/components/admin/customer-gallery-creator";
+import { CustomerGalleryManager } from "@/components/admin/customer-gallery-manager";
 import { adminMenu } from "@/lib/site-data";
 
 export const metadata: Metadata = {
@@ -14,6 +15,14 @@ const stats: { label: string; value: string; icon: LucideIcon }[] = [
   { label: "Ảnh cần sửa", value: "412", icon: ImageUp },
   { label: "Bài viết", value: "24", icon: Newspaper },
 ];
+
+function adminMenuHref(item: string) {
+  if (item === "Quản lý album khách hàng") {
+    return "#quan-ly-album-khach-hang";
+  }
+
+  return `#${item}`;
+}
 
 export default function AdminStudioPage() {
   return (
@@ -29,7 +38,7 @@ export default function AdminStudioPage() {
           </div>
           <nav className="mt-5 space-y-1">
             {adminMenu.map((item, index) => (
-              <a key={item} href={`#${item}`} className={`flex items-center gap-3 rounded-md px-3 py-3 text-sm font-semibold ${index === 0 ? "bg-zinc-950 text-white" : "text-zinc-600 hover:bg-zinc-100"}`}>
+              <a key={item} href={adminMenuHref(item)} className={`flex items-center gap-3 rounded-md px-3 py-3 text-sm font-semibold ${index === 0 ? "bg-zinc-950 text-white" : "text-zinc-600 hover:bg-zinc-100"}`}>
                 {item === "Cài đặt" ? <Settings size={17} /> : <span className="size-2 rounded-full bg-current" />}
                 {item}
               </a>
@@ -64,6 +73,9 @@ export default function AdminStudioPage() {
                 <p>5. Upload ảnh hoàn thiện vào FILE CHỈNH SỬA để khách tải ở tab cuối.</p>
               </div>
             </section>
+          </div>
+          <div className="mt-6">
+            <CustomerGalleryManager />
           </div>
           <div className="mt-6 grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
             <section className="rounded-md border border-zinc-200 bg-white p-5 shadow-sm">

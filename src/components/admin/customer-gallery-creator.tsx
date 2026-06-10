@@ -12,6 +12,7 @@ type CreatedGallery = {
     edited_drive_folder_url: string;
     customer_name_slug: string;
     raw_download_enabled: boolean;
+    edited_download_enabled: boolean;
   };
 };
 
@@ -43,6 +44,7 @@ export function CustomerGalleryCreator() {
       }
 
       setResult(data);
+      window.dispatchEvent(new Event("customer-gallery:changed"));
       if (data.reused) {
         setNotice("Thư mục này đã tồn tại trong database, hệ thống đang hiển thị lại các đường link đã lưu.");
       }
@@ -72,7 +74,7 @@ export function CustomerGalleryCreator() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ rawDownloadEnabled: nextValue }),
     });
-    const data = (await response.json()) as CreatedGallery & { gallery: CreatedGallery["gallery"] };
+    const data = (await response.json()) as { gallery: CreatedGallery["gallery"] };
 
     if (response.ok) {
       setResult((current) => current ? { ...current, gallery: { ...current.gallery, raw_download_enabled: data.gallery.raw_download_enabled } } : current);

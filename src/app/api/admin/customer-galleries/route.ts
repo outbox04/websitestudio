@@ -5,6 +5,26 @@ import { createAdminClient } from "@/lib/supabase/admin";
 
 export const runtime = "nodejs";
 
+function firstHeaderValue(value: string | null) {
+  return value?.split(",")[0]?.trim();
+}
+
+function publicOrigin(request: Request) {
+  const forwardedHost = firstHeaderValue(request.headers.get("x-forwarded-host"));
+  const forwardedProto = firstHeaderValue(request.headers.get("x-forwarded-proto"));
+  const host = forwardedHost || request.headers.get("host");
+
+  if (host) {
+    return `${forwardedProto || (host.startsWith("localhost") || host.startsWith("127.0.0.1") ? "http" : "https")}://${host}`;
+  }
+
+  return process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") || new URL(request.url).origin;
+}
+
+function customerUrl(request: Request, slug: string) {
+  return `${publicOrigin(request).replace(/\/$/, "")}/${slug}`;
+}
+
 function getErrorMessage(error: unknown) {
   if (error instanceof Error) {
     return error.message;
@@ -26,6 +46,31 @@ function getErrorMessage(error: unknown) {
   return "Không tạo được thư mục khách hàng";
 }
 
+export async function GET(request: Request) {
+  try {
+    const supabase = createAdminClient();
+    const { data, error } = await supabase
+      .from("customer_galleries")
+      .select(
+        "id,customer_name,customer_name_slug,shoot_date,raw_drive_folder_url,edited_drive_folder_url,raw_download_enabled,edited_download_enabled,created_at,updated_at",
+      )
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      throw error;
+    }
+
+    return NextResponse.json({
+      galleries: (data || []).map((gallery) => ({
+        ...gallery,
+        customerUrl: customerUrl(request, gallery.customer_name_slug),
+      })),
+    });
+  } catch (error) {
+    return NextResponse.json({ error: getErrorMessage(error) }, { status: 500 });
+  }
+}
+
 export async function POST(request: Request) {
   const { name, shootDate } = (await request.json()) as {
     name?: string;
@@ -44,8 +89,7 @@ export async function POST(request: Request) {
 
   try {
     const supabase = createAdminClient();
-    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
-    const customerUrl = `${siteUrl.replace(/\/$/, "")}/${slug}`;
+    const url = customerUrl(request, slug);
 
     const { data: existingGallery, error: existingError } = await supabase
       .from("customer_galleries")
@@ -60,7 +104,7 @@ export async function POST(request: Request) {
     if (existingGallery) {
       return NextResponse.json({
         gallery: existingGallery,
-        customerUrl,
+        customerUrl: url,
         reused: true,
       });
     }
@@ -89,7 +133,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({
       gallery: data,
-      customerUrl,
+      customerUrl: url,
       reused: false,
     });
   } catch (error) {
