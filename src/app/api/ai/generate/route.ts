@@ -1,12 +1,24 @@
 import OpenAI, { toFile } from "openai";
 import { NextResponse } from "next/server";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { createClient } from "@/lib/supabase/server";
 
 export const runtime = "nodejs";
 
 const defaultModel = "gpt-image-1";
 const maxUploadBytes = 50 * 1024 * 1024;
+const aiConceptPriceVnd = 50_000;
 
 export async function POST(request: Request) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return NextResponse.json({ error: "Vui lòng đăng nhập để tạo ảnh concept" }, { status: 401 });
+  }
+
   if (!process.env.OPENAI_API_KEY) {
     return NextResponse.json({ error: "Missing OPENAI_API_KEY" }, { status: 500 });
   }
@@ -16,6 +28,7 @@ export async function POST(request: Request) {
   const outfit = String(formData.get("outfit") || "");
   const background = String(formData.get("background") || "");
   const style = String(formData.get("style") || "");
+  const conceptNote = String(formData.get("conceptNote") || "").trim();
 
   if (!(image instanceof File)) {
     return NextResponse.json({ error: "image file is required" }, { status: 400 });
@@ -33,14 +46,31 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Image must be under 50MB" }, { status: 400 });
   }
 
+  const admin = createAdminClient();
+  const { data: profile, error: profileError } = await admin
+    .from("profiles")
+    .select("credit_balance_vnd")
+    .eq("id", user.id)
+    .maybeSingle();
+
+  if (profileError) {
+    return NextResponse.json({ error: profileError.message }, { status: 500 });
+  }
+
+  const currentBalance = profile?.credit_balance_vnd || 0;
+  if (currentBalance < aiConceptPriceVnd) {
+    return NextResponse.json({ error: "Số dư chưa đủ để tạo ảnh. Mỗi ảnh concept có giá 50.000đ." }, { status: 402 });
+  }
+
   const prompt = [
     "Create a premium studio portrait concept from the uploaded face reference.",
     "Preserve facial identity, natural skin texture, and realistic proportions.",
     `Outfit: ${outfit}.`,
     `Background: ${background}.`,
     `Style: ${style}.`,
+    conceptNote ? `Client note: ${conceptNote}.` : "",
     "Use soft professional studio lighting, clean composition, no text, no watermark, no logos.",
-  ].join(" ");
+  ].filter(Boolean).join(" ");
 
   try {
     const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
@@ -63,11 +93,40 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "OpenAI did not return an image" }, { status: 502 });
     }
 
+    const nextBalance = currentBalance - aiConceptPriceVnd;
+    const { data: updatedProfile, error: balanceError } = await admin
+      .from("profiles")
+      .update({ credit_balance_vnd: nextBalance })
+      .eq("id", user.id)
+      .select("credit_balance_vnd")
+      .single();
+
+    if (balanceError) {
+      return NextResponse.json({ error: balanceError.message }, { status: 500 });
+    }
+
+    await admin.from("wallet_transactions").insert({
+      user_id: user.id,
+      amount_vnd: -aiConceptPriceVnd,
+      type: "ai_concept_charge",
+      note: `${style} · ${outfit} · ${background}`,
+    });
+
+    await admin.from("ai_requests").insert({
+      user_id: user.id,
+      outfit_preset: outfit,
+      background_preset: background,
+      style_preset: style,
+      prompt,
+      status: "completed",
+    });
+
     return NextResponse.json({
       status: "completed",
       model: process.env.OPENAI_IMAGE_MODEL || defaultModel,
       prompt,
       imageBase64: generated,
+      balanceVnd: updatedProfile.credit_balance_vnd,
       usage: result.usage,
     });
   } catch (error) {

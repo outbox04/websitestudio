@@ -32,10 +32,11 @@ Brand tagline: `Nơi cá tính trở thành nghệ thuật`.
 1. Copy `.env.example` values into `.env.local`.
 2. Create Supabase tables from `supabase/schema.sql`.
 3. If you already ran an older schema, run `supabase/upgrade-admin-auth.sql`.
-4. Create the first admin in Supabase Auth, then run `supabase/admin-auth.sql` after replacing `admin@example.com`.
-5. Configure Google Drive service account credentials and `TLORA_DRIVE_ROOT_FOLDER_ID`.
-6. Add `OPENAI_API_KEY` for `/api/ai/generate`; optionally change `OPENAI_IMAGE_MODEL`.
-7. Persist completed OpenAI results in `ai_requests` and Supabase Storage when moving from scaffold to production.
+4. Run `supabase/ai-concept-wallet.sql` to add AI Concept credit balance and wallet transaction tracking.
+5. Create the first admin in Supabase Auth, then run `supabase/admin-auth.sql` after replacing `admin@example.com`.
+6. Configure Google Drive service account credentials and `TLORA_DRIVE_ROOT_FOLDER_ID`.
+7. Add `OPENAI_API_KEY` for `/api/ai/generate`; optionally change `OPENAI_IMAGE_MODEL`.
+8. Connect a real payment gateway before production; the current AI Concept top-up endpoint is a demo balance increment.
 
 ## TLORA Studio Gallery Flow
 

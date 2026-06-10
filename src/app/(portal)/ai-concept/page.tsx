@@ -1,20 +1,54 @@
 import type { Metadata } from "next";
-import { AiWizard } from "@/components/ai-wizard";
+import { AiConceptStudio } from "@/components/ai-concept-studio";
+import { createClient } from "@/lib/supabase/server";
 
 export const metadata: Metadata = {
-  title: "AI Concept Generator",
-  description: "Upload ảnh rõ mặt, chọn trang phục, background, phong cách và tạo ảnh AI.",
+  title: "AI Concept",
+  description: "Đăng ký, nạp tiền và tạo ảnh ghép concept AI với giá 50.000đ mỗi ảnh.",
 };
 
-export default function AiConceptPage() {
+export default async function AiConceptPage() {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  let profile: { full_name: string | null; credit_balance_vnd: number | null } | null = null;
+  let history: Array<{
+    id: string;
+    outfit_preset: string;
+    background_preset: string;
+    style_preset: string;
+    status: string;
+    result_image_url: string | null;
+    created_at: string;
+  }> = [];
+
+  if (user) {
+    const { data: profileData } = await supabase
+      .from("profiles")
+      .select("full_name,credit_balance_vnd")
+      .eq("id", user.id)
+      .maybeSingle();
+    const { data: historyData } = await supabase
+      .from("ai_requests")
+      .select("id,outfit_preset,background_preset,style_preset,status,result_image_url,created_at")
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false })
+      .limit(8);
+
+    profile = profileData || null;
+    history = historyData || [];
+  }
+
   return (
-    <main className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
-      <div className="mb-8">
-        <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#d8b766]">AI Concept Generator</p>
-        <h1 className="mt-3 font-heading text-3xl font-extrabold text-white md:text-5xl">Tạo concept ảnh AI theo từng bước</h1>
-        <p className="mt-3 max-w-2xl text-zinc-400">Workflow lưu prompt, rule, preset trang phục, background và lịch sử ảnh đã tạo.</p>
-      </div>
-      <AiWizard />
+    <main className="min-h-screen bg-[#07080a] px-4 py-8 text-white sm:px-6 lg:px-8">
+      <AiConceptStudio
+        user={user ? { email: user.email || "", id: user.id } : null}
+        initialBalanceVnd={profile?.credit_balance_vnd || 0}
+        initialFullName={profile?.full_name || ""}
+        initialHistory={history}
+      />
     </main>
   );
 }
