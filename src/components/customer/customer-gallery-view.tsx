@@ -140,14 +140,14 @@ export function CustomerGalleryView({
   const downloadAction =
     tab === "all"
       ? {
-          href: gallery.raw_drive_folder_url,
+          href: `/api/customer-galleries/${gallery.customer_name_slug}/download?kind=raw`,
           enabled: gallery.raw_download_enabled,
           label: "Tải xuống",
           disabledLabel: "Tải xuống đang khóa",
         }
       : tab === "edited"
         ? {
-            href: gallery.edited_drive_folder_url,
+            href: `/api/customer-galleries/${gallery.customer_name_slug}/download?kind=edited`,
             enabled: gallery.edited_download_enabled,
             label: "Tải file đã chỉnh",
             disabledLabel: "File đã chỉnh đang khóa",

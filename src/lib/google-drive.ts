@@ -25,7 +25,7 @@ function getPrivateKey() {
   return process.env.GOOGLE_DRIVE_PRIVATE_KEY?.replace(/\\n/g, "\n");
 }
 
-function getDriveClient() {
+export function getDriveClient() {
   const clientEmail = process.env.GOOGLE_DRIVE_CLIENT_EMAIL;
   const privateKey = getPrivateKey();
 
