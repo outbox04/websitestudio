@@ -135,43 +135,6 @@ export default function AdminStudioPage() {
           <div className="mt-5">
             <CustomerGalleryManager />
           </div>
-
-          <div className="mt-5 grid gap-5 xl:grid-cols-[1.2fr_0.8fr]">
-            <section className="rounded-lg border border-zinc-200 bg-white p-5 shadow-sm">
-              <h2 className="text-xl font-bold text-zinc-950">Ảnh khách đã chọn</h2>
-              <div className="mt-4 overflow-x-auto">
-                <table className="w-full min-w-[720px] text-left text-sm">
-                  <thead className="border-b border-zinc-200 text-xs uppercase text-zinc-500">
-                    <tr>
-                      <th className="py-3 pr-4">Khách</th>
-                      <th className="pr-4">Album</th>
-                      <th className="pr-4">Ảnh</th>
-                      <th className="pr-4">Ghi chú</th>
-                      <th>Trạng thái</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-zinc-100">
-                    {[
-                      ["Minh Anh", "Concept Beauty", "DRV_002", "Da tự nhiên, sáng mắt", "Đang chỉnh"],
-                      ["Gia Hân", "Profile 2026", "DRV_014", "Crop ngang LinkedIn", "Đã chọn"],
-                      ["An Studio", "Lookbook Summer", "DRV_088", "Xóa nếp áo", "Đã hoàn thành"],
-                    ].map((row) => (
-                      <tr key={row[2]} className="text-zinc-700">
-                        {row.map((cell) => <td key={cell} className="py-4 pr-4">{cell}</td>)}
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </section>
-
-            <section className="rounded-lg border border-zinc-200 bg-white p-5 shadow-sm">
-              <h2 className="text-xl font-bold text-zinc-950">Cài đặt Google Drive</h2>
-              <p className="mt-2 text-sm leading-6 text-zinc-600">
-                Cần service account có quyền ghi vào thư mục gốc TLORA và biến `TLORA_DRIVE_ROOT_FOLDER_ID`.
-              </p>
-            </section>
-          </div>
         </section>
       </div>
     </main>
