@@ -17,10 +17,6 @@ export function SiteHeader() {
       <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 sm:px-6 lg:px-8">
         <Link href="/" className="flex items-center gap-3">
           <Image src="/brand/tlora-logo.png" alt="TLORA Studio" width={1536} height={1024} priority className="h-12 w-auto object-contain" />
-          <span>
-            <span className="block font-heading text-lg font-bold tracking-[0.12em] text-[#f3d88e]">TLORA</span>
-            <span className="block text-xs tracking-[0.28em] text-zinc-400">STUDIO</span>
-          </span>
         </Link>
         <nav className="hidden items-center gap-6 text-sm font-medium text-zinc-300 lg:flex">
           {nav.map((item) => (
