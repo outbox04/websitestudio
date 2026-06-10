@@ -7,7 +7,6 @@ import {
   ChevronRight,
   Download,
   Edit3,
-  Heart,
   Image as ImageIcon,
   ImageOff,
   Loader2,
@@ -191,7 +190,7 @@ export function CustomerGalleryView({
 
             <div className="mt-10 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
               <StatCard icon={ImageIcon} value={photos.length} label="Ảnh trong album" tone="violet" />
-              <StatCard icon={Heart} value={selectedPhotos.length} label="Ảnh đã chọn" tone="rose" />
+              <StatCard icon={Check} value={selectedPhotos.length} label="Ảnh đã chọn" tone="rose" />
               <StatCard icon={Edit3} value={notedPhotos.length} label="Ảnh cần chỉnh sửa" tone="gold" />
               <StatCard icon={UploadCloud} value={gallery.raw_download_enabled ? "Sẵn sàng" : "Đang khóa"} label="Tải file gốc" tone="green" />
             </div>
@@ -232,7 +231,14 @@ export function CustomerGalleryView({
           </div>
         </section>
 
-        <PhotoGrid photos={visiblePhotos} selectedIds={new Set(selectedPhotos.map((photo) => photo.id))} onPreview={setPreview} onToggle={toggleSelected} />
+        <PhotoGrid
+          photos={visiblePhotos}
+          selectedIds={new Set(selectedPhotos.map((photo) => photo.id))}
+          canDownloadRaw={gallery.raw_download_enabled}
+          canDownloadEdited={gallery.edited_download_enabled}
+          onPreview={setPreview}
+          onToggle={toggleSelected}
+        />
       </main>
 
       {preview && (
@@ -246,6 +252,8 @@ export function CustomerGalleryView({
           onToggle={toggleSelected}
           onNote={updateNote}
           setPreview={setPreview}
+          canDownloadRaw={gallery.raw_download_enabled}
+          canDownloadEdited={gallery.edited_download_enabled}
         />
       )}
     </div>
@@ -268,6 +276,10 @@ function DownloadButton({ href, enabled, label, disabledLabel }: { href: string;
       {label}
     </a>
   );
+}
+
+function photoDownloadHref(photoId: string) {
+  return `/api/customer-galleries/photos/${photoId}/download`;
 }
 
 function StatCard({ icon: Icon, value, label, tone }: { icon: typeof ImageIcon; value: number | string; label: string; tone: "violet" | "rose" | "gold" | "green" }) {
@@ -295,11 +307,15 @@ function StatCard({ icon: Icon, value, label, tone }: { icon: typeof ImageIcon; 
 function PhotoGrid({
   photos,
   selectedIds,
+  canDownloadRaw,
+  canDownloadEdited,
   onPreview,
   onToggle,
 }: {
   photos: GalleryPhoto[];
   selectedIds: Set<string>;
+  canDownloadRaw: boolean;
+  canDownloadEdited: boolean;
   onPreview: (photo: GalleryPhoto) => void;
   onToggle: (photo: GalleryPhoto) => void;
 }) {
@@ -311,6 +327,8 @@ function PhotoGrid({
     <div className="mt-3 columns-1 gap-3 sm:columns-2 lg:columns-3 2xl:columns-4">
       {photos.map((photo, index) => {
         const selected = selectedIds.has(photo.id);
+        const canDownload = photo.kind === "raw" ? canDownloadRaw : canDownloadEdited;
+        const downloadHref = photoDownloadHref(photo.id);
         return (
           <article key={photo.id} className="group relative mb-3 break-inside-avoid overflow-hidden rounded-lg border border-white/10 bg-white/[0.04]">
             <button onClick={() => onPreview(photo)} className={`relative block w-full bg-zinc-900 ${index % 5 === 1 ? "aspect-[4/5]" : index % 5 === 3 ? "aspect-[3/4]" : "aspect-[4/3]"}`}>
@@ -330,9 +348,27 @@ function PhotoGrid({
             >
               {selected && <Check size={17} />}
             </button>
-            <button className="absolute right-3 top-3 grid size-8 place-items-center rounded-full bg-black/35 text-white backdrop-blur" aria-label="Yêu thích">
-              <Heart size={17} />
-            </button>
+            {canDownload ? (
+              <a
+                href={downloadHref}
+                download={photo.file_name}
+                className="absolute right-3 top-3 grid size-8 place-items-center rounded-full bg-black/45 text-white backdrop-blur transition hover:bg-[#d8b766] hover:text-black"
+                aria-label="Tải ảnh"
+                title="Tải ảnh"
+                onClick={(event) => event.stopPropagation()}
+              >
+                <Download size={17} />
+              </a>
+            ) : (
+              <button
+                disabled
+                className="absolute right-3 top-3 grid size-8 place-items-center rounded-full bg-black/25 text-zinc-500 backdrop-blur"
+                aria-label="Tải ảnh đang khóa"
+                title="Tải ảnh đang khóa"
+              >
+                <Download size={17} />
+              </button>
+            )}
             {photo.edit_note && (
               <span className="absolute bottom-3 left-3 rounded-full bg-black/55 px-3 py-1 text-xs font-medium text-[#f3d88e] backdrop-blur">
                 Có ghi chú
@@ -355,6 +391,8 @@ function PreviewModal({
   onToggle,
   onNote,
   setPreview,
+  canDownloadRaw,
+  canDownloadEdited,
 }: {
   photo: GalleryPhoto;
   photos: GalleryPhoto[];
@@ -365,7 +403,12 @@ function PreviewModal({
   onToggle: (photo: GalleryPhoto) => void;
   onNote: (photo: GalleryPhoto, note: string) => void;
   setPreview: (photo: GalleryPhoto | null) => void;
+  canDownloadRaw: boolean;
+  canDownloadEdited: boolean;
 }) {
+  const canDownload = photo.kind === "raw" ? canDownloadRaw : canDownloadEdited;
+  const downloadHref = photoDownloadHref(photo.id);
+
   return (
     <div className="fixed inset-0 z-50 grid place-items-center bg-black/90 p-3" role="dialog" aria-modal="true">
       <div className="relative grid h-[94vh] w-full max-w-7xl overflow-hidden rounded-lg border border-white/10 bg-[#101115] shadow-2xl lg:grid-cols-[minmax(0,1fr)_360px]">
@@ -408,12 +451,17 @@ function PreviewModal({
                 className="min-h-40 w-full resize-none rounded-md border border-white/10 bg-black/25 p-3 text-sm text-white outline-none placeholder:text-zinc-500 focus:border-[#d8b766]"
               />
               <p className="text-xs font-medium text-emerald-300">Ghi chú tự động lưu khi khách nhập.</p>
+              {canDownload && (
+                <a href={downloadHref} download={photo.file_name} className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-md bg-white/10 px-4 text-sm font-semibold text-white">
+                  <Download size={16} /> Tải ảnh
+                </a>
+              )}
             </div>
           ) : (
             <div className="mt-6 space-y-3">
               <p className="text-sm leading-6 text-zinc-400">Ảnh đã chỉnh sửa từ thư mục file hoàn thiện.</p>
-              {photo.download_url && (
-                <a href={photo.download_url} target="_blank" rel="noreferrer" className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-md bg-[#d8b766] px-4 text-sm font-semibold text-black">
+              {canDownload && (
+                <a href={downloadHref} download={photo.file_name} className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-md bg-[#d8b766] px-4 text-sm font-semibold text-black">
                   <Download size={16} /> Tải ảnh
                 </a>
               )}
