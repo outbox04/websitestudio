@@ -1,28 +1,17 @@
 import { NextResponse } from "next/server";
 import { createCustomerDriveFolders } from "@/lib/google-drive";
+import { customerUrlFromOrigin, publicOriginFromHeaders } from "@/lib/public-origin";
 import { createSlug } from "@/lib/slug";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 export const runtime = "nodejs";
 
-function firstHeaderValue(value: string | null) {
-  return value?.split(",")[0]?.trim();
-}
-
 function publicOrigin(request: Request) {
-  const forwardedHost = firstHeaderValue(request.headers.get("x-forwarded-host"));
-  const forwardedProto = firstHeaderValue(request.headers.get("x-forwarded-proto"));
-  const host = forwardedHost || request.headers.get("host");
-
-  if (host) {
-    return `${forwardedProto || (host.startsWith("localhost") || host.startsWith("127.0.0.1") ? "http" : "https")}://${host}`;
-  }
-
-  return process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") || new URL(request.url).origin;
+  return publicOriginFromHeaders(request.headers) || new URL(request.url).origin;
 }
 
 function customerUrl(request: Request, slug: string) {
-  return `${publicOrigin(request).replace(/\/$/, "")}/${slug}`;
+  return customerUrlFromOrigin(publicOrigin(request), slug);
 }
 
 function getErrorMessage(error: unknown) {

@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
+import { headers } from "next/headers";
 import { AdminStudioWorkspace, type AdminEditRequest, type AdminGallery } from "@/components/admin/admin-studio-workspace";
+import { customerUrlFromOrigin, publicOriginFromHeaders } from "@/lib/public-origin";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 export const metadata: Metadata = {
@@ -38,7 +40,7 @@ async function getAdminGalleryData(): Promise<{
 }> {
   try {
     const supabase = createAdminClient();
-    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
+    const siteUrl = publicOriginFromHeaders(await headers());
 
     const [{ data: galleriesData, error: galleriesError }, { data: photosData, error: photosError }] = await Promise.all([
       supabase
@@ -74,7 +76,7 @@ async function getAdminGalleryData(): Promise<{
         customerName: gallery.customer_name,
         customerSlug: gallery.customer_name_slug,
         shootDate: gallery.shoot_date,
-        customerUrl: `${siteUrl.replace(/\/$/, "")}/${gallery.customer_name_slug}`,
+        customerUrl: customerUrlFromOrigin(siteUrl, gallery.customer_name_slug),
         rawDriveUrl: gallery.raw_drive_folder_url,
         editedDriveUrl: gallery.edited_drive_folder_url,
         rawDownloadEnabled: gallery.raw_download_enabled,
@@ -100,7 +102,7 @@ async function getAdminGalleryData(): Promise<{
           customerName: gallery.customer_name,
           customerSlug: gallery.customer_name_slug,
           shootDate: gallery.shoot_date,
-          customerUrl: `${siteUrl.replace(/\/$/, "")}/${gallery.customer_name_slug}`,
+          customerUrl: customerUrlFromOrigin(siteUrl, gallery.customer_name_slug),
           fileName: photo.file_name,
           editNote: photo.edit_note,
           previewUrl: photo.preview_url,
