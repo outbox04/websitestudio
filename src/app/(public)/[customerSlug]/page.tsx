@@ -26,26 +26,36 @@ export async function generateMetadata({ params }: { params: Promise<{ customerS
 
 export default async function CustomerGalleryPage({ params }: { params: Promise<{ customerSlug: string }> }) {
   const { customerSlug } = await params;
-  const supabase = createAdminClient();
+  let gallery;
+  let photos;
 
-  const { data: gallery } = await supabase
-    .from("customer_galleries")
-    .select("*")
-    .eq("customer_name_slug", customerSlug)
-    .maybeSingle();
+  try {
+    const supabase = createAdminClient();
 
-  if (!gallery) {
+    const { data: galleryData } = await supabase
+      .from("customer_galleries")
+      .select("*")
+      .eq("customer_name_slug", customerSlug)
+      .maybeSingle();
+
+    if (!galleryData) {
+      notFound();
+    }
+
+    const { data: photosData } = await supabase
+      .from("customer_gallery_photos")
+      .select("*")
+      .eq("gallery_id", galleryData.id)
+      .order("file_name", { ascending: true });
+
+    gallery = galleryData;
+    photos = photosData || [];
+  } catch {
     notFound();
   }
 
-  const { data: photos } = await supabase
-    .from("customer_gallery_photos")
-    .select("*")
-    .eq("gallery_id", gallery.id)
-    .order("file_name", { ascending: true });
-
-  const rawPhotos = (photos || []).filter((photo) => photo.kind === "raw");
-  const editedPhotos = (photos || []).filter((photo) => photo.kind === "edited");
+  const rawPhotos = photos.filter((photo) => photo.kind === "raw");
+  const editedPhotos = photos.filter((photo) => photo.kind === "edited");
 
   return <CustomerGalleryView gallery={gallery} rawPhotos={rawPhotos} editedPhotos={editedPhotos} />;
 }

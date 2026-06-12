@@ -1,37 +1,38 @@
 import type { Metadata } from "next";
-import {
-  FolderSync,
-  ImageUp,
-  Newspaper,
-  Settings,
-  ShieldCheck,
-  Users,
-  type LucideIcon,
-} from "lucide-react";
+import { FolderSync, Settings, ShieldCheck } from "lucide-react";
 import Image from "next/image";
-import { CustomerGalleryCreator } from "@/components/admin/customer-gallery-creator";
-import { CustomerGalleryManager } from "@/components/admin/customer-gallery-manager";
+import { AdminStudioTabs, type AdminEditRequest, type AdminGallery } from "@/components/admin/admin-studio-tabs";
 import { adminMenu } from "@/lib/site-data";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 export const metadata: Metadata = {
   title: "TLORA Admin",
   description: "Dashboard quản lý khách hàng, album, ảnh cần sửa, tin tức và AI workflow.",
 };
 
-const stats: { label: string; value: string; helper: string; icon: LucideIcon; tone: string }[] = [
-  { label: "Khách hàng", value: "128", helper: "Tổng hồ sơ", icon: Users, tone: "bg-sky-50 text-sky-700 ring-sky-100" },
-  { label: "Album đang xử lý", value: "36", helper: "Đang mở workflow", icon: FolderSync, tone: "bg-violet-50 text-violet-700 ring-violet-100" },
-  { label: "Ảnh cần sửa", value: "412", helper: "Có ghi chú từ khách", icon: ImageUp, tone: "bg-amber-50 text-amber-700 ring-amber-100" },
-  { label: "Bài viết", value: "24", helper: "Nội dung đã xuất bản", icon: Newspaper, tone: "bg-rose-50 text-rose-700 ring-rose-100" },
-];
+export const dynamic = "force-dynamic";
 
-const workflow = [
-  "Tạo thư mục khách hàng trong thư mục gốc TLORA.",
-  "Upload ảnh vào link FILE GỐC, sau đó bấm đồng bộ ảnh.",
-  "Gửi link khách hàng dạng /ten-khach để khách chọn ảnh và nhập ghi chú.",
-  "Chỉ mở tải FILE GỐC khi khách đã thanh toán đủ.",
-  "Upload ảnh hoàn thiện vào FILE CHỈNH SỬA để khách tải ở tab cuối.",
-];
+type CustomerGalleryRow = {
+  id: string;
+  customer_name: string;
+  customer_name_slug: string;
+  shoot_date: string;
+  raw_drive_folder_url: string;
+  edited_drive_folder_url: string;
+  raw_download_enabled: boolean;
+};
+
+type CustomerGalleryPhotoRow = {
+  id: string;
+  gallery_id: string;
+  file_name: string;
+  preview_url: string | null;
+  download_url: string | null;
+  kind: "raw" | "edited";
+  selected: boolean;
+  edit_note: string | null;
+  updated_at: string;
+};
 
 function adminMenuHref(item: string) {
   if (item === "Quản lý album khách hàng") {
@@ -41,7 +42,96 @@ function adminMenuHref(item: string) {
   return `#${item}`;
 }
 
-export default function AdminStudioPage() {
+async function getAdminGalleryData(): Promise<{
+  galleries: AdminGallery[];
+  editRequests: AdminEditRequest[];
+  databaseError?: string;
+}> {
+  try {
+    const supabase = createAdminClient();
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
+
+    const [{ data: galleriesData, error: galleriesError }, { data: photosData, error: photosError }] = await Promise.all([
+      supabase
+        .from("customer_galleries")
+        .select("id,customer_name,customer_name_slug,shoot_date,raw_drive_folder_url,edited_drive_folder_url,raw_download_enabled")
+        .order("created_at", { ascending: false }),
+      supabase
+        .from("customer_gallery_photos")
+        .select("id,gallery_id,file_name,preview_url,download_url,kind,selected,edit_note,updated_at")
+        .eq("kind", "raw")
+        .order("updated_at", { ascending: false }),
+    ]);
+
+    if (galleriesError) {
+      throw galleriesError;
+    }
+
+    if (photosError) {
+      throw photosError;
+    }
+
+    const galleriesRows = (galleriesData || []) as CustomerGalleryRow[];
+    const photosRows = (photosData || []) as CustomerGalleryPhotoRow[];
+    const galleryById = new Map(galleriesRows.map((gallery) => [gallery.id, gallery]));
+
+    const galleries = galleriesRows.map((gallery) => {
+      const rawPhotos = photosRows.filter((photo) => photo.gallery_id === gallery.id);
+      const selectedPhotos = rawPhotos.filter((photo) => photo.selected);
+
+      return {
+        id: gallery.id,
+        customerName: gallery.customer_name,
+        customerSlug: gallery.customer_name_slug,
+        shootDate: gallery.shoot_date,
+        customerUrl: `${siteUrl.replace(/\/$/, "")}/${gallery.customer_name_slug}`,
+        rawDriveUrl: gallery.raw_drive_folder_url,
+        editedDriveUrl: gallery.edited_drive_folder_url,
+        rawDownloadEnabled: gallery.raw_download_enabled,
+        rawPhotoCount: rawPhotos.length,
+        selectedPhotoCount: selectedPhotos.length,
+      };
+    });
+
+    const editRequests = photosRows
+      .filter((photo) => photo.selected || Boolean(photo.edit_note?.trim()))
+      .map((photo) => {
+        const gallery = galleryById.get(photo.gallery_id);
+
+        if (!gallery) {
+          return null;
+        }
+
+        return {
+          id: photo.id,
+          galleryId: photo.gallery_id,
+          customerName: gallery.customer_name,
+          customerSlug: gallery.customer_name_slug,
+          shootDate: gallery.shoot_date,
+          customerUrl: `${siteUrl.replace(/\/$/, "")}/${gallery.customer_name_slug}`,
+          fileName: photo.file_name,
+          editNote: photo.edit_note,
+          previewUrl: photo.preview_url,
+          downloadUrl: photo.download_url,
+          updatedAt: photo.updated_at,
+          selected: photo.selected,
+        };
+      })
+      .filter((request): request is AdminEditRequest => Boolean(request));
+
+    return { galleries, editRequests };
+  } catch (error) {
+    return {
+      galleries: [],
+      editRequests: [],
+      databaseError: error instanceof Error ? error.message : "Không đọc được dữ liệu Supabase",
+    };
+  }
+}
+
+export default async function AdminStudioPage() {
+  const { galleries, editRequests, databaseError } = await getAdminGalleryData();
+
   return (
     <main className="min-h-screen bg-[#f4f6f8] text-zinc-950">
       <div className="grid lg:grid-cols-[288px_1fr]">
@@ -82,7 +172,7 @@ export default function AdminStudioPage() {
                 </p>
                 <h1 className="mt-4 text-3xl font-extrabold tracking-normal text-zinc-950 md:text-4xl">Dashboard</h1>
                 <p className="mt-2 max-w-2xl text-sm leading-6 text-zinc-600">
-                  Quản lý album khách hàng, link gửi khách, quyền tải file và quy trình đồng bộ Google Drive.
+                  Quản lý album khách hàng, link gửi khách, quyền tải file và bảng tổng hợp ảnh cần chỉnh.
                 </p>
               </div>
               <div className="flex items-center gap-3 rounded-md border border-zinc-200 bg-zinc-50 px-4 py-3 text-sm font-semibold text-zinc-700">
@@ -92,48 +182,8 @@ export default function AdminStudioPage() {
             </div>
           </div>
 
-          <div className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-            {stats.map(({ label, value, helper, icon: Icon, tone }) => (
-              <article key={label} className="rounded-lg border border-zinc-200 bg-white p-5 shadow-sm">
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <p className="text-sm font-semibold text-zinc-600">{label}</p>
-                    <p className="mt-3 text-3xl font-extrabold text-zinc-950">{value}</p>
-                    <p className="mt-2 text-xs font-medium text-zinc-500">{helper}</p>
-                  </div>
-                  <span className={`grid size-11 shrink-0 place-items-center rounded-md ring-1 ${tone}`}>
-                    <Icon size={20} />
-                  </span>
-                </div>
-              </article>
-            ))}
-          </div>
-
-          <div className="mt-5 grid gap-5 xl:grid-cols-[1.05fr_0.95fr]">
-            <CustomerGalleryCreator />
-            <section className="rounded-lg border border-zinc-200 bg-white p-5 shadow-sm">
-              <div className="flex items-center justify-between gap-4">
-                <div>
-                  <h2 className="text-xl font-bold text-zinc-950">Quy trình TLORA</h2>
-                  <p className="mt-2 text-sm leading-6 text-zinc-600">Checklist vận hành album từ lúc tạo thư mục đến khi giao file.</p>
-                </div>
-                <span className="grid size-10 place-items-center rounded-md bg-zinc-950 text-white">
-                  <FolderSync size={18} />
-                </span>
-              </div>
-              <ol className="mt-5 space-y-3">
-                {workflow.map((item, index) => (
-                  <li key={item} className="grid grid-cols-[32px_1fr] gap-3 text-sm leading-6 text-zinc-700">
-                    <span className="grid size-8 place-items-center rounded-full bg-zinc-100 text-xs font-bold text-zinc-700">{index + 1}</span>
-                    <span>{item}</span>
-                  </li>
-                ))}
-              </ol>
-            </section>
-          </div>
-
-          <div className="mt-5">
-            <CustomerGalleryManager />
+          <div id="quan-ly-album-khach-hang" className="mt-5">
+            <AdminStudioTabs galleries={galleries} editRequests={editRequests} databaseError={databaseError} />
           </div>
         </section>
       </div>
