@@ -95,7 +95,7 @@ function Get-UniqueDestinationPath {
 $resolvedRawDir = (Resolve-Path -LiteralPath $RawDir).Path
 
 if (-not $OutputDir) {
-  $OutputDir = Join-Path (Split-Path -Parent $resolvedRawDir) "FILE CAN CHINH"
+  $OutputDir = Join-Path $resolvedRawDir "FILE CAN CHINH"
 }
 
 if (-not (Test-Path -LiteralPath $OutputDir)) {

@@ -1,10 +1,26 @@
 # Copy RAW files for editing
 
-Tool này dùng trên Windows để copy file RAW cần chỉnh từ một thư mục RAW sang thư mục `FILE CAN CHINH`.
+Tool nay dung tren Windows de copy file RAW can chinh tu mot thu muc RAW sang thu muc `FILE CAN CHINH`.
 
-## Cách dùng nhanh
+## App co giao dien
 
-1. Copy danh sách file khách chọn, ví dụ:
+Chay app:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\tools\raw-copy-app.ps1
+```
+
+Trong app:
+
+1. Dan danh sach ten file can sua.
+2. Chon hoac nhap duong dan thu muc chua file RAW.
+3. Bam `Tao thu muc va copy RAW`.
+
+App se tao thu muc `FILE CAN CHINH` ngay trong thu muc RAW va copy cac file RAW cung ten vao do.
+
+## Cach dung nhanh bang lenh
+
+1. Copy danh sach file khach chon, vi du:
 
 ```text
 6Z0A2854.JPG
@@ -12,29 +28,29 @@ Tool này dùng trên Windows để copy file RAW cần chỉnh từ một thư 
 6Z0A2871
 ```
 
-2. Chạy PowerShell:
+2. Chay PowerShell:
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\tools\copy-raw-selection.ps1 -RawDir "D:\Album\FILE GOC RAW"
 ```
 
-Tool sẽ tự tạo thư mục `FILE CAN CHINH` nằm cạnh thư mục RAW, rồi copy các file RAW cùng tên như `.CR3`, `.CR2`, `.NEF`, `.ARW`, `.RAF`, `.DNG`.
+Tool se tu tao thu muc `FILE CAN CHINH` trong thu muc RAW, roi copy cac file RAW cung ten nhu `.CR3`, `.CR2`, `.NEF`, `.ARW`, `.RAF`, `.DNG`.
 
-## Tùy chọn
+## Tuy chon
 
-Chỉ định thư mục đích:
+Chi dinh thu muc dich:
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\tools\copy-raw-selection.ps1 -RawDir "D:\Album\FILE GOC RAW" -OutputDir "D:\Album\FILE CAN CHINH"
 ```
 
-Dùng file `.txt` thay vì clipboard:
+Dung file `.txt` thay vi clipboard:
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\tools\copy-raw-selection.ps1 -RawDir "D:\Album\FILE GOC RAW" -NamesFile ".\selected-files.txt"
 ```
 
-Không tìm trong thư mục con:
+Khong tim trong thu muc con:
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\tools\copy-raw-selection.ps1 -RawDir "D:\Album\FILE GOC RAW" -Recurse $false
