@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { createCustomerDriveFolders } from "@/lib/google-drive";
-import { customerUrlFromOrigin, publicOriginFromHeaders } from "@/lib/public-origin";
+import { customerDoneUrlFromOrigin, customerUrlFromOrigin, publicOriginFromHeaders } from "@/lib/public-origin";
 import { createSlug } from "@/lib/slug";
 import { createAdminClient } from "@/lib/supabase/admin";
 
@@ -12,6 +12,10 @@ function publicOrigin(request: Request) {
 
 function customerUrl(request: Request, slug: string) {
   return customerUrlFromOrigin(publicOrigin(request), slug);
+}
+
+function customerDoneUrl(request: Request, slug: string) {
+  return customerDoneUrlFromOrigin(publicOrigin(request), slug);
 }
 
 function getErrorMessage(error: unknown) {
@@ -73,6 +77,7 @@ export async function GET(request: Request) {
       galleries: (data || []).map((gallery) => ({
         ...gallery,
         customerUrl: customerUrl(request, gallery.customer_name_slug),
+        customerDoneUrl: customerDoneUrl(request, gallery.customer_name_slug),
         selected_photo_file_names: selectedFilesByGalleryId.get(gallery.id) || [],
         selected_photo_count: selectedFilesByGalleryId.get(gallery.id)?.length || 0,
       })),
@@ -116,6 +121,7 @@ export async function POST(request: Request) {
       return NextResponse.json({
         gallery: existingGallery,
         customerUrl: url,
+        customerDoneUrl: customerDoneUrl(request, slug),
         reused: true,
       });
     }
@@ -134,6 +140,7 @@ export async function POST(request: Request) {
         root_drive_folder_url: folders.rootFolderUrl,
         raw_drive_folder_url: folders.rawFolderUrl,
         edited_drive_folder_url: folders.editedFolderUrl,
+        edited_download_enabled: false,
       })
       .select("*")
       .single();
@@ -145,6 +152,7 @@ export async function POST(request: Request) {
     return NextResponse.json({
       gallery: data,
       customerUrl: url,
+      customerDoneUrl: customerDoneUrl(request, slug),
       reused: false,
     });
   } catch (error) {

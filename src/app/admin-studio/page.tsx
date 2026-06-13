@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { headers } from "next/headers";
 import { AdminStudioWorkspace, type AdminEditRequest, type AdminGallery } from "@/components/admin/admin-studio-workspace";
-import { customerUrlFromOrigin, publicOriginFromHeaders } from "@/lib/public-origin";
+import { customerDoneUrlFromOrigin, customerUrlFromOrigin, publicOriginFromHeaders } from "@/lib/public-origin";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 export const metadata: Metadata = {
@@ -19,6 +19,7 @@ type CustomerGalleryRow = {
   raw_drive_folder_url: string;
   edited_drive_folder_url: string;
   raw_download_enabled: boolean;
+  edited_download_enabled: boolean;
 };
 
 type CustomerGalleryPhotoRow = {
@@ -45,7 +46,7 @@ async function getAdminGalleryData(): Promise<{
     const [{ data: galleriesData, error: galleriesError }, { data: photosData, error: photosError }] = await Promise.all([
       supabase
         .from("customer_galleries")
-        .select("id,customer_name,customer_name_slug,shoot_date,raw_drive_folder_url,edited_drive_folder_url,raw_download_enabled")
+        .select("id,customer_name,customer_name_slug,shoot_date,raw_drive_folder_url,edited_drive_folder_url,raw_download_enabled,edited_download_enabled")
         .order("created_at", { ascending: false }),
       supabase
         .from("customer_gallery_photos")
@@ -77,9 +78,11 @@ async function getAdminGalleryData(): Promise<{
         customerSlug: gallery.customer_name_slug,
         shootDate: gallery.shoot_date,
         customerUrl: customerUrlFromOrigin(siteUrl, gallery.customer_name_slug),
+        customerDoneUrl: customerDoneUrlFromOrigin(siteUrl, gallery.customer_name_slug),
         rawDriveUrl: gallery.raw_drive_folder_url,
         editedDriveUrl: gallery.edited_drive_folder_url,
         rawDownloadEnabled: gallery.raw_download_enabled,
+        editedDownloadEnabled: gallery.edited_download_enabled,
         rawPhotoCount: rawPhotos.length,
         selectedPhotoCount: selectedPhotos.length,
         editedPhotoCount: editedPhotos.length,
@@ -103,6 +106,7 @@ async function getAdminGalleryData(): Promise<{
           customerSlug: gallery.customer_name_slug,
           shootDate: gallery.shoot_date,
           customerUrl: customerUrlFromOrigin(siteUrl, gallery.customer_name_slug),
+          customerDoneUrl: customerDoneUrlFromOrigin(siteUrl, gallery.customer_name_slug),
           fileName: photo.file_name,
           editNote: photo.edit_note,
           previewUrl: photo.preview_url,

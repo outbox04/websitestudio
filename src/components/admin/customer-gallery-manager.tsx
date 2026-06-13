@@ -14,6 +14,7 @@ type ManagedGallery = {
   edited_download_enabled: boolean;
   created_at: string;
   customerUrl: string;
+  customerDoneUrl: string;
   selected_photo_file_names: string[];
   selected_photo_count: number;
 };
@@ -215,11 +216,20 @@ export function CustomerGalleryManager() {
                 </td>
                 <td className="py-4 pr-4">{new Date(gallery.shoot_date).toLocaleDateString("vi-VN")}</td>
                 <td className="py-4 pr-4">
-                  <LinkAction
-                    href={gallery.customerUrl}
-                    copied={copied === `${gallery.id}:customer`}
-                    onCopy={() => copy(gallery.customerUrl, `${gallery.id}:customer`)}
-                  />
+                  <div className="flex flex-col gap-2">
+                    <LinkAction
+                      label="FILE GỐC"
+                      href={gallery.customerUrl}
+                      copied={copied === `${gallery.id}:customer`}
+                      onCopy={() => copy(gallery.customerUrl, `${gallery.id}:customer`)}
+                    />
+                    <LinkAction
+                      label="HOÀN THIỆN"
+                      href={gallery.customerDoneUrl}
+                      copied={copied === `${gallery.id}:customer-done`}
+                      onCopy={() => copy(gallery.customerDoneUrl, `${gallery.id}:customer-done`)}
+                    />
+                  </div>
                 </td>
                 <td className="py-4 pr-4">
                   <div className="flex flex-col gap-2">

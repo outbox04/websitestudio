@@ -104,11 +104,14 @@ create table if not exists public.customer_galleries (
   raw_drive_folder_url text not null,
   edited_drive_folder_url text not null,
   raw_download_enabled boolean not null default false,
-  edited_download_enabled boolean not null default true,
+  edited_download_enabled boolean not null default false,
   created_by uuid references public.profiles(id) on delete set null,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
+
+alter table public.customer_galleries
+  alter column edited_download_enabled set default false;
 
 create table if not exists public.customer_gallery_photos (
   id uuid primary key default gen_random_uuid(),

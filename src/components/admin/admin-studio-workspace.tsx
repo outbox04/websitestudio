@@ -24,9 +24,11 @@ export type AdminGallery = {
   customerSlug: string;
   shootDate: string;
   customerUrl: string;
+  customerDoneUrl: string;
   rawDriveUrl: string;
   editedDriveUrl: string;
   rawDownloadEnabled: boolean;
+  editedDownloadEnabled: boolean;
   rawPhotoCount: number;
   selectedPhotoCount: number;
   editedPhotoCount: number;
@@ -39,6 +41,7 @@ export type AdminEditRequest = {
   customerSlug: string;
   shootDate: string;
   customerUrl: string;
+  customerDoneUrl: string;
   fileName: string;
   editNote: string | null;
   previewUrl: string | null;
@@ -222,6 +225,22 @@ function AlbumManagerView({
     setBusyId("");
   }
 
+  async function toggleEditedDownload(gallery: AdminGallery) {
+    setBusyId(`edited-${gallery.id}`);
+    const nextValue = !gallery.editedDownloadEnabled;
+    const response = await fetch(`/api/admin/customer-galleries/${gallery.customerSlug}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ editedDownloadEnabled: nextValue }),
+    });
+
+    if (response.ok) {
+      setGalleries((current) => current.map((item) => item.id === gallery.id ? { ...item, editedDownloadEnabled: nextValue } : item));
+    }
+
+    setBusyId("");
+  }
+
   return (
     <div className="space-y-5">
       <HeaderCard
@@ -286,6 +305,7 @@ function AlbumManagerView({
                     onCopy={copy}
                     onSync={syncGallery}
                     onToggleRaw={toggleRawDownload}
+                    onToggleEdited={toggleEditedDownload}
                     onToggleExpanded={() => setExpandedId(isExpanded ? null : gallery.id)}
                   />
                 );
@@ -308,6 +328,7 @@ function FragmentRow({
   onCopy,
   onSync,
   onToggleRaw,
+  onToggleEdited,
   onToggleExpanded,
 }: {
   gallery: AdminGallery;
@@ -318,6 +339,7 @@ function FragmentRow({
   onCopy: (value: string, id: string) => void;
   onSync: (slug: string, id: string) => void;
   onToggleRaw: (gallery: AdminGallery) => void;
+  onToggleEdited: (gallery: AdminGallery) => void;
   onToggleExpanded: () => void;
 }) {
   return (
@@ -334,11 +356,20 @@ function FragmentRow({
         </td>
         <td className="py-4 pr-4">{formatDate(gallery.shootDate)}</td>
         <td className="py-4 pr-4">
-          <LinkWithCopy
-            value={gallery.customerUrl}
-            copied={copiedId === `${gallery.id}-customer`}
-            onCopy={() => onCopy(gallery.customerUrl, `${gallery.id}-customer`)}
-          />
+          <div className="flex flex-col gap-2">
+            <LinkWithCopy
+              label="FILE GỐC"
+              value={gallery.customerUrl}
+              copied={copiedId === `${gallery.id}-customer`}
+              onCopy={() => onCopy(gallery.customerUrl, `${gallery.id}-customer`)}
+            />
+            <LinkWithCopy
+              label="HOÀN THIỆN"
+              value={gallery.customerDoneUrl}
+              copied={copiedId === `${gallery.id}-customer-done`}
+              onCopy={() => onCopy(gallery.customerDoneUrl, `${gallery.id}-customer-done`)}
+            />
+          </div>
         </td>
         <td className="py-4 pr-4">
           <div className="flex flex-wrap gap-2">
@@ -351,16 +382,20 @@ function FragmentRow({
           <p className="mt-1 text-xs text-zinc-500">{requests.length} file cần chỉnh</p>
         </td>
         <td className="py-4 pr-4">
-          <button
-            type="button"
-            onClick={() => onToggleRaw(gallery)}
-            className={`inline-flex min-h-9 items-center gap-2 rounded-md px-3 font-semibold ${
-              gallery.rawDownloadEnabled ? "bg-emerald-50 text-emerald-700" : "bg-zinc-100 text-zinc-700"
-            }`}
-          >
-            {busyId === `raw-${gallery.id}` && <RefreshCw className="animate-spin" size={14} />}
-            {gallery.rawDownloadEnabled ? "Đang mở tải" : "Đang khóa"}
-          </button>
+          <div className="flex flex-col items-start gap-2">
+            <DownloadPermissionButton
+              enabled={gallery.rawDownloadEnabled}
+              loading={busyId === `raw-${gallery.id}`}
+              label="FILE GỐC"
+              onClick={() => onToggleRaw(gallery)}
+            />
+            <DownloadPermissionButton
+              enabled={gallery.editedDownloadEnabled}
+              loading={busyId === `edited-${gallery.id}`}
+              label="HOÀN THIỆN"
+              onClick={() => onToggleEdited(gallery)}
+            />
+          </div>
         </td>
         <td className="py-4 pr-4 text-right">
           <button
@@ -539,9 +574,10 @@ function StatusLine({ label, value }: { label: string; value: string }) {
   );
 }
 
-function LinkWithCopy({ value, copied, onCopy }: { value: string; copied: boolean; onCopy: () => void }) {
+function LinkWithCopy({ value, copied, onCopy, label }: { value: string; copied: boolean; onCopy: () => void; label?: string }) {
   return (
     <div className="flex max-w-[300px] items-center gap-2">
+      {label && <span className="shrink-0 rounded bg-zinc-100 px-2 py-1 text-xs font-semibold text-zinc-700">{label}</span>}
       <a href={value} target="_blank" rel="noreferrer" className="truncate rounded-md border border-zinc-200 px-3 py-2 text-zinc-600 hover:text-zinc-950">
         {value}
       </a>
@@ -549,6 +585,32 @@ function LinkWithCopy({ value, copied, onCopy }: { value: string; copied: boolea
         {copied ? <Check size={16} /> : <Copy size={16} />}
       </button>
     </div>
+  );
+}
+
+function DownloadPermissionButton({
+  enabled,
+  loading,
+  label,
+  onClick,
+}: {
+  enabled: boolean;
+  loading: boolean;
+  label: string;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={loading}
+      className={`inline-flex min-h-9 items-center gap-2 rounded-md px-3 font-semibold ${
+        enabled ? "bg-emerald-50 text-emerald-700" : "bg-zinc-100 text-zinc-700"
+      }`}
+    >
+      {loading && <RefreshCw className="animate-spin" size={14} />}
+      {label}: {enabled ? "Đang mở" : "Đang khóa"}
+    </button>
   );
 }
 

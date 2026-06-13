@@ -17,16 +17,16 @@ export async function generateMetadata({ params }: { params: Promise<{ customerS
       .maybeSingle();
 
     return {
-      title: data?.customer_name ? `${data.customer_name} - TLORA Studio Gallery` : "TLORA Studio Gallery",
+      title: data?.customer_name ? `${data.customer_name} - File hoàn thiện` : "File hoàn thiện - TLORA Studio",
     };
   } catch {
-    return { title: "TLORA Studio Gallery" };
+    return { title: "File hoàn thiện - TLORA Studio" };
   }
 }
 
-export default async function CustomerGalleryPage({ params }: { params: Promise<{ customerSlug: string }> }) {
+export default async function CustomerGalleryDonePage({ params }: { params: Promise<{ customerSlug: string }> }) {
   const { customerSlug } = await params;
   const { gallery, rawPhotos, editedPhotos } = await getCustomerGalleryPageData(customerSlug);
 
-  return <CustomerGalleryView gallery={gallery} rawPhotos={rawPhotos} editedPhotos={editedPhotos} />;
+  return <CustomerGalleryView gallery={gallery} rawPhotos={rawPhotos} editedPhotos={editedPhotos} initialTab="edited" />;
 }

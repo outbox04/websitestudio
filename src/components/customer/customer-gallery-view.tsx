@@ -57,12 +57,14 @@ export function CustomerGalleryView({
   gallery,
   rawPhotos,
   editedPhotos,
+  initialTab = "all",
 }: {
   gallery: Gallery;
   rawPhotos: GalleryPhoto[];
   editedPhotos: GalleryPhoto[];
+  initialTab?: Tab;
 }) {
-  const [tab, setTab] = useState<Tab>("all");
+  const [tab, setTab] = useState<Tab>(initialTab);
   const [photos, setPhotos] = useState(rawPhotos);
   const [preview, setPreview] = useState<GalleryPhoto | null>(null);
   const [syncing, setSyncing] = useState(false);

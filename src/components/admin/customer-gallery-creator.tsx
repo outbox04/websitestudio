@@ -5,6 +5,7 @@ import { useState } from "react";
 
 type CreatedGallery = {
   customerUrl: string;
+  customerDoneUrl: string;
   reused?: boolean;
   gallery: {
     customer_name: string;
@@ -128,7 +129,8 @@ export function CustomerGalleryCreator() {
         <div className="mt-5 space-y-3 rounded-lg border border-zinc-200 bg-zinc-50 p-4">
           <LinkRow label="Link FILE GỐC" value={result.gallery.raw_drive_folder_url} copied={copied === "raw"} onCopy={() => copy(result.gallery.raw_drive_folder_url, "raw")} />
           <LinkRow label="Link FILE CHỈNH SỬA" value={result.gallery.edited_drive_folder_url} copied={copied === "edited"} onCopy={() => copy(result.gallery.edited_drive_folder_url, "edited")} />
-          <LinkRow label="Link khách hàng" value={result.customerUrl} copied={copied === "customer"} onCopy={() => copy(result.customerUrl, "customer")} />
+          <LinkRow label="Link chọn FILE GỐC" value={result.customerUrl} copied={copied === "customer"} onCopy={() => copy(result.customerUrl, "customer")} />
+          <LinkRow label="Link hoàn thiện" value={result.customerDoneUrl} copied={copied === "customer-done"} onCopy={() => copy(result.customerDoneUrl, "customer-done")} />
           <div className="flex flex-wrap gap-3">
             <button onClick={syncPhotos} className="inline-flex min-h-10 items-center gap-2 rounded-md border border-zinc-200 bg-white px-4 text-sm font-semibold text-zinc-800 hover:bg-zinc-50">
               <RefreshCw size={16} /> Đồng bộ ảnh sau khi upload

@@ -27,3 +27,7 @@ export function publicOriginFromHeaders(headers: HeaderReader) {
 export function customerUrlFromOrigin(origin: string, slug: string) {
   return origin ? `${origin.replace(/\/$/, "")}/${slug}` : `/${slug}`;
 }
+
+export function customerDoneUrlFromOrigin(origin: string, slug: string) {
+  return `${customerUrlFromOrigin(origin, slug)}/done`;
+}
