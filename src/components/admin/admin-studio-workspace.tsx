@@ -14,7 +14,7 @@ import {
   Settings,
 } from "lucide-react";
 import Image from "next/image";
-import { useMemo, useState } from "react";
+import { Fragment, useMemo, useState } from "react";
 import { CustomerGalleryCreator } from "@/components/admin/customer-gallery-creator";
 import { adminMenu } from "@/lib/site-data";
 
@@ -453,34 +453,52 @@ function EditFileTable({ requests }: { requests: AdminEditRequest[] }) {
     return <EmptyText text="Album này chưa có file nào được khách chọn hoặc ghi chú cần chỉnh." />;
   }
 
+  const requestRows = chunkRequests(requests, 2);
+
   return (
     <div className="overflow-x-auto rounded-md border border-zinc-200 bg-white">
-      <table className="w-full min-w-[760px] text-left text-sm">
+      <table className="w-full min-w-[980px] text-left text-sm">
         <thead className="border-b border-zinc-200 bg-white text-xs uppercase text-zinc-500">
           <tr>
             <th className="px-4 py-3">Tên file</th>
             <th className="px-4 py-3">Nội dung cần chỉnh sửa</th>
-            <th className="px-4 py-3">Trạng thái</th>
-            <th className="px-4 py-3 text-right">Xem ảnh</th>
+            <th className="px-4 py-3">Tên file</th>
+            <th className="px-4 py-3">Nội dung cần chỉnh sửa</th>
           </tr>
         </thead>
         <tbody className="divide-y divide-zinc-100">
-          {requests.map((request) => (
-            <tr key={request.id} className="align-top text-zinc-700">
-              <td className="px-4 py-3 font-semibold text-zinc-950">{request.fileName}</td>
-              <td className="px-4 py-3">
-                <p className="max-w-[440px] whitespace-pre-wrap leading-6">{request.editNote?.trim() || "Khách chưa nhập ghi chú."}</p>
-              </td>
-              <td className="px-4 py-3 text-xs font-semibold text-emerald-700">{request.selected ? "Khách đã chọn" : "Có ghi chú"}</td>
-              <td className="px-4 py-3 text-right">
-                <PreviewLink request={request} />
-              </td>
+          {requestRows.map((row) => (
+            <tr key={row.map((request) => request.id).join("-")} className="align-top text-zinc-700">
+              {row.map((request) => (
+                <Fragment key={request.id}>
+                  <td className="w-[18%] px-4 py-3 font-semibold text-zinc-950">{request.fileName}</td>
+                  <td className="w-[32%] px-4 py-3">
+                    <p className="whitespace-pre-wrap leading-6">{request.editNote?.trim() || "Khách chưa nhập ghi chú."}</p>
+                  </td>
+                </Fragment>
+              ))}
+              {row.length === 1 && (
+                <>
+                  <td className="w-[18%] px-4 py-3" />
+                  <td className="w-[32%] px-4 py-3" />
+                </>
+              )}
             </tr>
           ))}
         </tbody>
       </table>
     </div>
   );
+}
+
+function chunkRequests(requests: AdminEditRequest[], size: number) {
+  const rows: AdminEditRequest[][] = [];
+
+  for (let index = 0; index < requests.length; index += size) {
+    rows.push(requests.slice(index, index + size));
+  }
+
+  return rows;
 }
 
 function EditRequestsTable({ requests }: { requests: AdminEditRequest[] }) {
