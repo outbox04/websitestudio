@@ -38,21 +38,43 @@ function getErrorMessage(error: unknown) {
 export async function GET(request: Request) {
   try {
     const supabase = createAdminClient();
-    const { data, error } = await supabase
-      .from("customer_galleries")
-      .select(
-        "id,customer_name,customer_name_slug,shoot_date,raw_drive_folder_url,edited_drive_folder_url,raw_download_enabled,edited_download_enabled,created_at,updated_at",
-      )
-      .order("created_at", { ascending: false });
+    const [{ data, error }, { data: selectedPhotosData, error: selectedPhotosError }] = await Promise.all([
+      supabase
+        .from("customer_galleries")
+        .select(
+          "id,customer_name,customer_name_slug,shoot_date,raw_drive_folder_url,edited_drive_folder_url,raw_download_enabled,edited_download_enabled,created_at,updated_at",
+        )
+        .order("created_at", { ascending: false }),
+      supabase
+        .from("customer_gallery_photos")
+        .select("gallery_id,file_name")
+        .eq("selected", true)
+        .eq("kind", "raw")
+        .order("file_name", { ascending: true }),
+    ]);
 
     if (error) {
       throw error;
+    }
+
+    if (selectedPhotosError) {
+      throw selectedPhotosError;
+    }
+
+    const selectedFilesByGalleryId = new Map<string, string[]>();
+
+    for (const photo of selectedPhotosData || []) {
+      const existing = selectedFilesByGalleryId.get(photo.gallery_id) || [];
+      existing.push(photo.file_name);
+      selectedFilesByGalleryId.set(photo.gallery_id, existing);
     }
 
     return NextResponse.json({
       galleries: (data || []).map((gallery) => ({
         ...gallery,
         customerUrl: customerUrl(request, gallery.customer_name_slug),
+        selected_photo_file_names: selectedFilesByGalleryId.get(gallery.id) || [],
+        selected_photo_count: selectedFilesByGalleryId.get(gallery.id)?.length || 0,
       })),
     });
   } catch (error) {

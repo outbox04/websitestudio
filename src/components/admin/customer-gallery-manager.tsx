@@ -14,6 +14,8 @@ type ManagedGallery = {
   edited_download_enabled: boolean;
   created_at: string;
   customerUrl: string;
+  selected_photo_file_names: string[];
+  selected_photo_count: number;
 };
 
 type LoadingAction = {
@@ -100,6 +102,13 @@ export function CustomerGalleryManager() {
   async function copy(value: string, key: string) {
     await navigator.clipboard.writeText(value);
     setCopied(key);
+    window.setTimeout(() => setCopied(""), 1200);
+  }
+
+  async function copySelectedFileNames(gallery: ManagedGallery) {
+    const value = gallery.selected_photo_file_names.join(", ");
+    await navigator.clipboard.writeText(value);
+    setCopied(`${gallery.id}:selected-files`);
     window.setTimeout(() => setCopied(""), 1200);
   }
 
@@ -244,13 +253,24 @@ export function CustomerGalleryManager() {
                   </div>
                 </td>
                 <td className="py-4 text-right">
-                  <button
-                    onClick={() => syncPhotos(gallery.customer_name_slug)}
-                    className="inline-flex min-h-10 items-center gap-2 rounded-md border border-zinc-200 bg-white px-3 text-sm font-semibold text-zinc-800 hover:bg-zinc-50"
-                  >
-                    {loadingAction?.slug === gallery.customer_name_slug && loadingAction.key === "sync" ? <Loader2 className="animate-spin" size={16} /> : <RefreshCw size={16} />}
-                    Đồng bộ ảnh
-                  </button>
+                  <div className="flex flex-col items-end gap-2">
+                    <button
+                      onClick={() => void copySelectedFileNames(gallery)}
+                      disabled={gallery.selected_photo_count === 0}
+                      className="inline-flex min-h-10 items-center gap-2 rounded-md border border-zinc-200 bg-white px-3 text-sm font-semibold text-zinc-800 hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      {copied === `${gallery.id}:selected-files` ? <Check size={16} /> : <Copy size={16} />}
+                      {copied === `${gallery.id}:selected-files` ? "Đã copy" : "Copy tên ảnh chọn"}
+                    </button>
+                    <p className="text-xs text-zinc-500">{gallery.selected_photo_count} ảnh đã chọn</p>
+                    <button
+                      onClick={() => syncPhotos(gallery.customer_name_slug)}
+                      className="inline-flex min-h-10 items-center gap-2 rounded-md border border-zinc-200 bg-white px-3 text-sm font-semibold text-zinc-800 hover:bg-zinc-50"
+                    >
+                      {loadingAction?.slug === gallery.customer_name_slug && loadingAction.key === "sync" ? <Loader2 className="animate-spin" size={16} /> : <RefreshCw size={16} />}
+                      Đồng bộ ảnh
+                    </button>
+                  </div>
                 </td>
               </tr>
             ))}
