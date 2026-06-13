@@ -277,7 +277,7 @@ function AlbumManagerView({
         </div>
 
         <div className="mt-5 overflow-x-auto">
-          <table className="w-full min-w-[1100px] text-left text-sm">
+          <table className="w-full min-w-[1280px] text-left text-sm">
             <thead className="border-b border-zinc-200 text-xs uppercase text-zinc-500">
               <tr>
                 <th className="py-3 pr-4">Album</th>
@@ -285,7 +285,8 @@ function AlbumManagerView({
                 <th className="py-3 pr-4">Link khách</th>
                 <th className="py-3 pr-4">Google Drive</th>
                 <th className="py-3 pr-4">File</th>
-                <th className="py-3 pr-4">Quyền tải FILE GỐC</th>
+                <th className="py-3 pr-4">Copy tên file</th>
+                <th className="py-3 pr-4">Quyền tải</th>
                 <th className="py-3 pr-4 text-right">Thao tác</th>
               </tr>
             </thead>
@@ -342,6 +343,8 @@ function FragmentRow({
   onToggleEdited: (gallery: AdminGallery) => void;
   onToggleExpanded: () => void;
 }) {
+  const requestFileNames = requests.map((request) => request.fileName).join(", ");
+
   return (
     <>
       <tr className="align-top text-zinc-700">
@@ -382,6 +385,17 @@ function FragmentRow({
           <p className="mt-1 text-xs text-zinc-500">{requests.length} file cần chỉnh</p>
         </td>
         <td className="py-4 pr-4">
+          <button
+            type="button"
+            onClick={() => onCopy(requestFileNames, `${gallery.id}-request-files`)}
+            disabled={requests.length === 0}
+            className="inline-flex min-h-9 items-center gap-2 rounded-md border border-zinc-200 bg-white px-3 text-xs font-semibold text-zinc-800 hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {copiedId === `${gallery.id}-request-files` ? <Check size={14} /> : <Copy size={14} />}
+            {copiedId === `${gallery.id}-request-files` ? "Đã copy" : "Copy tất cả"}
+          </button>
+        </td>
+        <td className="py-4 pr-4">
           <div className="flex flex-col items-start gap-2">
             <DownloadPermissionButton
               enabled={gallery.rawDownloadEnabled}
@@ -410,7 +424,7 @@ function FragmentRow({
       </tr>
       {isExpanded && (
         <tr>
-          <td colSpan={7} className="bg-zinc-50 px-4 py-4">
+          <td colSpan={8} className="bg-zinc-50 px-4 py-4">
             <EditFileTable requests={requests} />
           </td>
         </tr>
@@ -576,12 +590,12 @@ function StatusLine({ label, value }: { label: string; value: string }) {
 
 function LinkWithCopy({ value, copied, onCopy, label }: { value: string; copied: boolean; onCopy: () => void; label?: string }) {
   return (
-    <div className="flex max-w-[300px] items-center gap-2">
-      {label && <span className="shrink-0 rounded bg-zinc-100 px-2 py-1 text-xs font-semibold text-zinc-700">{label}</span>}
+    <div className="grid max-w-[310px] grid-cols-[86px_minmax(0,1fr)_36px] items-center gap-2">
+      {label && <span className="rounded bg-zinc-100 px-2 py-1 text-center text-[11px] font-bold text-zinc-800">{label}</span>}
       <a href={value} target="_blank" rel="noreferrer" className="truncate rounded-md border border-zinc-200 px-3 py-2 text-zinc-600 hover:text-zinc-950">
         {value}
       </a>
-      <button type="button" onClick={onCopy} className="grid size-10 shrink-0 place-items-center rounded-md bg-zinc-950 text-white" aria-label="Copy link">
+      <button type="button" onClick={onCopy} className="grid size-9 place-items-center rounded-md bg-zinc-950 text-white" aria-label="Copy link">
         {copied ? <Check size={16} /> : <Copy size={16} />}
       </button>
     </div>
