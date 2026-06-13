@@ -194,13 +194,14 @@ export function CustomerGalleryManager() {
       {error && <div className="mt-4 rounded-md border border-red-200 bg-red-50 p-3 text-sm font-medium text-red-700">{error}</div>}
 
       <div className="mt-5 overflow-x-auto">
-        <table className="w-full min-w-[980px] text-left text-sm">
+        <table className="w-full min-w-[1120px] text-left text-sm">
           <thead className="border-b border-zinc-200 bg-zinc-50 text-xs uppercase text-zinc-500">
             <tr>
               <th className="py-3 pr-4">Khách hàng</th>
               <th className="pr-4">Ngày chụp</th>
               <th className="pr-4">Link khách</th>
               <th className="pr-4">Google Drive</th>
+              <th className="pr-4">File cần chỉnh</th>
               <th className="pr-4">Quyền tải</th>
               <th className="text-right">Thao tác</th>
             </tr>
@@ -237,6 +238,19 @@ export function CustomerGalleryManager() {
                   </div>
                 </td>
                 <td className="py-4 pr-4">
+                  <div className="flex flex-col items-start gap-2">
+                    <button
+                      onClick={() => void copySelectedFileNames(gallery)}
+                      disabled={gallery.selected_photo_file_names.length === 0}
+                      className="inline-flex min-h-10 items-center gap-2 rounded-md border border-zinc-200 bg-white px-3 text-sm font-semibold text-zinc-800 hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      {copied === `${gallery.id}:selected-files` ? <Check size={16} /> : <Copy size={16} />}
+                      {copied === `${gallery.id}:selected-files` ? "Đã copy" : "Copy tên file"}
+                    </button>
+                    <p className="text-xs text-zinc-500">{gallery.selected_photo_count} file cần chỉnh</p>
+                  </div>
+                </td>
+                <td className="py-4 pr-4">
                   <div className="flex flex-col gap-2">
                     <DownloadToggle
                       enabled={gallery.raw_download_enabled}
@@ -254,15 +268,6 @@ export function CustomerGalleryManager() {
                 </td>
                 <td className="py-4 text-right">
                   <div className="flex flex-col items-end gap-2">
-                    <button
-                      onClick={() => void copySelectedFileNames(gallery)}
-                      disabled={gallery.selected_photo_count === 0}
-                      className="inline-flex min-h-10 items-center gap-2 rounded-md border border-zinc-200 bg-white px-3 text-sm font-semibold text-zinc-800 hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-50"
-                    >
-                      {copied === `${gallery.id}:selected-files` ? <Check size={16} /> : <Copy size={16} />}
-                      {copied === `${gallery.id}:selected-files` ? "Đã copy" : "Copy tên ảnh chọn"}
-                    </button>
-                    <p className="text-xs text-zinc-500">{gallery.selected_photo_count} ảnh đã chọn</p>
                     <button
                       onClick={() => syncPhotos(gallery.customer_name_slug)}
                       className="inline-flex min-h-10 items-center gap-2 rounded-md border border-zinc-200 bg-white px-3 text-sm font-semibold text-zinc-800 hover:bg-zinc-50"
