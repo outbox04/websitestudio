@@ -1,0 +1,103 @@
+import { createCustomerDriveFolders } from "@/lib/google-drive";
+import { createSlug } from "@/lib/slug";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { errorMessage, isAuthorized, json, options, publicOrigin, unauthorized } from "@/lib/tlora-api";
+
+export const runtime = "nodejs";
+
+type TloraAlbumPayload = {
+  albumName?: string;
+  customerName?: string;
+  driveFileGocUrl?: string;
+  driveFileChinhSuaUrl?: string;
+  websiteUrl?: string;
+  createdAt?: string;
+};
+
+function today() {
+  return new Date().toISOString().slice(0, 10);
+}
+
+function customerUrl(origin: string, slug: string) {
+  return `${origin.replace(/\/$/, "")}/${slug}`;
+}
+
+export function OPTIONS() {
+  return options();
+}
+
+export async function POST(request: Request) {
+  if (!isAuthorized(request)) {
+    return unauthorized();
+  }
+
+  const payload = (await request.json()) as TloraAlbumPayload;
+  const customerName = payload.customerName?.trim() || payload.albumName?.trim();
+  if (!customerName) {
+    return json({ error: "customerName hoặc albumName là bắt buộc" }, { status: 400 });
+  }
+
+  const slug = createSlug(customerName);
+  if (!slug) {
+    return json({ error: "Không tạo được slug từ tên khách hàng" }, { status: 400 });
+  }
+
+  try {
+    const supabase = createAdminClient();
+    const origin = publicOrigin(request);
+
+    const { data: existing, error: existingError } = await supabase
+      .from("customer_galleries")
+      .select("*")
+      .eq("customer_name_slug", slug)
+      .maybeSingle();
+
+    if (existingError) {
+      throw existingError;
+    }
+
+    if (existing) {
+      return json({
+        ok: true,
+        reused: true,
+        gallery: existing,
+        websiteUrl: payload.websiteUrl || customerUrl(origin, slug),
+        driveFileGocUrl: existing.raw_drive_folder_url,
+        driveFileChinhSuaUrl: existing.edited_drive_folder_url,
+      });
+    }
+
+    const folders = await createCustomerDriveFolders(customerName);
+    const { data, error } = await supabase
+      .from("customer_galleries")
+      .insert({
+        customer_name: customerName,
+        customer_name_slug: slug,
+        shoot_date: payload.createdAt?.slice(0, 10) || today(),
+        root_drive_folder_id: folders.rootFolderId,
+        raw_drive_folder_id: folders.rawFolderId,
+        edited_drive_folder_id: folders.editedFolderId,
+        root_drive_folder_url: folders.rootFolderUrl,
+        raw_drive_folder_url: folders.rawFolderUrl,
+        edited_drive_folder_url: folders.editedFolderUrl,
+        edited_download_enabled: false,
+      })
+      .select("*")
+      .single();
+
+    if (error) {
+      throw error;
+    }
+
+    return json({
+      ok: true,
+      reused: false,
+      gallery: data,
+      websiteUrl: customerUrl(origin, slug),
+      driveFileGocUrl: folders.rawFolderUrl,
+      driveFileChinhSuaUrl: folders.editedFolderUrl,
+    });
+  } catch (error) {
+    return json({ error: errorMessage(error) }, { status: 500 });
+  }
+}
