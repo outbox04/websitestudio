@@ -32,14 +32,14 @@ export async function POST(request: Request) {
   }
 
   const payload = (await request.json()) as TloraAlbumPayload;
-  const customerName = payload.customerName?.trim() || payload.albumName?.trim();
-  if (!customerName) {
-    return json({ error: "customerName hoặc albumName là bắt buộc" }, { status: 400 });
+  const albumName = payload.albumName?.trim() || payload.customerName?.trim();
+  if (!albumName) {
+    return json({ error: "albumName hoặc customerName là bắt buộc" }, { status: 400 });
   }
 
-  const slug = createSlug(customerName);
+  const slug = createSlug(albumName);
   if (!slug) {
-    return json({ error: "Không tạo được slug từ tên khách hàng" }, { status: 400 });
+    return json({ error: "Không tạo được slug từ tên album" }, { status: 400 });
   }
 
   try {
@@ -67,11 +67,11 @@ export async function POST(request: Request) {
       });
     }
 
-    const folders = await createCustomerDriveFolders(customerName);
+    const folders = await createCustomerDriveFolders(albumName);
     const { data, error } = await supabase
       .from("customer_galleries")
       .insert({
-        customer_name: customerName,
+        customer_name: albumName,
         customer_name_slug: slug,
         shoot_date: payload.createdAt?.slice(0, 10) || today(),
         root_drive_folder_id: folders.rootFolderId,
