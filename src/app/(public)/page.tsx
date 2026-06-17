@@ -135,13 +135,21 @@ const faqs = [
 export default function HomePage() {
   return (
     <div className="bg-[#14110f] text-[#f4ece0]">
-      <section className="relative overflow-hidden px-4 py-20 sm:px-6 lg:px-8 lg:py-28">
-        <div className="pointer-events-none absolute -right-28 -top-28 size-96 rounded-full border border-[#f4ece0]/10 opacity-60 lg:size-[480px]" />
-        <div className="pointer-events-none absolute right-0 top-0 h-full w-1/2 bg-radial-[circle_at_top_right] from-[#c99a5e]/16 to-transparent" />
+      <section className="relative min-h-[calc(100svh-73px)] overflow-hidden px-4 py-16 sm:px-6 sm:py-20 lg:px-8 lg:py-28">
+        <Image
+          src="https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=1800&q=85"
+          alt="Ảnh nền concept studio TLORA"
+          fill
+          priority
+          sizes="100vw"
+          className="object-cover object-[62%_center]"
+        />
+        <div className="absolute inset-0 bg-[#14110f]/72 sm:bg-[#14110f]/58" />
+        <div className="absolute inset-0 bg-linear-to-r from-[#14110f] via-[#14110f]/86 to-[#14110f]/25" />
+        <div className="absolute inset-x-0 bottom-0 h-48 bg-linear-to-t from-[#14110f] to-transparent" />
+        <div className="pointer-events-none absolute -right-28 -top-28 size-96 rounded-full border border-[#f4ece0]/10 opacity-45 lg:size-[480px]" />
         <div className="relative mx-auto max-w-6xl">
-          <Image src="/brand/tlora-logo.png" alt="TLORA Studio" width={1536} height={1024} priority className="h-auto w-52 object-contain sm:w-64" />
-          <Eyebrow className="mt-10">Studio concept - không cưới, chỉ có bạn</Eyebrow>
-          <h1 className="max-w-4xl font-heading text-4xl font-extrabold leading-tight text-[#f4ece0] sm:text-5xl lg:text-7xl">
+          <h1 className="max-w-4xl pt-10 font-heading text-4xl font-extrabold leading-tight text-[#f4ece0] sm:pt-16 sm:text-5xl lg:pt-24 lg:text-7xl">
             Mỗi set chụp là <span className="italic text-[#c99a5e]">một concept</span>
             <br />
             dựng riêng cho bạn.
@@ -149,19 +157,19 @@ export default function HomePage() {
           <p className="mt-6 max-w-2xl text-base leading-8 text-[#cbc0b0] sm:text-lg">
             TLORA không chụp đại trà. Ba dịch vụ, một tiêu chuẩn duy nhất: ảnh nhận về phải xứng đáng với số tiền bạn bỏ ra.
           </p>
-          <div className="mt-9 flex flex-col gap-3 sm:flex-row">
+          <div className="mt-8 flex flex-col gap-3 sm:mt-9 sm:flex-row">
             <PillLink href="/bang-gia" tone="light">
               Đặt lịch tư vấn <ArrowRight size={16} />
             </PillLink>
             <PillLink href="#mood">Xem mood ảnh mẫu</PillLink>
           </div>
-          <div className="mt-12 flex flex-wrap items-center gap-3">
-            <span className="font-mono text-xs uppercase tracking-[0.14em] text-[#8c8174]">Bạn đang tìm gì?</span>
+          <div className="mt-10 flex flex-wrap items-center gap-3 sm:mt-12">
+            <span className="w-full font-mono text-xs uppercase tracking-[0.14em] text-[#cbc0b0] sm:w-auto">Bạn đang tìm gì?</span>
             {services.map((service) => (
               <a
                 key={service.id}
                 href={`#${service.id}`}
-                className="rounded-full border border-[#f4ece0]/12 px-4 py-2 text-sm font-semibold text-[#f4ece0] transition hover:-translate-y-0.5"
+                className="rounded-full border border-[#f4ece0]/12 px-4 py-2 text-sm font-semibold text-[#f4ece0] shadow-lg shadow-black/20 transition hover:-translate-y-0.5"
                 style={{ backgroundColor: service.soft, borderColor: service.accent }}
               >
                 <span className="mr-2 inline-block size-2 rounded-full align-middle" style={{ backgroundColor: service.accent }} />
@@ -169,7 +177,7 @@ export default function HomePage() {
               </a>
             ))}
           </div>
-          <ul className="mt-9 flex flex-wrap gap-x-8 gap-y-3 border-t border-[#f4ece0]/12 pt-6">
+          <ul className="mt-8 grid gap-3 border-t border-[#f4ece0]/12 pt-6 sm:mt-9 sm:grid-cols-3">
             {trustItems.map((item) => (
               <li key={item} className="flex items-center gap-2 text-sm text-[#cbc0b0]">
                 <Check size={16} className="text-[#c99a5e]" />
@@ -180,7 +188,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section id="dich-vu" className="px-4 pb-10 pt-16 text-center sm:px-6 lg:px-8">
+      <section id="dich-vu" className="px-4 pb-8 pt-14 text-center sm:px-6 sm:pb-10 sm:pt-16 lg:px-8">
         <div className="mx-auto max-w-4xl">
           <Eyebrow center>Dịch vụ studio</Eyebrow>
           <h2 className="font-heading text-3xl font-extrabold text-[#f4ece0] md:text-5xl">Ba concept, một tiêu chuẩn giá trị</h2>
@@ -194,14 +202,14 @@ export default function HomePage() {
         <ServiceSection key={service.id} service={service} />
       ))}
 
-      <section className="bg-[#1c1813] px-4 py-20 sm:px-6 lg:px-8">
+      <section className="bg-[#1c1813] px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
         <div className="mx-auto max-w-6xl text-center">
           <Eyebrow center>Quy trình</Eyebrow>
           <h2 className="font-heading text-3xl font-extrabold text-[#f4ece0] md:text-5xl">Từ lúc đặt lịch đến khi nhận ảnh</h2>
           <p className="mx-auto mt-5 max-w-2xl text-base leading-7 text-[#cbc0b0]">
             Năm bước, không có công đoạn nào bị giấu đi. Bạn biết mình đang ở đâu trong quy trình tại mọi thời điểm.
           </p>
-          <div className="mt-12 grid overflow-hidden rounded-2xl border border-[#f4ece0]/12 bg-[#f4ece0]/12 md:grid-cols-5">
+          <div className="mt-10 grid overflow-hidden rounded-2xl border border-[#f4ece0]/12 bg-[#f4ece0]/12 sm:grid-cols-2 lg:mt-12 lg:grid-cols-5">
             {processSteps.map(([step, title, description]) => (
               <article key={step} className="bg-[#14110f] p-6 text-left">
                 <span className="font-mono text-xs text-[#8c8174]">{step}</span>
@@ -213,13 +221,13 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section className="px-4 py-20 sm:px-6 lg:px-8">
+      <section className="px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
         <div className="mx-auto max-w-6xl text-center">
           <Eyebrow center>Khách hàng cần một ekip biết lắng nghe</Eyebrow>
           <h2 className="mx-auto max-w-4xl font-heading text-3xl font-extrabold text-[#f4ece0] md:text-5xl">
             TLORA giữ buổi chụp riêng tư, rõ ràng và tôn trọng cá tính từng người
           </h2>
-          <div className="mt-12 grid gap-6 md:grid-cols-3">
+          <div className="mt-10 grid gap-4 sm:gap-6 md:grid-cols-3 lg:mt-12">
             {whyCards.map(([title, description]) => (
               <article key={title} className="rounded-2xl border border-[#f4ece0]/12 p-8 text-left">
                 <h3 className="font-heading text-xl font-bold text-[#f4ece0]">{title}</h3>
@@ -230,14 +238,14 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section id="mood" className="bg-[#1c1813] px-4 py-20 sm:px-6 lg:px-8">
+      <section id="mood" className="bg-[#1c1813] px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
         <div className="mx-auto max-w-6xl text-center">
           <Eyebrow center>Chọn mood trước khi chốt lịch</Eyebrow>
           <h2 className="font-heading text-3xl font-extrabold text-[#f4ece0] md:text-5xl">Mỗi mood là một phiên bản ánh sáng và màu khác nhau</h2>
           <p className="mx-auto mt-5 max-w-2xl text-base leading-7 text-[#cbc0b0]">
             Xem trước không khí của từng mood để chọn đúng cảm xúc bạn muốn mang về, sau đó mới cần quyết định trang phục.
           </p>
-          <div className="mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:mt-12 lg:grid-cols-3">
             {moodCards.map(([title, type, accent, image]) => (
               <article key={title} className="text-left">
                 <div className="relative aspect-3/4 overflow-hidden rounded-[26px] border border-[#f4ece0]/12">
@@ -256,11 +264,11 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section className="px-4 py-20 sm:px-6 lg:px-8">
+      <section className="px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
         <div className="mx-auto max-w-6xl text-center">
           <Eyebrow center>Khách đã chụp tại TLORA</Eyebrow>
           <h2 className="font-heading text-3xl font-extrabold text-[#f4ece0] md:text-5xl">Phản hồi sau buổi chụp</h2>
-          <div className="mt-12 grid gap-6 md:grid-cols-3">
+          <div className="mt-10 grid gap-5 md:grid-cols-3 lg:mt-12 lg:gap-6">
             {[
               ["Mình từng nghĩ ảnh sinh nhật chỉ cần thổi nến cho có. Đến lúc nhận ảnh mới thấy giá trị mình bỏ ra hoàn toàn xứng đáng.", "Khách chụp Sinh nhật, tuổi 22"],
               ["Ảnh retouch vẫn là mặt mình, chỉ là phiên bản sáng và mịn hơn, không bị lạ như nhiều nơi mình từng chụp.", "Khách chụp Beauty Concept"],
@@ -275,7 +283,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section className="bg-[#1c1813] px-4 py-20 sm:px-6 lg:px-8">
+      <section className="bg-[#1c1813] px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
         <div className="mx-auto max-w-4xl text-center">
           <Eyebrow center>Câu hỏi thường gặp</Eyebrow>
           <h2 className="font-heading text-3xl font-extrabold text-[#f4ece0] md:text-5xl">Những điều khách thường hỏi trước khi đặt lịch</h2>
@@ -293,7 +301,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section className="px-4 py-20 sm:px-6 lg:px-8">
+      <section className="px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
         <div className="relative mx-auto max-w-5xl overflow-hidden rounded-[32px] border border-[#f4ece0]/12 bg-[#1c1813] px-6 py-16 text-center sm:px-10">
           <div className="absolute inset-x-0 top-0 h-56 bg-radial-[ellipse_at_top] from-[#c99a5e]/18 to-transparent" />
           <div className="relative">
@@ -319,8 +327,8 @@ export default function HomePage() {
 
 function ServiceSection({ service }: { service: (typeof services)[number] }) {
   return (
-    <section id={service.id} className="border-t border-[#f4ece0]/12 px-4 py-20 sm:px-6 lg:px-8">
-      <div className="mx-auto grid max-w-6xl gap-10 lg:grid-cols-[0.85fr_1fr_1fr] lg:items-start">
+    <section id={service.id} className="border-t border-[#f4ece0]/12 px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
+      <div className="mx-auto grid max-w-6xl gap-8 md:grid-cols-2 lg:grid-cols-[0.85fr_1fr_1fr] lg:items-start">
         <div className="lg:sticky lg:top-28">
           <div className="relative aspect-4/5 overflow-hidden rounded-[26px] border border-[#f4ece0]/12">
             <Image src={service.image} alt={service.title} fill sizes="(min-width: 1024px) 30vw, 100vw" className="object-cover" />
@@ -357,7 +365,9 @@ function ServiceSection({ service }: { service: (typeof services)[number] }) {
           </ul>
         </div>
 
-        <Receipt service={service} />
+        <div className="md:col-span-2 lg:col-span-1">
+          <Receipt service={service} />
+        </div>
       </div>
     </section>
   );
@@ -365,7 +375,7 @@ function ServiceSection({ service }: { service: (typeof services)[number] }) {
 
 function Receipt({ service }: { service: (typeof services)[number] }) {
   return (
-    <div className="-rotate-1 rounded-t bg-[#f4ece0] px-6 pb-8 pt-7 text-[#241d14] shadow-2xl shadow-black/35">
+    <div className="rounded-t bg-[#f4ece0] px-5 pb-8 pt-7 text-[#241d14] shadow-2xl shadow-black/35 sm:-rotate-1 sm:px-6">
       <div className="flex items-baseline justify-between gap-4 border-b border-dashed border-[#241d14]/35 pb-4">
         <span className="font-mono text-[11px] uppercase tracking-[0.12em] text-[#7a6b52]">Hóa đơn giá trị</span>
         <span className="font-heading text-sm font-bold">{service.receiptName}</span>
