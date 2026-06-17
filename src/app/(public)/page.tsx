@@ -1,21 +1,17 @@
 import {
   ArrowRight,
-  Camera,
   CheckCircle2,
   ChevronDown,
-  Clapperboard,
-  Images,
-  MessageCircle,
   Star,
 } from "lucide-react";
 import Image from "next/image";
 import type { ReactNode } from "react";
 import { ButtonLink } from "@/components/ui";
 
-const heroStats = [
-  ["12+", "concept được dựng mỗi tháng"],
-  ["48h", "trả album chọn ảnh online"],
-  ["1:1", "brief riêng cho từng khách"],
+const heroProofs = [
+  "Concept rõ trước khi chụp",
+  "Có hướng dẫn tạo dáng",
+  "Chọn ảnh online trong 48h",
 ];
 
 const serviceCards = [
@@ -124,60 +120,51 @@ export default function HomePage() {
           sizes="100vw"
           className="object-cover opacity-42"
         />
-        <div className="absolute inset-0 bg-gradient-to-b from-[#07080a]/45 via-[#07080a]/82 to-[#07080a]" />
-        <div className="relative mx-auto grid min-h-[760px] max-w-7xl items-end gap-10 px-4 pb-16 pt-20 sm:px-6 lg:grid-cols-[0.95fr_1.05fr] lg:px-8">
-          <div className="pb-2">
-            <Image src="/brand/tlora-logo.png" alt="TLORA Studio" width={1536} height={1024} priority className="h-auto w-full max-w-sm object-contain" />
-            <p className="mt-8 text-sm font-semibold uppercase tracking-[0.18em] text-[#d8b766]">Nơi cá tính trở thành nghệ thuật</p>
-            <h1 className="mt-4 max-w-3xl font-heading text-5xl font-extrabold leading-tight text-white md:text-7xl">
-              Chụp ảnh concept cao cấp cho cá nhân, gia đình và thương hiệu.
+        <div className="absolute inset-0 bg-linear-to-r from-[#07080a]/95 via-[#07080a]/72 to-[#07080a]/30" />
+        <div className="absolute inset-x-0 bottom-0 h-48 bg-linear-to-t from-[#07080a] to-transparent" />
+        <div className="relative mx-auto grid min-h-175 max-w-7xl items-center gap-12 px-4 py-16 sm:px-6 lg:grid-cols-[0.92fr_0.8fr] lg:px-8">
+          <div>
+            <Image src="/brand/tlora-logo.png" alt="TLORA Studio" width={1536} height={1024} priority className="h-auto w-52 object-contain sm:w-60" />
+            <p className="mt-10 text-xs font-semibold uppercase tracking-[0.22em] text-[#d8b766]">TLORA Studio</p>
+            <h1 className="mt-4 max-w-2xl font-heading text-4xl font-extrabold leading-tight text-white sm:text-5xl lg:text-6xl">
+              Ảnh chân dung có concept, có cảm xúc, có mục đích.
             </h1>
-            <p className="mt-5 max-w-2xl text-lg leading-8 text-zinc-300">
-              TLORA xây dựng buổi chụp như một trải nghiệm trọn gói: tư vấn concept, setup studio, hướng dẫn tạo dáng, chọn ảnh online và retouch theo ghi chú.
+            <p className="mt-5 max-w-xl text-base leading-7 text-zinc-300 sm:text-lg">
+              TLORA chuẩn bị ánh sáng, tạo dáng và hậu kỳ để bạn có bộ ảnh dùng được cho hồ sơ cá nhân, gia đình hoặc thương hiệu.
             </p>
-            <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+            <div className="mt-7 flex flex-col gap-3 sm:flex-row">
               <ButtonLink href="/bang-gia">
-                Xem gói chụp <ArrowRight size={16} />
+                Đặt lịch tư vấn <ArrowRight size={16} />
               </ButtonLink>
-              <ButtonLink href="/cong-khach-hang" className="border border-white/10 bg-white/[0.06] text-white shadow-none hover:bg-white/10">
-                Vào album khách hàng
+              <ButtonLink href="/cong-khach-hang" className="border border-white/10 bg-white/6 text-white shadow-none hover:bg-white/10">
+                Xem album khách
               </ButtonLink>
             </div>
-            <div className="mt-8 grid gap-3 sm:grid-cols-3">
-              {heroStats.map(([value, label]) => (
-                <div key={label} className="rounded-md border border-white/10 bg-black/30 p-4">
-                  <p className="text-2xl font-extrabold text-[#f3d88e]">{value}</p>
-                  <p className="mt-1 text-xs font-medium leading-5 text-zinc-400">{label}</p>
+            <div className="mt-7 flex flex-wrap gap-3">
+              {heroProofs.map((proof) => (
+                <div key={proof} className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-black/30 px-4 py-2 text-sm font-semibold text-zinc-100">
+                  <CheckCircle2 size={16} className="text-[#d8b766]" />
+                  {proof}
                 </div>
               ))}
             </div>
           </div>
 
-          <div className="rounded-lg border border-white/10 bg-[#101115]/92 p-4 shadow-2xl shadow-black/35 backdrop-blur">
-            <div className="grid gap-4 lg:grid-cols-[0.78fr_1.22fr]">
-              <div className="space-y-3">
-                <StudioControl title="Brief cá nhân" icon={MessageCircle} items={["Mục đích sử dụng ảnh", "Phong cách mong muốn", "Trang phục và makeup"]} active />
-                <StudioControl title="Set chụp" icon={Clapperboard} items={["Ánh sáng", "Phông nền", "Đạo cụ"]} />
-                <StudioControl title="Bàn giao" icon={Images} items={["Album online", "Ghi chú retouch", "File hoàn thiện"]} />
-              </div>
-              <div className="overflow-hidden rounded-md border border-white/10 bg-black">
-                <div className="grid grid-cols-2 gap-px bg-white/10">
-                  {[
-                    "https://images.unsplash.com/photo-1496440737103-cd596325d314?auto=format&fit=crop&w=800&q=82",
-                    "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=800&q=82",
-                  ].map((src, index) => (
-                    <div key={src} className="relative aspect-[4/5] bg-zinc-900">
-                      <Image src={src} alt={`Ảnh concept TLORA ${index + 1}`} fill sizes="(min-width: 1024px) 320px, 50vw" className="object-cover" />
-                      <span className="absolute left-3 top-3 rounded-full bg-black/65 px-3 py-1 text-xs font-semibold text-white">
-                        {index === 0 ? "Trước buổi chụp" : "Concept hoàn thiện"}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-                <div className="border-t border-white/10 p-4">
-                  <p className="text-sm font-semibold text-white">Một buổi chụp được chuẩn bị như một dự án hình ảnh riêng.</p>
-                  <p className="mt-2 text-xs leading-5 text-zinc-400">Từ brief, moodboard đến album bàn giao đều được gom về một quy trình dễ theo dõi.</p>
-                </div>
+          <div className="relative overflow-hidden rounded-lg border border-white/10 bg-black shadow-2xl shadow-black/35">
+            <div className="relative aspect-4/5 min-h-120">
+              <Image
+                src="https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=900&q=85"
+                alt="Ảnh chân dung concept tại TLORA Studio"
+                fill
+                sizes="(min-width: 1024px) 520px, 100vw"
+                className="object-cover"
+              />
+              <div className="absolute inset-0 bg-linear-to-t from-black/85 via-black/20 to-transparent" />
+              <div className="absolute inset-x-5 bottom-5">
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#d8b766]">Studio portrait</p>
+                <p className="mt-2 max-w-sm font-heading text-2xl font-extrabold leading-tight text-white">
+                  Một buổi chụp được chuẩn bị để bạn bước vào khung hình tự tin hơn.
+                </p>
               </div>
             </div>
           </div>
@@ -187,8 +174,8 @@ export default function HomePage() {
       <DarkSection eyebrow="Dịch vụ studio" title="Concept được thiết kế cho từng mục tiêu hình ảnh" description="Mỗi gói chụp bắt đầu từ nhu cầu thật: ảnh cá nhân, ảnh gia đình, hồ sơ doanh nghiệp hoặc lookbook thương hiệu.">
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           {serviceCards.map((card) => (
-            <article key={card.title} className="overflow-hidden rounded-lg border border-white/10 bg-white/[0.04] shadow-xl shadow-black/20">
-              <div className="relative aspect-[4/5]">
+            <article key={card.title} className="overflow-hidden rounded-lg border border-white/10 bg-white/4 shadow-xl shadow-black/20">
+              <div className="relative aspect-4/5">
                 <Image src={card.image} alt={card.title} fill sizes="(min-width: 1024px) 25vw, 50vw" className="object-cover" />
               </div>
               <div className="p-4">
@@ -204,9 +191,9 @@ export default function HomePage() {
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-6">
           {styleCards.map((style) => (
             <article key={style.title} className="group overflow-hidden rounded-lg border border-white/10 bg-[#101115]">
-              <div className="relative aspect-[3/4]">
+              <div className="relative aspect-3/4">
                 <Image src={style.image} alt={style.title} fill sizes="(min-width: 1024px) 16vw, 50vw" className="object-cover transition duration-500 group-hover:scale-105" />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
+                <div className="absolute inset-0 bg-linear-to-t from-black/80 via-transparent to-transparent" />
                 <h3 className="absolute bottom-3 left-3 right-3 text-sm font-bold text-white">{style.title}</h3>
               </div>
             </article>
@@ -214,7 +201,7 @@ export default function HomePage() {
         </div>
       </DarkSection>
 
-      <section className="border-y border-white/10 bg-white/[0.025] px-4 py-16 sm:px-6 lg:px-8">
+      <section className="border-y border-white/10 bg-white/2.5 px-4 py-16 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-6xl text-center">
           <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#d8b766]">Trước khi chụp</p>
           <h2 className="mt-3 font-heading text-3xl font-extrabold text-white md:text-5xl">Không chỉ là ảnh đẹp, mà là hình ảnh dùng được lâu dài</h2>
@@ -241,7 +228,7 @@ export default function HomePage() {
                   ))}
                 </ul>
               </div>
-              <div className="relative aspect-[16/10] overflow-hidden rounded-lg border border-white/10 bg-zinc-900 shadow-2xl shadow-black/20">
+              <div className="relative aspect-16/10 overflow-hidden rounded-lg border border-white/10 bg-zinc-900 shadow-2xl shadow-black/20">
                 <Image src={feature.image} alt={feature.title} fill sizes="(min-width: 1024px) 50vw, 100vw" className="object-cover" />
               </div>
             </div>
@@ -265,7 +252,7 @@ export default function HomePage() {
       <DarkSection eyebrow="Quy trình" title="Cách một bộ ảnh TLORA được thực hiện" description="Từ brief đến bàn giao file, mỗi bước đều có đầu việc rõ ràng để khách dễ theo dõi và ekip dễ xử lý.">
         <div className="grid gap-4 md:grid-cols-5">
           {processSteps.map(([step, title, description]) => (
-            <article key={step} className="rounded-lg border border-white/10 bg-white/[0.04] p-5">
+            <article key={step} className="rounded-lg border border-white/10 bg-white/4 p-5">
               <p className="text-2xl font-extrabold text-[#d8b766]">{step}</p>
               <h3 className="mt-4 font-bold text-white">{title}</h3>
               <p className="mt-2 text-sm leading-6 text-zinc-400">{description}</p>
@@ -317,43 +304,12 @@ export default function HomePage() {
             <ButtonLink href="/bang-gia">
               Xem bảng giá <ArrowRight size={16} />
             </ButtonLink>
-            <ButtonLink href="/tin-tuc" className="border border-white/10 bg-white/[0.06] text-white shadow-none hover:bg-white/10">
+            <ButtonLink href="/tin-tuc" className="border border-white/10 bg-white/6 text-white shadow-none hover:bg-white/10">
               Đọc hướng dẫn chuẩn bị
             </ButtonLink>
           </div>
         </div>
       </section>
-    </div>
-  );
-}
-
-function StudioControl({
-  title,
-  icon: Icon,
-  items,
-  active = false,
-}: {
-  title: string;
-  icon: typeof Camera;
-  items: string[];
-  active?: boolean;
-}) {
-  return (
-    <div className={`rounded-md border p-4 ${active ? "border-[#d8b766]/40 bg-[#d8b766]/10" : "border-white/10 bg-black/25"}`}>
-      <div className="flex items-center gap-3">
-        <span className="grid size-9 place-items-center rounded-md bg-black/30 text-[#d8b766]">
-          <Icon size={18} />
-        </span>
-        <h3 className="font-bold text-white">{title}</h3>
-      </div>
-      <div className="mt-4 space-y-2">
-        {items.map((item) => (
-          <div key={item} className="flex items-center gap-2 text-xs font-medium text-zinc-300">
-            <span className="size-1.5 rounded-full bg-[#d8b766]" />
-            {item}
-          </div>
-        ))}
-      </div>
     </div>
   );
 }
