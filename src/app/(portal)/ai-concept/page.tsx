@@ -42,7 +42,7 @@ export default async function AiConceptPage() {
   }
 
   return (
-    <main className="min-h-screen bg-[#07080a] px-4 py-8 text-white sm:px-6 lg:px-8">
+    <main className="min-h-screen bg-[#07080a] text-white">
       <AiConceptStudio
         user={user ? { email: user.email || "", id: user.id } : null}
         initialBalanceVnd={profile?.credit_balance_vnd || 0}
