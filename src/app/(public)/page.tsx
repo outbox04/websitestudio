@@ -1,312 +1,315 @@
-import {
-  ArrowRight,
-  CheckCircle2,
-  ChevronDown,
-  Star,
-} from "lucide-react";
+import { ArrowRight, Check, ChevronDown } from "lucide-react";
 import Image from "next/image";
-import type { ReactNode } from "react";
-import { ButtonLink } from "@/components/ui";
+import Link from "next/link";
 
-const heroProofs = [
-  "Concept rõ trước khi chụp",
-  "Có hướng dẫn tạo dáng",
+const trustItems = [
+  "Tư vấn concept trước khi chụp",
   "Chọn ảnh online trong 48h",
+  "Hậu kỳ kiểm soát từng file",
 ];
 
-const serviceCards = [
+const services = [
   {
-    title: "Chân dung cá nhân",
-    description: "Ảnh profile, beauty portrait và hình ảnh cá nhân có định hướng rõ về phong thái.",
-    image: "https://images.unsplash.com/photo-1496440737103-cd596325d314?auto=format&fit=crop&w=900&q=82",
+    id: "sinh-nhat",
+    index: "01",
+    label: "SINH NHẬT",
+    title: "Một buổi chụp sinh nhật không chỉ là thổi nến",
+    description:
+      "TLORA dựng concept theo đúng tính cách và cột mốc tuổi của bạn. Màu sắc, set trang trí và trang phục đều kể một câu chuyện, không phải đứng cạnh phông nền có sẵn.",
+    who: "Dành cho ai đang đánh dấu một tuổi mới, một mốc quan trọng, muốn lưu lại bằng ảnh thay vì chỉ video ngắn.",
+    mood: "MOOD - Pop màu, tuổi mới",
+    image: "https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=1000&q=82",
+    accent: "#E8704F",
+    soft: "rgba(232,112,79,0.14)",
+    chips: ["18 / 22 / 30 tuổi", "Cá nhân hoặc gia đình"],
+    features: [
+      "Tư vấn theme và bảng màu riêng theo cá tính",
+      "Set trang trí dựng theo tuổi hoặc chủ đề đã chọn",
+      "Hướng dẫn tạo dáng tại chỗ, không cần kinh nghiệm",
+    ],
+    receiptName: "SINH NHẬT CONCEPT",
+    items: [
+      ["Tư vấn chọn theme và màu sắc riêng", "1 buổi"],
+      ["Set dựng theo tuổi / chủ đề", "1 set"],
+      ["Trang phục thay đổi", "2 lượt"],
+      ["Photographer đồng hành tại set", "60-90 phút"],
+      ["Chọn ảnh online riêng tư", "48h"],
+      ["Ảnh đã retouch bàn giao", "15 ảnh"],
+    ],
+    value: "2.350.000đ",
+    price: "1.490.000đ",
   },
   {
-    title: "Gia đình và couple",
-    description: "Bố cục gần gũi, ánh sáng mềm, màu ảnh sang và album riêng để cả nhà cùng chọn.",
-    image: "https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=900&q=82",
+    id: "beauty",
+    index: "02",
+    label: "BEAUTY",
+    title: "Một bộ ảnh để bạn thấy phiên bản đẹp nhất của mình",
+    description:
+      "Ánh sáng beauty chuẩn editorial, da được giữ nguyên chất nhưng sáng và mịn hơn dưới hậu kỳ tay nghề. Ảnh đẹp hơn, nhưng vẫn là bạn.",
+    who: "Dành cho ai cần ảnh profile, ảnh cá nhân chỉn chu, hoặc đơn giản là muốn một lần được chụp đúng nghĩa đẹp thật.",
+    mood: "MOOD - Beauty editorial",
+    image: "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=1000&q=82",
+    accent: "#C99A5E",
+    soft: "rgba(201,154,94,0.16)",
+    chips: ["Profile cá nhân", "Da sáng, tự nhiên"],
+    features: [
+      "Tư vấn concept beauty theo gu cá nhân",
+      "Hướng dẫn skincare và chuẩn bị da trước buổi chụp",
+      "Retouch da tự nhiên, không làm sai khác gương mặt",
+    ],
+    receiptName: "BEAUTY CONCEPT",
+    items: [
+      ["Tư vấn concept beauty theo gu cá nhân", "1 buổi"],
+      ["Hướng dẫn chuẩn bị da trước chụp", "checklist"],
+      ["Set ánh sáng beauty chuẩn editorial", "1 set"],
+      ["Photographer đồng hành tại set", "45-60 phút"],
+      ["Chọn ảnh online riêng tư", "48h"],
+      ["Ảnh retouch da tự nhiên bàn giao", "10 ảnh"],
+    ],
+    value: "1.980.000đ",
+    price: "1.290.000đ",
   },
   {
-    title: "Lookbook thương hiệu",
-    description: "Set chụp phục vụ sản phẩm, thời trang, profile doanh nghiệp và chiến dịch nội dung.",
-    image: "https://images.unsplash.com/photo-1509631179647-0177331693ae?auto=format&fit=crop&w=900&q=82",
-  },
-  {
-    title: "Retouch hậu kỳ",
-    description: "Da, dáng, màu và chi tiết được xử lý theo ghi chú, giữ tinh thần tự nhiên của ảnh.",
-    image: "https://images.unsplash.com/photo-1512316609839-ce289d3eba0a?auto=format&fit=crop&w=900&q=82",
-  },
-];
-
-const styleCards = [
-  {
-    title: "Clean Beauty",
-    image: "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=700&q=82",
-  },
-  {
-    title: "Editorial",
-    image: "https://images.unsplash.com/photo-1509967419530-da38b4704bc6?auto=format&fit=crop&w=700&q=82",
-  },
-  {
-    title: "Business Portrait",
-    image: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=700&q=82",
-  },
-  {
-    title: "Family Classic",
-    image: "https://images.unsplash.com/photo-1529634806980-85c3dd6d34ac?auto=format&fit=crop&w=700&q=82",
-  },
-  {
-    title: "Korean Profile",
-    image: "https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=700&q=82",
-  },
-  {
-    title: "Luxury Mood",
-    image: "https://images.unsplash.com/photo-1502716119720-b23a93e5fe1b?auto=format&fit=crop&w=700&q=82",
-  },
-];
-
-const featureSections = [
-  {
-    title: "Tư vấn concept trước buổi chụp",
-    description: "TLORA chuẩn bị moodboard, trang phục, makeup và hướng tạo dáng để khách bước vào set chụp với tâm thế rõ ràng.",
-    image: "https://images.unsplash.com/photo-1554080353-a576cf803bda?auto=format&fit=crop&w=1000&q=82",
-    points: ["Moodboard theo cá tính", "Checklist trang phục", "Trao đổi trước lịch chụp"],
-  },
-  {
-    title: "Không gian studio tối ưu ánh sáng",
-    description: "Set đèn, phông nền và đạo cụ được bố trí theo từng concept, tạo hình ảnh sạch, sang và nhất quán.",
-    image: "https://images.unsplash.com/photo-1604014237800-1c9102c219da?auto=format&fit=crop&w=1000&q=82",
-    points: ["Ánh sáng mềm", "Nhiều nền chụp", "Điều phối ekip tại set"],
-  },
-  {
-    title: "Chọn ảnh và ghi chú trực tuyến",
-    description: "Sau buổi chụp, khách nhận album riêng để xem ảnh, đánh dấu ảnh cần chỉnh và nhập ghi chú cho từng file.",
-    image: "https://images.unsplash.com/photo-1497366754035-f200968a6e72?auto=format&fit=crop&w=1000&q=82",
-    points: ["Album riêng tư", "Ghi chú theo từng ảnh", "Tải file khi được mở quyền"],
+    id: "concept",
+    index: "03",
+    label: "CONCEPT TRANG PHỤC",
+    title: "Bước vào một câu chuyện thời trang do bạn chọn",
+    description:
+      "Từ business, editorial, vintage đến color-pop, mỗi mood là một bối cảnh ánh sáng riêng, không phải đổi áo rồi chụp lại cùng một góc.",
+    who: "Dành cho ai cần ảnh lookbook, ảnh cá nhân để làm nội dung, hoặc muốn thử một phiên bản phong cách khác của mình.",
+    mood: "MOOD - Lookbook tối giản",
+    image: "https://images.unsplash.com/photo-1509631179647-0177331693ae?auto=format&fit=crop&w=1000&q=82",
+    accent: "#3E6B5E",
+    soft: "rgba(62,107,94,0.18)",
+    chips: ["Content / cá nhân", "2-3 set bối cảnh"],
+    features: [
+      "Moodboard và tư vấn phong cách trước buổi chụp",
+      "2-3 set bối cảnh hoặc ánh sáng khác nhau trong một buổi",
+      "Đạo diễn tạo dáng tại chỗ theo từng mood",
+    ],
+    receiptName: "CONCEPT TRANG PHỤC",
+    items: [
+      ["Moodboard và tư vấn phong cách", "1 buổi"],
+      ["Set bối cảnh / ánh sáng khác nhau", "2-3 set"],
+      ["Trang phục thay đổi", "2-3 lượt"],
+      ["Photographer đồng hành tại set", "90-120 phút"],
+      ["Chọn ảnh online riêng tư", "48h"],
+      ["Ảnh retouch theo mood bàn giao", "20 ảnh"],
+    ],
+    value: "3.150.000đ",
+    price: "1.990.000đ",
   },
 ];
 
 const processSteps = [
-  ["01", "Tư vấn brief", "Chọn mục tiêu hình ảnh, phong cách, trang phục và thời lượng phù hợp."],
-  ["02", "Chuẩn bị set chụp", "TLORA lên moodboard, setup ánh sáng, makeup và điều phối ekip."],
-  ["03", "Chụp tại studio", "Photographer hướng dẫn tạo dáng, chỉnh chi tiết và kiểm tra ảnh ngay tại set."],
-  ["04", "Chọn ảnh online", "Khách nhận album riêng, chọn ảnh cần retouch và để lại ghi chú cụ thể."],
-  ["05", "Retouch và bàn giao", "File hoàn thiện được upload vào album, khách tải về khi quy trình hoàn tất."],
+  ["01", "Tư vấn và chọn concept", "Chọn mục tiêu hình ảnh, phong cách, trang phục và thời lượng phù hợp."],
+  ["02", "Chuẩn bị set và moodboard", "TLORA lên moodboard, setup ánh sáng, makeup và đạo cụ theo concept đã chốt."],
+  ["03", "Chụp tại studio", "Photographer hướng dẫn tạo dáng trực tiếp, chỉnh kịp thời tại set."],
+  ["04", "Chọn ảnh online", "Khách nhận album riêng, chấm và ghi chú chỉnh sửa cho từng file."],
+  ["05", "Retouch và bàn giao", "File hoàn thiện được upload vào album, khách tải về theo đúng ghi chú."],
 ];
 
-const reasons = [
-  "Concept được cá nhân hóa theo tính cách, nghề nghiệp và mục đích sử dụng.",
-  "Quy trình chọn ảnh trực tuyến giúp giảm nhắn tin qua lại và tránh sót ghi chú.",
-  "Màu ảnh, ánh sáng và retouch được giữ nhất quán trong toàn bộ album.",
-  "Khách luôn biết mình đang ở bước nào: đã chọn, cần chỉnh, file đã hoàn thiện.",
+const whyCards = [
+  ["Tư vấn dễ hiểu", "Không dùng thuật ngữ khó hiểu, mọi lựa chọn đều gắn với mục đích sử dụng ảnh thật."],
+  ["Tạo dáng tự nhiên", "Photographer hướng dẫn trực tiếp tại chỗ, không bắt khách tự dò kiểu ảnh mẫu trên mạng."],
+  ["Hậu kỳ có kiểm soát", "Retouch giữ nét gương mặt thật, không làm khách cảm thấy ảnh xa lạ với chính mình."],
+];
+
+const moodCards = [
+  ["Pop Sinh Nhật", "Sinh nhật", "#E8704F", "https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=800&q=82"],
+  ["Vintage Tuổi Mới", "Sinh nhật", "#E8704F", "https://images.unsplash.com/photo-1512316609839-ce289d3eba0a?auto=format&fit=crop&w=800&q=82"],
+  ["Clean Beauty", "Beauty", "#C99A5E", "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=800&q=82"],
+  ["Editorial Beauty", "Beauty", "#C99A5E", "https://images.unsplash.com/photo-1496440737103-cd596325d314?auto=format&fit=crop&w=800&q=82"],
+  ["Lookbook Tối Giản", "Concept", "#3E6B5E", "https://images.unsplash.com/photo-1509631179647-0177331693ae?auto=format&fit=crop&w=800&q=82"],
+  ["Color Block", "Concept", "#3E6B5E", "https://images.unsplash.com/photo-1509967419530-da38b4704bc6?auto=format&fit=crop&w=800&q=82"],
 ];
 
 const faqs = [
-  ["Tôi chưa biết chọn concept nào thì sao?", "TLORA sẽ tư vấn dựa trên mục tiêu sử dụng ảnh, phong cách cá nhân và ngân sách của bạn."],
-  ["Bao lâu có ảnh để chọn?", "Thông thường album chọn ảnh được gửi trong 24-48 giờ sau buổi chụp, tùy số lượng file."],
-  ["Tôi có thể ghi chú chỉnh sửa từng ảnh không?", "Có. Album khách hàng cho phép bạn nhập ghi chú riêng cho từng ảnh cần retouch."],
-  ["Khi nào tải được file gốc hoặc file đã chỉnh?", "Quyền tải sẽ được studio mở theo từng album sau khi hoàn tất thanh toán hoặc bàn giao."],
-  ["TLORA có chụp lookbook cho thương hiệu không?", "Có. Studio nhận lookbook, profile doanh nghiệp, campaign nội dung và ảnh sản phẩm có người mẫu."],
+  ["Tôi chưa biết chọn concept nào thì sao?", "TLORA tư vấn dựa trên mục đích dùng ảnh và tính cách của bạn trước khi chốt mood, trang phục và bối cảnh. Bạn không cần tự nghĩ ra concept từ đầu."],
+  ["Buổi chụp kéo dài bao lâu?", "Tùy dịch vụ: 60-90 phút cho Sinh nhật, 45-60 phút cho Beauty, 90-120 phút cho Concept trang phục có nhiều set bối cảnh."],
+  ["Tôi có thể đổi trang phục bao nhiêu lần?", "Mỗi dịch vụ có số lượt đổi trang phục cụ thể, được ghi rõ trong hóa đơn giá trị của từng concept ở trên."],
+  ["Ảnh có được chỉnh sửa da tự nhiên không?", "Có. TLORA retouch giữ nét gương mặt thật, chỉ làm sáng và mịn da hợp lý, không thay đổi cấu trúc khuôn mặt."],
+  ["Bao lâu thì nhận được ảnh?", "Khách chọn ảnh online trong 48h sau buổi chụp, ảnh đã retouch được bàn giao theo lịch hẹn cụ thể tại buổi tư vấn."],
 ];
 
 export default function HomePage() {
   return (
-    <div className="bg-[#07080a] text-white">
-      <section className="relative overflow-hidden border-b border-white/10">
-        <Image
-          src="https://images.unsplash.com/photo-1554080353-a576cf803bda?auto=format&fit=crop&w=1800&q=85"
-          alt="Không gian studio chụp ảnh TLORA"
-          fill
-          priority
-          sizes="100vw"
-          className="object-cover opacity-42"
-        />
-        <div className="absolute inset-0 bg-linear-to-r from-[#07080a]/95 via-[#07080a]/72 to-[#07080a]/30" />
-        <div className="absolute inset-x-0 bottom-0 h-48 bg-linear-to-t from-[#07080a] to-transparent" />
-        <div className="relative mx-auto grid min-h-175 max-w-7xl items-center gap-12 px-4 py-16 sm:px-6 lg:grid-cols-[0.92fr_0.8fr] lg:px-8">
-          <div>
-            <Image src="/brand/tlora-logo.png" alt="TLORA Studio" width={1536} height={1024} priority className="h-auto w-52 object-contain sm:w-60" />
-            <p className="mt-10 text-xs font-semibold uppercase tracking-[0.22em] text-[#d8b766]">TLORA Studio</p>
-            <h1 className="mt-4 max-w-2xl font-heading text-4xl font-extrabold leading-tight text-white sm:text-5xl lg:text-6xl">
-              Ảnh chân dung có concept, có cảm xúc, có mục đích.
-            </h1>
-            <p className="mt-5 max-w-xl text-base leading-7 text-zinc-300 sm:text-lg">
-              TLORA chuẩn bị ánh sáng, tạo dáng và hậu kỳ để bạn có bộ ảnh dùng được cho hồ sơ cá nhân, gia đình hoặc thương hiệu.
-            </p>
-            <div className="mt-7 flex flex-col gap-3 sm:flex-row">
-              <ButtonLink href="/bang-gia">
-                Đặt lịch tư vấn <ArrowRight size={16} />
-              </ButtonLink>
-              <ButtonLink href="/cong-khach-hang" className="border border-white/10 bg-white/6 text-white shadow-none hover:bg-white/10">
-                Xem album khách
-              </ButtonLink>
-            </div>
-            <div className="mt-7 flex flex-wrap gap-3">
-              {heroProofs.map((proof) => (
-                <div key={proof} className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-black/30 px-4 py-2 text-sm font-semibold text-zinc-100">
-                  <CheckCircle2 size={16} className="text-[#d8b766]" />
-                  {proof}
-                </div>
-              ))}
-            </div>
+    <div className="bg-[#14110f] text-[#f4ece0]">
+      <section className="relative overflow-hidden px-4 py-20 sm:px-6 lg:px-8 lg:py-28">
+        <div className="pointer-events-none absolute -right-28 -top-28 size-96 rounded-full border border-[#f4ece0]/10 opacity-60 lg:size-[480px]" />
+        <div className="pointer-events-none absolute right-0 top-0 h-full w-1/2 bg-radial-[circle_at_top_right] from-[#c99a5e]/16 to-transparent" />
+        <div className="relative mx-auto max-w-6xl">
+          <Image src="/brand/tlora-logo.png" alt="TLORA Studio" width={1536} height={1024} priority className="h-auto w-52 object-contain sm:w-64" />
+          <Eyebrow className="mt-10">Studio concept - không cưới, chỉ có bạn</Eyebrow>
+          <h1 className="max-w-4xl font-heading text-4xl font-extrabold leading-tight text-[#f4ece0] sm:text-5xl lg:text-7xl">
+            Mỗi set chụp là <span className="italic text-[#c99a5e]">một concept</span>
+            <br />
+            dựng riêng cho bạn.
+          </h1>
+          <p className="mt-6 max-w-2xl text-base leading-8 text-[#cbc0b0] sm:text-lg">
+            TLORA không chụp đại trà. Ba dịch vụ, một tiêu chuẩn duy nhất: ảnh nhận về phải xứng đáng với số tiền bạn bỏ ra.
+          </p>
+          <div className="mt-9 flex flex-col gap-3 sm:flex-row">
+            <PillLink href="/bang-gia" tone="light">
+              Đặt lịch tư vấn <ArrowRight size={16} />
+            </PillLink>
+            <PillLink href="#mood">Xem mood ảnh mẫu</PillLink>
           </div>
-
-          <div className="relative overflow-hidden rounded-lg border border-white/10 bg-black shadow-2xl shadow-black/35">
-            <div className="relative aspect-4/5 min-h-120">
-              <Image
-                src="https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=900&q=85"
-                alt="Ảnh chân dung concept tại TLORA Studio"
-                fill
-                sizes="(min-width: 1024px) 520px, 100vw"
-                className="object-cover"
-              />
-              <div className="absolute inset-0 bg-linear-to-t from-black/85 via-black/20 to-transparent" />
-              <div className="absolute inset-x-5 bottom-5">
-                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#d8b766]">Studio portrait</p>
-                <p className="mt-2 max-w-sm font-heading text-2xl font-extrabold leading-tight text-white">
-                  Một buổi chụp được chuẩn bị để bạn bước vào khung hình tự tin hơn.
-                </p>
-              </div>
-            </div>
+          <div className="mt-12 flex flex-wrap items-center gap-3">
+            <span className="font-mono text-xs uppercase tracking-[0.14em] text-[#8c8174]">Bạn đang tìm gì?</span>
+            {services.map((service) => (
+              <a
+                key={service.id}
+                href={`#${service.id}`}
+                className="rounded-full border border-[#f4ece0]/12 px-4 py-2 text-sm font-semibold text-[#f4ece0] transition hover:-translate-y-0.5"
+                style={{ backgroundColor: service.soft, borderColor: service.accent }}
+              >
+                <span className="mr-2 inline-block size-2 rounded-full align-middle" style={{ backgroundColor: service.accent }} />
+                {service.label === "CONCEPT TRANG PHỤC" ? "Concept trang phục" : service.label.charAt(0) + service.label.slice(1).toLowerCase()}
+              </a>
+            ))}
           </div>
+          <ul className="mt-9 flex flex-wrap gap-x-8 gap-y-3 border-t border-[#f4ece0]/12 pt-6">
+            {trustItems.map((item) => (
+              <li key={item} className="flex items-center gap-2 text-sm text-[#cbc0b0]">
+                <Check size={16} className="text-[#c99a5e]" />
+                {item}
+              </li>
+            ))}
+          </ul>
         </div>
       </section>
 
-      <DarkSection eyebrow="Dịch vụ studio" title="Concept được thiết kế cho từng mục tiêu hình ảnh" description="Mỗi gói chụp bắt đầu từ nhu cầu thật: ảnh cá nhân, ảnh gia đình, hồ sơ doanh nghiệp hoặc lookbook thương hiệu.">
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          {serviceCards.map((card) => (
-            <article key={card.title} className="overflow-hidden rounded-lg border border-white/10 bg-white/4 shadow-xl shadow-black/20">
-              <div className="relative aspect-4/5">
-                <Image src={card.image} alt={card.title} fill sizes="(min-width: 1024px) 25vw, 50vw" className="object-cover" />
-              </div>
-              <div className="p-4">
-                <h3 className="font-bold text-white">{card.title}</h3>
-                <p className="mt-2 text-sm leading-6 text-zinc-400">{card.description}</p>
-              </div>
-            </article>
-          ))}
-        </div>
-      </DarkSection>
-
-      <DarkSection eyebrow="Phong cách nổi bật" title="Chọn mood ảnh trước khi bước vào set chụp" description="Các hướng hình ảnh phổ biến giúp khách dễ hình dung tone, ánh sáng, trang phục và mức độ retouch mong muốn.">
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-6">
-          {styleCards.map((style) => (
-            <article key={style.title} className="group overflow-hidden rounded-lg border border-white/10 bg-[#101115]">
-              <div className="relative aspect-3/4">
-                <Image src={style.image} alt={style.title} fill sizes="(min-width: 1024px) 16vw, 50vw" className="object-cover transition duration-500 group-hover:scale-105" />
-                <div className="absolute inset-0 bg-linear-to-t from-black/80 via-transparent to-transparent" />
-                <h3 className="absolute bottom-3 left-3 right-3 text-sm font-bold text-white">{style.title}</h3>
-              </div>
-            </article>
-          ))}
-        </div>
-      </DarkSection>
-
-      <section className="border-y border-white/10 bg-white/2.5 px-4 py-16 sm:px-6 lg:px-8">
-        <div className="mx-auto max-w-6xl text-center">
-          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#d8b766]">Trước khi chụp</p>
-          <h2 className="mt-3 font-heading text-3xl font-extrabold text-white md:text-5xl">Không chỉ là ảnh đẹp, mà là hình ảnh dùng được lâu dài</h2>
-          <p className="mx-auto mt-4 max-w-3xl text-base leading-7 text-zinc-400">
-            Một bộ ảnh tốt có thể dùng cho hồ sơ cá nhân, thương hiệu, mạng xã hội, profile doanh nghiệp hoặc kỷ niệm gia đình. TLORA giúp bạn chuẩn bị đủ kỹ để ảnh vừa đẹp vừa đúng mục đích.
+      <section id="dich-vu" className="px-4 pb-10 pt-16 text-center sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-4xl">
+          <Eyebrow center>Dịch vụ studio</Eyebrow>
+          <h2 className="font-heading text-3xl font-extrabold text-[#f4ece0] md:text-5xl">Ba concept, một tiêu chuẩn giá trị</h2>
+          <p className="mx-auto mt-5 max-w-2xl text-base leading-7 text-[#cbc0b0]">
+            Không có gói chụp đại trà. Mỗi dịch vụ được tính đúng theo công sức bỏ vào: tư vấn, set dựng, trang phục, ánh sáng và hậu kỳ.
           </p>
         </div>
       </section>
 
-      <section className="px-4 py-16 sm:px-6 lg:px-8">
-        <div className="mx-auto grid max-w-6xl gap-14">
-          {featureSections.map((feature, index) => (
-            <div key={feature.title} className={`grid gap-8 lg:grid-cols-2 lg:items-center ${index % 2 === 1 ? "lg:[&>*:first-child]:order-2" : ""}`}>
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#d8b766]">Điểm mạnh {index + 1}</p>
-                <h2 className="mt-3 font-heading text-3xl font-extrabold text-white">{feature.title}</h2>
-                <p className="mt-4 text-sm leading-7 text-zinc-400">{feature.description}</p>
-                <ul className="mt-5 space-y-3">
-                  {feature.points.map((point) => (
-                    <li key={point} className="flex items-center gap-2 text-sm font-semibold text-zinc-200">
-                      <CheckCircle2 size={17} className="text-[#d8b766]" />
-                      {point}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-              <div className="relative aspect-16/10 overflow-hidden rounded-lg border border-white/10 bg-zinc-900 shadow-2xl shadow-black/20">
-                <Image src={feature.image} alt={feature.title} fill sizes="(min-width: 1024px) 50vw, 100vw" className="object-cover" />
-              </div>
-            </div>
-          ))}
+      {services.map((service) => (
+        <ServiceSection key={service.id} service={service} />
+      ))}
+
+      <section className="bg-[#1c1813] px-4 py-20 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-6xl text-center">
+          <Eyebrow center>Quy trình</Eyebrow>
+          <h2 className="font-heading text-3xl font-extrabold text-[#f4ece0] md:text-5xl">Từ lúc đặt lịch đến khi nhận ảnh</h2>
+          <p className="mx-auto mt-5 max-w-2xl text-base leading-7 text-[#cbc0b0]">
+            Năm bước, không có công đoạn nào bị giấu đi. Bạn biết mình đang ở đâu trong quy trình tại mọi thời điểm.
+          </p>
+          <div className="mt-12 grid overflow-hidden rounded-2xl border border-[#f4ece0]/12 bg-[#f4ece0]/12 md:grid-cols-5">
+            {processSteps.map(([step, title, description]) => (
+              <article key={step} className="bg-[#14110f] p-6 text-left">
+                <span className="font-mono text-xs text-[#8c8174]">{step}</span>
+                <h3 className="mt-5 font-heading text-lg font-bold text-[#f4ece0]">{title}</h3>
+                <p className="mt-3 text-sm leading-6 text-[#8c8174]">{description}</p>
+              </article>
+            ))}
+          </div>
         </div>
       </section>
-
-      <DarkSection eyebrow="Vì sao chọn TLORA" title="Một quy trình studio rõ ràng từ lúc đặt lịch đến khi tải file" description="Không để khách phải tự đoán mình cần chuẩn bị gì, chọn ảnh thế nào hoặc file đã chỉnh đang ở đâu.">
-        <div className="mx-auto grid max-w-5xl gap-4 md:grid-cols-2">
-          {reasons.map((reason, index) => (
-            <div key={reason} className="rounded-lg border border-white/10 bg-[#101115] p-5">
-              <div className="flex gap-4">
-                <span className="grid size-10 shrink-0 place-items-center rounded-full bg-[#d8b766] text-sm font-extrabold text-black">{index + 1}</span>
-                <p className="text-sm leading-7 text-zinc-300">{reason}</p>
-              </div>
-            </div>
-          ))}
-        </div>
-      </DarkSection>
-
-      <DarkSection eyebrow="Quy trình" title="Cách một bộ ảnh TLORA được thực hiện" description="Từ brief đến bàn giao file, mỗi bước đều có đầu việc rõ ràng để khách dễ theo dõi và ekip dễ xử lý.">
-        <div className="grid gap-4 md:grid-cols-5">
-          {processSteps.map(([step, title, description]) => (
-            <article key={step} className="rounded-lg border border-white/10 bg-white/4 p-5">
-              <p className="text-2xl font-extrabold text-[#d8b766]">{step}</p>
-              <h3 className="mt-4 font-bold text-white">{title}</h3>
-              <p className="mt-2 text-sm leading-6 text-zinc-400">{description}</p>
-            </article>
-          ))}
-        </div>
-      </DarkSection>
-
-      <DarkSection eyebrow="Tin tưởng" title="Khách hàng cần một ekip biết lắng nghe" description="TLORA giữ buổi chụp nhẹ nhàng, có hướng dẫn rõ ràng và tôn trọng cá tính riêng của từng người.">
-        <div className="mx-auto grid max-w-5xl gap-4 md:grid-cols-3">
-          {[
-            ["Tư vấn dễ hiểu", "Không dùng thuật ngữ khó, mọi lựa chọn đều gắn với mục đích sử dụng ảnh."],
-            ["Tạo dáng tự nhiên", "Photographer hướng dẫn từng chi tiết nhỏ để khách không bị cứng trước ống kính."],
-            ["Hậu kỳ có kiểm soát", "Retouch giữ nét riêng, không làm mất cấu trúc gương mặt hoặc cảm xúc của ảnh."],
-          ].map(([title, description]) => (
-            <article key={title} className="rounded-lg border border-white/10 bg-[#101115] p-5 text-center">
-              <Star className="mx-auto text-[#d8b766]" size={24} />
-              <h3 className="mt-4 font-bold text-white">{title}</h3>
-              <p className="mt-2 text-sm leading-6 text-zinc-400">{description}</p>
-            </article>
-          ))}
-        </div>
-      </DarkSection>
-
-      <DarkSection eyebrow="FAQ" title="Câu hỏi thường gặp" description="Những điều khách thường cần biết trước khi đặt lịch chụp tại TLORA Studio.">
-        <div className="mx-auto max-w-4xl space-y-3">
-          {faqs.map(([question, answer]) => (
-            <details key={question} className="group rounded-lg border border-white/10 bg-[#101115] p-4">
-              <summary className="flex cursor-pointer list-none items-center justify-between gap-4 text-sm font-semibold text-white">
-                {question}
-                <ChevronDown size={18} className="shrink-0 text-[#d8b766] transition group-open:rotate-180" />
-              </summary>
-              <p className="mt-3 text-sm leading-6 text-zinc-400">{answer}</p>
-            </details>
-          ))}
-        </div>
-      </DarkSection>
 
       <section className="px-4 py-20 sm:px-6 lg:px-8">
-        <div className="mx-auto max-w-4xl rounded-lg border border-white/10 bg-[#101115] p-8 text-center shadow-2xl shadow-black/25">
-          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#d8b766]">Đặt lịch TLORA Studio</p>
-          <h2 className="mx-auto mt-3 max-w-2xl font-heading text-3xl font-extrabold text-white md:text-4xl">
-            Sẵn sàng có một bộ ảnh thể hiện đúng cá tính của bạn?
+        <div className="mx-auto max-w-6xl text-center">
+          <Eyebrow center>Khách hàng cần một ekip biết lắng nghe</Eyebrow>
+          <h2 className="mx-auto max-w-4xl font-heading text-3xl font-extrabold text-[#f4ece0] md:text-5xl">
+            TLORA giữ buổi chụp riêng tư, rõ ràng và tôn trọng cá tính từng người
           </h2>
-          <p className="mx-auto mt-4 max-w-2xl text-sm leading-7 text-zinc-400">
-            Xem gói chụp, chuẩn bị brief và để TLORA tư vấn concept phù hợp với mục tiêu hình ảnh của bạn.
+          <div className="mt-12 grid gap-6 md:grid-cols-3">
+            {whyCards.map(([title, description]) => (
+              <article key={title} className="rounded-2xl border border-[#f4ece0]/12 p-8 text-left">
+                <h3 className="font-heading text-xl font-bold text-[#f4ece0]">{title}</h3>
+                <p className="mt-3 text-sm leading-7 text-[#8c8174]">{description}</p>
+              </article>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section id="mood" className="bg-[#1c1813] px-4 py-20 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-6xl text-center">
+          <Eyebrow center>Chọn mood trước khi chốt lịch</Eyebrow>
+          <h2 className="font-heading text-3xl font-extrabold text-[#f4ece0] md:text-5xl">Mỗi mood là một phiên bản ánh sáng và màu khác nhau</h2>
+          <p className="mx-auto mt-5 max-w-2xl text-base leading-7 text-[#cbc0b0]">
+            Xem trước không khí của từng mood để chọn đúng cảm xúc bạn muốn mang về, sau đó mới cần quyết định trang phục.
           </p>
-          <div className="mt-7 flex flex-col justify-center gap-3 sm:flex-row">
-            <ButtonLink href="/bang-gia">
-              Xem bảng giá <ArrowRight size={16} />
-            </ButtonLink>
-            <ButtonLink href="/tin-tuc" className="border border-white/10 bg-white/6 text-white shadow-none hover:bg-white/10">
-              Đọc hướng dẫn chuẩn bị
-            </ButtonLink>
+          <div className="mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            {moodCards.map(([title, type, accent, image]) => (
+              <article key={title} className="text-left">
+                <div className="relative aspect-3/4 overflow-hidden rounded-[26px] border border-[#f4ece0]/12">
+                  <Image src={image} alt={title} fill sizes="(min-width: 1024px) 33vw, 50vw" className="object-cover" />
+                  <div className="absolute inset-0 bg-linear-to-t from-[#14110f]/80 via-transparent to-transparent" />
+                </div>
+                <div className="mt-3 flex items-center justify-between gap-3">
+                  <h3 className="font-semibold text-[#f4ece0]">{title}</h3>
+                  <span className="rounded-full px-3 py-1 font-mono text-[10px] uppercase tracking-[0.08em]" style={{ backgroundColor: `${accent}24`, color: accent }}>
+                    {type}
+                  </span>
+                </div>
+              </article>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="px-4 py-20 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-6xl text-center">
+          <Eyebrow center>Khách đã chụp tại TLORA</Eyebrow>
+          <h2 className="font-heading text-3xl font-extrabold text-[#f4ece0] md:text-5xl">Phản hồi sau buổi chụp</h2>
+          <div className="mt-12 grid gap-6 md:grid-cols-3">
+            {[
+              ["Mình từng nghĩ ảnh sinh nhật chỉ cần thổi nến cho có. Đến lúc nhận ảnh mới thấy giá trị mình bỏ ra hoàn toàn xứng đáng.", "Khách chụp Sinh nhật, tuổi 22"],
+              ["Ảnh retouch vẫn là mặt mình, chỉ là phiên bản sáng và mịn hơn, không bị lạ như nhiều nơi mình từng chụp.", "Khách chụp Beauty Concept"],
+              ["Ba set bối cảnh trong một buổi giúp mình có đủ ảnh cho cả tháng làm content, không phải đặt lịch lại nhiều lần.", "Khách chụp Concept Trang Phục"],
+            ].map(([quote, person]) => (
+              <article key={person} className="rounded-2xl border border-[#f4ece0]/12 bg-[#1c1813] p-7 text-left">
+                <p className="font-heading text-xl italic leading-8 text-[#f4ece0]">{quote}</p>
+                <p className="mt-5 font-mono text-xs text-[#8c8174]">- {person}</p>
+              </article>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="bg-[#1c1813] px-4 py-20 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-4xl text-center">
+          <Eyebrow center>Câu hỏi thường gặp</Eyebrow>
+          <h2 className="font-heading text-3xl font-extrabold text-[#f4ece0] md:text-5xl">Những điều khách thường hỏi trước khi đặt lịch</h2>
+          <div className="mt-10 text-left">
+            {faqs.map(([question, answer], index) => (
+              <details key={question} open={index === 0} className="group border-b border-[#f4ece0]/12 py-5">
+                <summary className="flex cursor-pointer list-none items-center justify-between gap-4 text-base font-semibold text-[#f4ece0]">
+                  {question}
+                  <ChevronDown size={18} className="shrink-0 text-[#8c8174] transition group-open:rotate-180" />
+                </summary>
+                <p className="mt-4 max-w-2xl text-sm leading-7 text-[#8c8174]">{answer}</p>
+              </details>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="px-4 py-20 sm:px-6 lg:px-8">
+        <div className="relative mx-auto max-w-5xl overflow-hidden rounded-[32px] border border-[#f4ece0]/12 bg-[#1c1813] px-6 py-16 text-center sm:px-10">
+          <div className="absolute inset-x-0 top-0 h-56 bg-radial-[ellipse_at_top] from-[#c99a5e]/18 to-transparent" />
+          <div className="relative">
+            <Eyebrow center>Đặt lịch TLORA Studio</Eyebrow>
+            <h2 className="mx-auto max-w-3xl font-heading text-3xl font-extrabold text-[#f4ece0] md:text-5xl">
+              Sẵn sàng có một bộ ảnh thể hiện đúng cá tính của bạn?
+            </h2>
+            <p className="mx-auto mt-5 max-w-2xl text-base leading-7 text-[#cbc0b0]">
+              Xem giá chụp, chuẩn bị lịch trình và để TLORA lo phần concept. Bạn chỉ cần tới đúng giờ.
+            </p>
+            <div className="mt-9 flex flex-col justify-center gap-3 sm:flex-row">
+              <PillLink href="/bang-gia" tone="light">
+                Đặt lịch tư vấn <ArrowRight size={16} />
+              </PillLink>
+              <PillLink href="#dich-vu">Xem lại 3 dịch vụ</PillLink>
+            </div>
           </div>
         </div>
       </section>
@@ -314,27 +317,104 @@ export default function HomePage() {
   );
 }
 
-function DarkSection({
-  eyebrow,
-  title,
-  description,
-  children,
-}: {
-  eyebrow: string;
-  title: string;
-  description: string;
-  children: ReactNode;
-}) {
+function ServiceSection({ service }: { service: (typeof services)[number] }) {
   return (
-    <section className="px-4 py-16 sm:px-6 lg:px-8">
-      <div className="mx-auto max-w-7xl">
-        <div className="mx-auto mb-10 max-w-3xl text-center">
-          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#d8b766]">{eyebrow}</p>
-          <h2 className="mt-3 font-heading text-3xl font-extrabold text-white md:text-5xl">{title}</h2>
-          <p className="mt-4 text-base leading-7 text-zinc-400">{description}</p>
+    <section id={service.id} className="border-t border-[#f4ece0]/12 px-4 py-20 sm:px-6 lg:px-8">
+      <div className="mx-auto grid max-w-6xl gap-10 lg:grid-cols-[0.85fr_1fr_1fr] lg:items-start">
+        <div className="lg:sticky lg:top-28">
+          <div className="relative aspect-4/5 overflow-hidden rounded-[26px] border border-[#f4ece0]/12">
+            <Image src={service.image} alt={service.title} fill sizes="(min-width: 1024px) 30vw, 100vw" className="object-cover" />
+            <div className="absolute inset-0 bg-linear-to-t from-[#14110f]/70 via-transparent to-transparent" />
+            <span className="absolute bottom-5 left-5 rounded-full border border-[#f4ece0]/20 bg-[#14110f]/55 px-4 py-2 font-mono text-xs tracking-[0.04em] text-[#f4ece0] backdrop-blur">
+              {service.mood}
+            </span>
+          </div>
+          <div className="mt-4 flex flex-wrap gap-2">
+            {service.chips.map((chip) => (
+              <span key={chip} className="rounded-full border border-[#f4ece0]/12 px-3 py-1 font-mono text-[11px] text-[#8c8174]">
+                {chip}
+              </span>
+            ))}
+          </div>
         </div>
-        {children}
+
+        <div>
+          <span className="font-mono text-xs uppercase tracking-[0.12em] text-[#8c8174]">
+            {service.index} - {service.label}
+          </span>
+          <h3 className="mt-4 font-heading text-3xl font-extrabold leading-tight text-[#f4ece0] md:text-4xl">{service.title}</h3>
+          <p className="mt-5 text-base leading-8 text-[#cbc0b0]">{service.description}</p>
+          <p className="mt-6 border-l-2 pl-4 text-sm leading-7 text-[#8c8174]" style={{ borderColor: service.accent }}>
+            {service.who}
+          </p>
+          <ul className="mt-7 space-y-3">
+            {service.features.map((feature) => (
+              <li key={feature} className="flex gap-3 text-sm leading-6 text-[#cbc0b0]">
+                <span className="mt-2 size-1.5 shrink-0 rounded-full" style={{ backgroundColor: service.accent }} />
+                {feature}
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        <Receipt service={service} />
       </div>
     </section>
+  );
+}
+
+function Receipt({ service }: { service: (typeof services)[number] }) {
+  return (
+    <div className="-rotate-1 rounded-t bg-[#f4ece0] px-6 pb-8 pt-7 text-[#241d14] shadow-2xl shadow-black/35">
+      <div className="flex items-baseline justify-between gap-4 border-b border-dashed border-[#241d14]/35 pb-4">
+        <span className="font-mono text-[11px] uppercase tracking-[0.12em] text-[#7a6b52]">Hóa đơn giá trị</span>
+        <span className="font-heading text-sm font-bold">{service.receiptName}</span>
+      </div>
+      <ul className="mt-4 space-y-2">
+        {service.items.map(([item, qty]) => (
+          <li key={item} className="flex justify-between gap-4 text-sm">
+            <span>{item}</span>
+            <i className="shrink-0 font-mono text-xs not-italic text-[#7a6b52]">{qty}</i>
+          </li>
+        ))}
+      </ul>
+      <div className="my-4 border-t border-dashed border-[#241d14]/35" />
+      <div className="flex justify-between font-mono text-sm text-[#5c4f3c]">
+        <span>Giá trị ước tính</span>
+        <b className="font-medium">{service.value}</b>
+      </div>
+      <div className="mt-2 flex justify-between text-lg font-bold text-[#241d14]">
+        <span>Bạn trả</span>
+        <b className="font-mono">{service.price}</b>
+      </div>
+      <div className="mt-5 rounded border px-3 py-2 text-center font-mono text-[11px] uppercase tracking-[0.08em]" style={{ borderColor: service.accent, color: service.accent }}>
+        Nhận nhiều hơn số tiền bỏ ra
+      </div>
+      <p className="mt-3 text-center text-[11px] text-[#9a8c72]">*Giá minh họa - cập nhật theo bảng giá thật của studio.</p>
+    </div>
+  );
+}
+
+function Eyebrow({ children, center = false, className = "" }: { children: string; center?: boolean; className?: string }) {
+  return (
+    <p className={`mb-5 flex items-center gap-3 font-mono text-xs uppercase tracking-[0.16em] text-[#8c8174] ${center ? "justify-center" : ""} ${className}`}>
+      {!center && <span className="h-px w-5 bg-[#8c8174]" />}
+      {children}
+    </p>
+  );
+}
+
+function PillLink({ href, children, tone = "ghost" }: { href: string; children: React.ReactNode; tone?: "ghost" | "light" }) {
+  return (
+    <Link
+      href={href}
+      className={`inline-flex min-h-12 items-center justify-center gap-2 rounded-full px-6 text-sm font-bold transition hover:-translate-y-0.5 ${
+        tone === "light"
+          ? "bg-[#f4ece0] text-[#14110f] hover:bg-[#e7dac4]"
+          : "border border-[#f4ece0]/30 text-[#f4ece0] hover:bg-[#f4ece0]/6"
+      }`}
+    >
+      {children}
+    </Link>
   );
 }
