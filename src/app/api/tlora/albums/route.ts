@@ -26,6 +26,45 @@ export function OPTIONS() {
   return options();
 }
 
+export async function GET(request: Request) {
+  if (!isAuthorized(request)) {
+    return unauthorized();
+  }
+
+  try {
+    const supabase = createAdminClient();
+    const origin = publicOrigin(request);
+    const { data, error } = await supabase
+      .from("customer_galleries")
+      .select(
+        "id,customer_name,customer_name_slug,shoot_date,raw_drive_folder_url,edited_drive_folder_url,created_at,updated_at",
+      )
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      throw error;
+    }
+
+    return json({
+      ok: true,
+      albums: (data || []).map((gallery) => ({
+        id: gallery.id,
+        albumName: gallery.customer_name,
+        customerName: gallery.customer_name,
+        slug: gallery.customer_name_slug,
+        shootDate: gallery.shoot_date,
+        driveFileGocUrl: gallery.raw_drive_folder_url,
+        driveFileChinhSuaUrl: gallery.edited_drive_folder_url,
+        websiteUrl: customerUrl(origin, gallery.customer_name_slug),
+        createdAt: gallery.created_at,
+        updatedAt: gallery.updated_at,
+      })),
+    });
+  } catch (error) {
+    return json({ error: errorMessage(error) }, { status: 500 });
+  }
+}
+
 export async function POST(request: Request) {
   if (!isAuthorized(request)) {
     return unauthorized();

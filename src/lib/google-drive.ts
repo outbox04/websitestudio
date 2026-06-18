@@ -1,4 +1,5 @@
 import { google } from "googleapis";
+import { Readable } from "node:stream";
 
 export type DrivePhoto = {
   id: string;
@@ -48,6 +49,10 @@ function driveFolderUrl(folderId: string) {
 
 export function driveImageUrl(fileId: string, width: number) {
   return `https://drive.google.com/thumbnail?id=${fileId}&sz=w${width}`;
+}
+
+function escapeDriveQuery(value: string) {
+  return value.replace(/\\/g, "\\\\").replace(/'/g, "\\'");
 }
 
 async function createFolder(name: string, parentId: string) {
@@ -124,4 +129,51 @@ export async function listDriveImages(folderId: string): Promise<DrivePhoto[]> {
     webContentLink: file.webContentLink || undefined,
     mimeType: file.mimeType || "image/jpeg",
   })) || [];
+}
+
+export async function uploadDriveImage(folderId: string, fileName: string, buffer: Buffer, mimeType = "image/jpeg"): Promise<DrivePhoto> {
+  const drive = getDriveClient();
+  const existing = await drive.files.list({
+    q: `'${folderId}' in parents and name='${escapeDriveQuery(fileName)}' and trashed=false`,
+    fields: "files(id,name,thumbnailLink,webViewLink,webContentLink,mimeType)",
+    pageSize: 1,
+  });
+  const found = existing.data.files?.[0];
+  if (found?.id) {
+    return {
+      id: found.id,
+      name: found.name || fileName,
+      thumbnailLink: driveImageUrl(found.id, 900),
+      largeThumbnailLink: driveImageUrl(found.id, 2400),
+      webViewLink: found.webViewLink || undefined,
+      webContentLink: found.webContentLink || undefined,
+      mimeType: found.mimeType || mimeType,
+    };
+  }
+
+  const response = await drive.files.create({
+    requestBody: {
+      name: fileName,
+      parents: [folderId],
+    },
+    media: {
+      mimeType,
+      body: Readable.from(buffer),
+    },
+    fields: "id,name,thumbnailLink,webViewLink,webContentLink,mimeType",
+  });
+
+  if (!response.data.id) {
+    throw new Error(`Could not upload Google Drive file: ${fileName}`);
+  }
+
+  return {
+    id: response.data.id,
+    name: response.data.name || fileName,
+    thumbnailLink: driveImageUrl(response.data.id, 900),
+    largeThumbnailLink: driveImageUrl(response.data.id, 2400),
+    webViewLink: response.data.webViewLink || undefined,
+    webContentLink: response.data.webContentLink || undefined,
+    mimeType: response.data.mimeType || mimeType,
+  };
 }
