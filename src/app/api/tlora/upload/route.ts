@@ -7,6 +7,14 @@ export const runtime = "nodejs";
 
 type TloraUploadKind = "raw" | "edited";
 
+function uniqueValues(values: string[]) {
+  return [...new Set(values.map((value) => value.trim()).filter(Boolean))];
+}
+
+function customerNameFromAlbumName(albumName: string) {
+  return albumName.replace(/_\d{2}\.\d{2}$/, "").trim();
+}
+
 export function OPTIONS() {
   return options();
 }
@@ -19,6 +27,7 @@ export async function POST(request: Request) {
   try {
     const formData = await request.formData();
     const albumName = String(formData.get("albumName") || "").trim();
+    const customerName = String(formData.get("customerName") || "").trim();
     const kind = String(formData.get("kind") || "").trim() as TloraUploadKind;
     const file = formData.get("file");
 
@@ -35,19 +44,36 @@ export async function POST(request: Request) {
     }
 
     const supabase = createAdminClient();
-    const slug = createSlug(albumName);
-    const { data: gallery, error: galleryError } = await supabase
+    const lookupNames = uniqueValues([albumName, customerName, customerNameFromAlbumName(albumName)]);
+    const lookupSlugs = uniqueValues(lookupNames.map(createSlug));
+    const { data: galleryBySlug, error: galleryBySlugError } = await supabase
       .from("customer_galleries")
       .select("id,customer_name,customer_name_slug,raw_drive_folder_id,edited_drive_folder_id")
-      .or(`customer_name_slug.eq.${slug},customer_name.eq.${albumName}`)
+      .in("customer_name_slug", lookupSlugs)
+      .limit(1)
       .maybeSingle();
 
-    if (galleryError) {
-      throw galleryError;
+    if (galleryBySlugError) {
+      throw galleryBySlugError;
     }
 
+    const { data: galleryByName, error: galleryByNameError } = galleryBySlug
+      ? { data: null, error: null }
+      : await supabase
+          .from("customer_galleries")
+          .select("id,customer_name,customer_name_slug,raw_drive_folder_id,edited_drive_folder_id")
+          .in("customer_name", lookupNames)
+          .limit(1)
+          .maybeSingle();
+
+    if (galleryByNameError) {
+      throw galleryByNameError;
+    }
+
+    const gallery = galleryBySlug || galleryByName;
+
     if (!gallery) {
-      return json({ error: "Gallery not found" }, { status: 404 });
+      return json({ error: "Gallery not found", albumName, customerName, lookupNames, lookupSlugs }, { status: 404 });
     }
 
     const folderId = kind === "raw" ? gallery.raw_drive_folder_id : gallery.edited_drive_folder_id;
