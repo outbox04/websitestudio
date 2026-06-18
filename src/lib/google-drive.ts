@@ -58,6 +58,7 @@ function escapeDriveQuery(value: string) {
 async function createFolder(name: string, parentId: string) {
   const drive = getDriveClient();
   const response = await drive.files.create({
+    supportsAllDrives: true,
     requestBody: {
       name,
       mimeType: folderMimeType,
@@ -77,6 +78,7 @@ async function shareFolderWithLink(folderId: string) {
   const drive = getDriveClient();
   await drive.permissions.create({
     fileId: folderId,
+    supportsAllDrives: true,
     requestBody: {
       type: "anyone",
       role: "reader",
@@ -114,6 +116,8 @@ export async function createCustomerDriveFolders(customerName: string): Promise<
 export async function listDriveImages(folderId: string): Promise<DrivePhoto[]> {
   const drive = getDriveClient();
   const response = await drive.files.list({
+    supportsAllDrives: true,
+    includeItemsFromAllDrives: true,
     q: `'${folderId}' in parents and mimeType contains 'image/' and trashed=false`,
     fields: "files(id,name,thumbnailLink,webViewLink,webContentLink,mimeType)",
     pageSize: 1000,
@@ -134,6 +138,8 @@ export async function listDriveImages(folderId: string): Promise<DrivePhoto[]> {
 export async function uploadDriveImage(folderId: string, fileName: string, buffer: Buffer, mimeType = "image/jpeg"): Promise<DrivePhoto> {
   const drive = getDriveClient();
   const existing = await drive.files.list({
+    supportsAllDrives: true,
+    includeItemsFromAllDrives: true,
     q: `'${folderId}' in parents and name='${escapeDriveQuery(fileName)}' and trashed=false`,
     fields: "files(id,name,thumbnailLink,webViewLink,webContentLink,mimeType)",
     pageSize: 1,
@@ -152,6 +158,7 @@ export async function uploadDriveImage(folderId: string, fileName: string, buffe
   }
 
   const response = await drive.files.create({
+    supportsAllDrives: true,
     requestBody: {
       name: fileName,
       parents: [folderId],
