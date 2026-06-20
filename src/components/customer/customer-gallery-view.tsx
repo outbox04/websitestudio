@@ -30,6 +30,9 @@ type Gallery = {
   edited_drive_folder_url: string;
   raw_download_enabled: boolean;
   edited_download_enabled: boolean;
+  total_cost_vnd: number;
+  deposit_paid_vnd: number;
+  payment_status: "unpaid" | "pending" | "paid";
 };
 
 type GalleryPhoto = {
@@ -84,6 +87,16 @@ export function CustomerGalleryView({
   const previewIndex = preview ? previewPhotos.findIndex((photo) => photo.id === preview.id) : -1;
   const cover = gallery.cover_url || photos[0]?.thumbnail_url || editedPhotos[0]?.thumbnail_url;
   const shootDate = new Date(gallery.shoot_date).toLocaleDateString("vi-VN");
+  const remaining = Math.max(gallery.total_cost_vnd - gallery.deposit_paid_vnd, 0);
+
+  async function payRemaining() {
+    const response = await fetch(`/api/customer-galleries/${gallery.customer_name_slug}/payment`, { method: "POST" });
+    const payload = await response.json() as { checkoutUrl?: string; fields?: Record<string, string | number>; error?: string };
+    if (!response.ok || !payload.checkoutUrl || !payload.fields) return alert(payload.error || "Không tạo được thanh toán.");
+    const form = document.createElement("form"); form.method = "POST"; form.action = payload.checkoutUrl;
+    Object.entries(payload.fields).forEach(([name, value]) => { const input = document.createElement("input"); input.type = "hidden"; input.name = name; input.value = String(value); form.appendChild(input); });
+    document.body.appendChild(form); form.submit();
+  }
 
   const showPreviousPhoto = useCallback(() => {
     if (!preview || previewPhotos.length === 0) return;
@@ -109,6 +122,16 @@ export function CustomerGalleryView({
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [preview, showNextPhoto, showPreviousPhoto]);
+
+  useEffect(() => {
+    if (gallery.payment_status !== "pending") return;
+    const timer = window.setInterval(async () => {
+      const response = await fetch(`/api/customer-galleries/${gallery.customer_name_slug}/payment`, { cache: "no-store" });
+      const status = await response.json() as { payment_status?: string };
+      if (status.payment_status === "paid") window.location.reload();
+    }, 60000);
+    return () => window.clearInterval(timer);
+  }, [gallery.customer_name_slug, gallery.payment_status]);
 
   async function patchPhoto(photoId: string, body: { selected?: boolean; editNote?: string }) {
     await fetch(`/api/customer-galleries/photos/${photoId}`, {
@@ -199,6 +222,8 @@ export function CustomerGalleryView({
           </div>
         </section>
 
+        {remaining > 0 && !gallery.edited_download_enabled && <section className="mt-6 flex flex-col gap-4 rounded-lg border border-[#d8b766]/35 bg-[#d8b766]/10 p-5 sm:flex-row sm:items-center sm:justify-between"><div><p className="text-sm font-bold text-[#f3d88e]">Thanh toán còn lại</p><p className="mt-1 text-sm text-zinc-300">Tổng chi phí {new Intl.NumberFormat("vi-VN").format(gallery.total_cost_vnd)}đ · Đã cọc {new Intl.NumberFormat("vi-VN").format(gallery.deposit_paid_vnd)}đ</p><p className="mt-2 text-2xl font-extrabold text-white">Còn lại {new Intl.NumberFormat("vi-VN").format(remaining)}đ</p></div><button onClick={payRemaining} className="inline-flex min-h-12 items-center justify-center rounded-md bg-[#d8b766] px-5 text-sm font-bold text-black">Thanh toán với SePay</button></section>}
+        {gallery.payment_status === "pending" && <p className="mt-4 rounded-md border border-sky-300/20 bg-sky-300/10 p-3 text-center text-sm text-sky-100">Đang chờ SePay xác nhận. Trang sẽ tự cập nhật trong vài phút để mở khóa tải xuống.</p>}
         <section className="mt-6 rounded-lg border border-white/10 bg-white/[0.04] p-3 shadow-2xl shadow-black/20 backdrop-blur">
           <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
             <div className="flex flex-wrap gap-2">
