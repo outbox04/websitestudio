@@ -1,5 +1,4 @@
 import { NextResponse } from "next/server";
-import { VietQR } from "vietqr";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 export const runtime = "nodejs";
@@ -22,17 +21,26 @@ export async function GET(request: Request) {
     if (error) throw error;
     if (!settings) return NextResponse.json({ error: "Chưa có tài khoản nhận thanh toán." }, { status: 503 });
 
-    const vietQr = new VietQR({ clientID: process.env.VIETQR_CLIENT_ID, apiKey: process.env.VIETQR_API_KEY });
-    const result = await vietQr.genQRCodeBase64({
-      bank: settings.bank_bin,
-      accountName: settings.account_name,
-      accountNumber: settings.account_number,
-      amount: amount.toString(),
-      memo,
-      template: "qr_only",
+    const response = await fetch("https://api.vietqr.io/v2/generate", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-client-id": process.env.VIETQR_CLIENT_ID,
+        "x-api-key": process.env.VIETQR_API_KEY,
+      },
+      body: JSON.stringify({
+        accountNo: settings.account_number,
+        accountName: settings.account_name,
+        acqId: settings.bank_bin,
+        addInfo: memo,
+        amount,
+        template: "qr_only",
+      }),
+      cache: "no-store",
     });
-    const qrDataUrl = result?.data?.qrDataURL;
-    if (!qrDataUrl) throw new Error("VietQR không trả về mã QR.");
+    const result = await response.json() as { data?: { qrDataURL?: string }; desc?: string };
+    if (!response.ok || !result.data?.qrDataURL) throw new Error(result.desc || "VietQR không trả về mã QR.");
+    const qrDataUrl = result.data.qrDataURL;
     return NextResponse.json({ qrDataUrl, accountName: settings.account_name, accountNumber: settings.account_number });
   } catch (error) {
     return NextResponse.json({ error: error instanceof Error ? error.message : "Không tạo được mã QR thanh toán." }, { status: 500 });
