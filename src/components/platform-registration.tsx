@@ -6,9 +6,9 @@ import { ArrowRight, BadgeCheck, Check, ChevronRight, Cloud, CreditCard, Crown, 
 
 type PlanId = "basic" | "medium" | "premium";
 const plans = [
-  { id: "basic" as const, name: "BASIC", description: "Dành cho Studio mới", price: 1490000, features: ["App TLORA RAW Selector", "Website Portfolio", "Website Chọn Ảnh", "Sử dụng Google Drive cá nhân", "Subdomain miễn phí"] },
-  { id: "medium" as const, name: "MEDIUM", description: "Dành cho studio muốn đi nhanh hơn", price: 3990000, popular: true, features: ["Tất cả tính năng Basic", "Tặng 2TB Cloud Storage", "Domain riêng", "Tùy chỉnh logo", "Tùy chỉnh màu sắc thương hiệu", "Hỗ trợ cài đặt"] },
-  { id: "premium" as const, name: "PREMIUM", description: "Giải pháp toàn diện", price: 7990000, features: ["Tất cả tính năng Medium", "Thiết kế theo thương hiệu", "Hiệu ứng nâng cao", "Landing Page riêng", "Thiệp cưới online", "Hỗ trợ mua tên miền", "Ưu đãi 30% tên miền .com .vn", "Triển khai 1:1"] },
+  { id: "basic" as const, name: "BASIC", description: "Dành cho Studio mới", price: 2000, features: ["App TLORA RAW Selector", "Website Portfolio", "Website Chọn Ảnh", "Sử dụng Google Drive cá nhân", "Subdomain miễn phí"] },
+  { id: "medium" as const, name: "MEDIUM", description: "Dành cho studio muốn đi nhanh hơn", price: 3000, popular: true, features: ["Tất cả tính năng Basic", "Tặng 2TB Cloud Storage", "Domain riêng", "Tùy chỉnh logo", "Tùy chỉnh màu sắc thương hiệu", "Hỗ trợ cài đặt"] },
+  { id: "premium" as const, name: "PREMIUM", description: "Giải pháp toàn diện", price: 4000, features: ["Tất cả tính năng Medium", "Thiết kế theo thương hiệu", "Hiệu ứng nâng cao", "Landing Page riêng", "Thiệp cưới online", "Hỗ trợ mua tên miền", "Ưu đãi 30% tên miền .com .vn", "Triển khai 1:1"] },
 ];
 const benefits = [[Layers3, "Website Studio", "Portfolio mang dấu ấn thương hiệu"], [ImagePlus, "App Quản Lý Ảnh", "Lọc RAW nhanh, workflow gọn gàng"], [Sparkles, "Chọn Ảnh Online", "Khách tự chọn ảnh trên album riêng"], [Cloud, "Drive / Cloud Storage", "Dữ liệu an toàn, luôn sẵn sàng"], [Crown, "Thiệp Cưới Online", "Điểm chạm premium cho khách hàng"]] as const;
 const steps = ["Thanh toán thành công", "Hệ thống xác nhận", "Tạo Website", "Tạo License", "Tạo tài khoản", "Cấp Cloud Storage", "Gửi Email kích hoạt"];
@@ -21,7 +21,7 @@ export function PlatformRegistration() {
   const [checkoutError, setCheckoutError] = useState(""); const [checkoutLoading, setCheckoutLoading] = useState(false);
   const plan = plans.find((item) => item.id === planId)!; const basic = planId === "basic";
   const slug = studio.trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/đ/g, "d").replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
-  const preview = basic ? `${slug || "ten-studio"}.tlgroup.site` : domain || "mystudio.com"; const fee = basic ? 0 : 350000; const discount = planId === "premium" ? 105000 : 0;
+  const preview = basic ? `${slug || "ten-studio"}.tlgroup.site` : domain || "mystudio.com"; const fee = 0; const discount = 0;
   const total = plan.price + fee - discount;
   useEffect(() => {
     const controller = new AbortController();

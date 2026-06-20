@@ -5,9 +5,9 @@ import { SePayPgClient } from "sepay-pg-node";
 export const runtime = "nodejs";
 
 const plans = {
-  basic: 1490000,
-  medium: 4340000,
-  premium: 8235000,
+  basic: 2000,
+  medium: 3000,
+  premium: 4000,
 } as const;
 
 type PlanId = keyof typeof plans;
