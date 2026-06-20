@@ -12,3 +12,7 @@ Creating turbopack project { dir: 'D:\\ST\\websitestudio', testMode: true }
 ✓ Compiled in 173ms
 ✓ Compiled in 44ms
   Reload env: .env.local
+  Reload env: .env.local
+  Reload env: .env.local
+  Reload env: .env.local
+✓ Compiled in 14ms
