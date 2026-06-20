@@ -26,7 +26,7 @@ export function SiteHeader() {
           ))}
         </nav>
         <div className="hidden items-center gap-3 md:flex">
-          <ButtonLink href="/bang-gia">
+          <ButtonLink href="/dang-ky">
             <CalendarCheck size={16} /> Đặt lịch tư vấn
           </ButtonLink>
         </div>

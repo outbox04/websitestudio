@@ -1,0 +1,13 @@
+
+> tlora-studio@0.1.0 dev
+> next dev
+
+▲ Next.js 16.2.7 (Turbopack)
+- Local:         http://localhost:3000
+- Network:       http://192.168.1.136:3000
+✓ Ready in 1840ms
+Creating turbopack project { dir: 'D:\\ST\\websitestudio', testMode: true }
+
+ GET / 200 in 3.4s (next.js: 2.2s, proxy.ts: 313ms, application-code: 929ms)
+✓ Compiled in 173ms
+✓ Compiled in 44ms
