@@ -25,7 +25,7 @@ export async function POST(request: Request) {
   const plan = body.plan as PlanId;
   const orderId = `TLORA-${randomUUID().replace(/-/g, "").slice(0, 12).toUpperCase()}`;
   const origin = new URL(request.url).origin;
-  const environment = process.env.SEPAY_ENV === "production" ? "production" : "sandbox";
+  const environment = process.env.SEPAY_ENV === "sandbox" ? "sandbox" : "production";
   const client = new SePayPgClient({
     env: environment,
     merchant_id: process.env.SEPAY_MERCHANT_ID,
