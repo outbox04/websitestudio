@@ -44,3 +44,15 @@ img {
   background: color-mix(in srgb, var(--brand-gold) 55%, transparent);
   color: #07080a;
 }
+
+/* SePay is the sole checkout channel for Studio Platform registrations. */
+.platform-registration aside .mt-6.grid.grid-cols-3 > button:nth-child(1),
+.platform-registration aside .mt-6.grid.grid-cols-3 > button:nth-child(3),
+.platform-registration aside .mt-5.grid.min-h-36,
+.platform-registration aside .mt-5.grid.min-h-36 + p {
+  display: none;
+}
+
+.platform-registration aside .mt-6.grid.grid-cols-3 {
+  grid-template-columns: minmax(0, 1fr);
+}
