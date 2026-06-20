@@ -677,6 +677,8 @@ type PaymentSettingsForm = {
   account_name: string;
 };
 
+type VietQrBank = { id: number; name: string; code: string; bin: string; shortName: string; logo: string };
+
 const emptyPaymentSettings: PaymentSettingsForm = { bank_bin: "", bank_name: "", account_number: "", account_name: "" };
 
 function PaymentSettingsView() {
@@ -684,6 +686,7 @@ function PaymentSettingsView() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
+  const [banks, setBanks] = useState<VietQrBank[]>([]);
 
   useEffect(() => {
     fetch("/api/admin/payment-settings", { cache: "no-store" })
@@ -694,6 +697,16 @@ function PaymentSettingsView() {
       })
       .catch((error: unknown) => setMessage(error instanceof Error ? error.message : "Không đọc được cấu hình thanh toán."))
       .finally(() => setLoading(false));
+  }, []);
+
+  useEffect(() => {
+    fetch("/api/vietqr/banks", { cache: "force-cache" })
+      .then(async (response) => {
+        const payload = await response.json() as { banks?: VietQrBank[]; error?: string };
+        if (!response.ok) throw new Error(payload.error || "Không tải được danh sách ngân hàng.");
+        setBanks(payload.banks || []);
+      })
+      .catch((error: unknown) => setMessage(error instanceof Error ? error.message : "Không tải được danh sách ngân hàng."));
   }, []);
 
   async function saveSettings(event: React.FormEvent<HTMLFormElement>) {
@@ -708,7 +721,7 @@ function PaymentSettingsView() {
     } finally { setSaving(false); }
   }
 
-  return <div className="max-w-3xl space-y-5"><HeaderCard title="Cài đặt thanh toán" description="Thông tin này được dùng để tạo mã VietQR động ở trang đăng ký TLORA Studio Platform." action="VietQR Banking" /><form onSubmit={saveSettings} className="rounded-lg border border-zinc-200 bg-white p-5 shadow-sm"><div className="flex items-start gap-3 rounded-md border border-sky-100 bg-sky-50 p-4 text-sm leading-6 text-sky-900"><Landmark className="mt-0.5 shrink-0" size={18} /><p>Nhập BIN ngân hàng, số tài khoản và tên chủ tài khoản. API key VietQR được bảo mật trong biến môi trường máy chủ, không nhập tại đây.</p></div><div className="mt-6 grid gap-5 sm:grid-cols-2"><PaymentInput label="Tên ngân hàng *" placeholder="Ví dụ: MB Bank" value={form.bank_name} onChange={(value) => setForm((current) => ({ ...current, bank_name: value }))} disabled={loading} /><PaymentInput label="Mã BIN ngân hàng *" placeholder="Ví dụ: 970422" value={form.bank_bin} onChange={(value) => setForm((current) => ({ ...current, bank_bin: value.replace(/\D/g, "") }))} disabled={loading} inputMode="numeric" /><PaymentInput label="Số tài khoản *" placeholder="0123456789" value={form.account_number} onChange={(value) => setForm((current) => ({ ...current, account_number: value.replace(/\s/g, "") }))} disabled={loading} inputMode="numeric" /><PaymentInput label="Tên chủ tài khoản *" placeholder="NGUYEN VAN A" value={form.account_name} onChange={(value) => setForm((current) => ({ ...current, account_name: value.toUpperCase() }))} disabled={loading} /></div>{message && <p className={`mt-5 rounded-md p-3 text-sm font-medium ${message.startsWith("Đã lưu") ? "bg-emerald-50 text-emerald-700" : "bg-red-50 text-red-700"}`}>{message}</p>}<button type="submit" disabled={loading || saving} className="mt-6 inline-flex min-h-11 items-center gap-2 rounded-md bg-zinc-950 px-5 text-sm font-bold text-white transition hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-60"><Save size={16} />{saving ? "Đang lưu..." : "Lưu thông tin nhận tiền"}</button></form></div>;
+  return <div className="max-w-3xl space-y-5"><HeaderCard title="Cài đặt thanh toán" description="Thông tin này được dùng để tạo mã VietQR động ở trang đăng ký TLORA Studio Platform." action="VietQR Banking" /><form onSubmit={saveSettings} className="rounded-lg border border-zinc-200 bg-white p-5 shadow-sm"><div className="flex items-start gap-3 rounded-md border border-sky-100 bg-sky-50 p-4 text-sm leading-6 text-sky-900"><Landmark className="mt-0.5 shrink-0" size={18} /><p>Chọn ngân hàng Việt Nam để tự điền tên và BIN. API key VietQR được bảo mật trong biến môi trường máy chủ, không nhập tại đây.</p></div><div className="mt-6 grid gap-5 sm:grid-cols-2"><label className="block text-sm font-semibold text-zinc-800 sm:col-span-2">Ngân hàng Việt Nam *<select value={form.bank_bin} onChange={(event) => { const bank = banks.find((item) => item.bin === event.target.value); if (bank) setForm((current) => ({ ...current, bank_bin: bank.bin, bank_name: bank.name })); }} disabled={loading || banks.length === 0} required className="mt-2 min-h-11 w-full rounded-md border border-zinc-300 bg-white px-3 text-sm font-normal outline-none transition focus:border-zinc-950 focus:ring-2 focus:ring-zinc-200 disabled:bg-zinc-100"><option value="">{banks.length ? "Chọn ngân hàng nhận tiền" : "Đang tải danh sách ngân hàng..."}</option>{banks.map((bank) => <option key={bank.id} value={bank.bin}>{bank.shortName} — {bank.bin}</option>)}</select></label><PaymentInput label="Tên ngân hàng *" placeholder="Tự động điền sau khi chọn" value={form.bank_name} onChange={(value) => setForm((current) => ({ ...current, bank_name: value }))} disabled={loading} /><PaymentInput label="Mã BIN ngân hàng *" placeholder="Tự động điền sau khi chọn" value={form.bank_bin} onChange={(value) => setForm((current) => ({ ...current, bank_bin: value.replace(/\D/g, "") }))} disabled={loading} inputMode="numeric" /><PaymentInput label="Số tài khoản *" placeholder="0123456789" value={form.account_number} onChange={(value) => setForm((current) => ({ ...current, account_number: value.replace(/\s/g, "") }))} disabled={loading} inputMode="numeric" /><PaymentInput label="Tên chủ tài khoản *" placeholder="NGUYEN VAN A" value={form.account_name} onChange={(value) => setForm((current) => ({ ...current, account_name: value.toUpperCase() }))} disabled={loading} /></div>{message && <p className={`mt-5 rounded-md p-3 text-sm font-medium ${message.startsWith("Đã lưu") ? "bg-emerald-50 text-emerald-700" : "bg-red-50 text-red-700"}`}>{message}</p>}<button type="submit" disabled={loading || saving} className="mt-6 inline-flex min-h-11 items-center gap-2 rounded-md bg-zinc-950 px-5 text-sm font-bold text-white transition hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-60"><Save size={16} />{saving ? "Đang lưu..." : "Lưu thông tin nhận tiền"}</button></form></div>;
 }
 
 function PaymentInput({ label, placeholder, value, onChange, disabled, inputMode }: { label: string; placeholder: string; value: string; onChange: (value: string) => void; disabled: boolean; inputMode?: "numeric" }) {

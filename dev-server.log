@@ -11,3 +11,4 @@ Creating turbopack project { dir: 'D:\\ST\\websitestudio', testMode: true }
  GET / 200 in 3.4s (next.js: 2.2s, proxy.ts: 313ms, application-code: 929ms)
 ✓ Compiled in 173ms
 ✓ Compiled in 44ms
+  Reload env: .env.local
