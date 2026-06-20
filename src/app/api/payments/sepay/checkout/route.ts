@@ -39,9 +39,9 @@ export async function POST(request: Request) {
     order_amount: plans[plan],
     currency: "VND",
     order_description: `TLORA Studio ${plan.toUpperCase()}${body.studioName?.trim() ? ` - ${body.studioName.trim().slice(0, 80)}` : ""}`,
-    success_url: `${origin}/dang-ky?payment=return&order=${orderId}`,
-    error_url: `${origin}/dang-ky?payment=error&order=${orderId}`,
-    cancel_url: `${origin}/dang-ky?payment=cancel&order=${orderId}`,
+    success_url: `${origin}/thanh-toan/${orderId}`,
+    error_url: `${origin}/thanh-toan/${orderId}?payment=error`,
+    cancel_url: `${origin}/thanh-toan/${orderId}?payment=cancel`,
     custom_data: JSON.stringify({ plan, orderId }),
   });
 

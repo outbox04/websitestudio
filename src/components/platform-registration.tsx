@@ -37,6 +37,7 @@ export function PlatformRegistration() {
   async function submitRegistration(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault(); setSubmitted(true); setCheckoutError("");
     if (payment !== "sepay") return;
+    sessionStorage.setItem("tlora-registration-receipt", JSON.stringify({ studio, plan: plan.name, total, domain: preview, username: "Đang khởi tạo", email: "", phone: "" }));
     setCheckoutLoading(true);
     try {
       const response = await fetch("/api/payments/sepay/checkout", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ plan: planId, studioName: studio }) });
