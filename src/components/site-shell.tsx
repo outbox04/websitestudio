@@ -59,6 +59,17 @@ export function SiteFooter() {
           <p>Supabase, Google Drive API, Vercel</p>
         </div>
       </div>
+      <div className="mx-auto flex max-w-7xl flex-col gap-3 border-t border-white/10 px-4 py-5 text-sm text-zinc-500 sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:px-8">
+        <p>© {new Date().getFullYear()} TLORA Studio. Bảo lưu mọi quyền.</p>
+        <nav className="flex flex-wrap gap-x-5 gap-y-2" aria-label="Liên kết pháp lý">
+          <Link href="/chinh-sach-bao-mat" className="transition hover:text-[#f3d88e]">
+            Chính sách bảo mật
+          </Link>
+          <Link href="/dieu-khoan-dich-vu" className="transition hover:text-[#f3d88e]">
+            Điều khoản dịch vụ
+          </Link>
+        </nav>
+      </div>
     </footer>
   );
 }
