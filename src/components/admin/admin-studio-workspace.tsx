@@ -9,12 +9,14 @@ import {
   FileText,
   FolderSync,
   ImageUp,
+  Landmark,
   Link as LinkIcon,
   RefreshCw,
+  Save,
   Settings,
 } from "lucide-react";
 import Image from "next/image";
-import { Fragment, useMemo, useState } from "react";
+import { Fragment, useEffect, useMemo, useState } from "react";
 import { CustomerGalleryCreator } from "@/components/admin/customer-gallery-creator";
 import { adminMenu } from "@/lib/site-data";
 
@@ -50,7 +52,7 @@ export type AdminEditRequest = {
   selected: boolean;
 };
 
-type AdminView = "dashboard" | "album-manager" | "edit-requests" | "placeholder";
+type AdminView = "dashboard" | "album-manager" | "edit-requests" | "payment-settings" | "placeholder";
 
 type AdminStudioWorkspaceProps = {
   galleries: AdminGallery[];
@@ -115,6 +117,8 @@ export function AdminStudioWorkspace({ galleries, editRequests, databaseError }:
           {activeView === "edit-requests" && (
             <EditRequestsView editRequests={editRequests} />
           )}
+
+          {activeView === "payment-settings" && <PaymentSettingsView />}
 
           {activeView === "placeholder" && (
             <PlaceholderView />
@@ -666,6 +670,51 @@ function PreviewLink({ request }: { request: AdminEditRequest }) {
   );
 }
 
+type PaymentSettingsForm = {
+  bank_bin: string;
+  bank_name: string;
+  account_number: string;
+  account_name: string;
+};
+
+const emptyPaymentSettings: PaymentSettingsForm = { bank_bin: "", bank_name: "", account_number: "", account_name: "" };
+
+function PaymentSettingsView() {
+  const [form, setForm] = useState<PaymentSettingsForm>(emptyPaymentSettings);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [message, setMessage] = useState("");
+
+  useEffect(() => {
+    fetch("/api/admin/payment-settings", { cache: "no-store" })
+      .then(async (response) => {
+        const payload = await response.json() as { settings?: PaymentSettingsForm | null; error?: string };
+        if (!response.ok) throw new Error(payload.error || "Không đọc được cấu hình thanh toán.");
+        setForm(payload.settings || emptyPaymentSettings);
+      })
+      .catch((error: unknown) => setMessage(error instanceof Error ? error.message : "Không đọc được cấu hình thanh toán."))
+      .finally(() => setLoading(false));
+  }, []);
+
+  async function saveSettings(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault(); setSaving(true); setMessage("");
+    try {
+      const response = await fetch("/api/admin/payment-settings", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(form) });
+      const payload = await response.json() as { settings?: PaymentSettingsForm; error?: string };
+      if (!response.ok) throw new Error(payload.error || "Không lưu được cấu hình thanh toán.");
+      setForm(payload.settings || form); setMessage("Đã lưu. QR trên trang đăng ký sẽ dùng tài khoản này.");
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Không lưu được cấu hình thanh toán.");
+    } finally { setSaving(false); }
+  }
+
+  return <div className="max-w-3xl space-y-5"><HeaderCard title="Cài đặt thanh toán" description="Thông tin này được dùng để tạo mã VietQR động ở trang đăng ký TLORA Studio Platform." action="VietQR Banking" /><form onSubmit={saveSettings} className="rounded-lg border border-zinc-200 bg-white p-5 shadow-sm"><div className="flex items-start gap-3 rounded-md border border-sky-100 bg-sky-50 p-4 text-sm leading-6 text-sky-900"><Landmark className="mt-0.5 shrink-0" size={18} /><p>Nhập BIN ngân hàng, số tài khoản và tên chủ tài khoản. API key VietQR được bảo mật trong biến môi trường máy chủ, không nhập tại đây.</p></div><div className="mt-6 grid gap-5 sm:grid-cols-2"><PaymentInput label="Tên ngân hàng *" placeholder="Ví dụ: MB Bank" value={form.bank_name} onChange={(value) => setForm((current) => ({ ...current, bank_name: value }))} disabled={loading} /><PaymentInput label="Mã BIN ngân hàng *" placeholder="Ví dụ: 970422" value={form.bank_bin} onChange={(value) => setForm((current) => ({ ...current, bank_bin: value.replace(/\D/g, "") }))} disabled={loading} inputMode="numeric" /><PaymentInput label="Số tài khoản *" placeholder="0123456789" value={form.account_number} onChange={(value) => setForm((current) => ({ ...current, account_number: value.replace(/\s/g, "") }))} disabled={loading} inputMode="numeric" /><PaymentInput label="Tên chủ tài khoản *" placeholder="NGUYEN VAN A" value={form.account_name} onChange={(value) => setForm((current) => ({ ...current, account_name: value.toUpperCase() }))} disabled={loading} /></div>{message && <p className={`mt-5 rounded-md p-3 text-sm font-medium ${message.startsWith("Đã lưu") ? "bg-emerald-50 text-emerald-700" : "bg-red-50 text-red-700"}`}>{message}</p>}<button type="submit" disabled={loading || saving} className="mt-6 inline-flex min-h-11 items-center gap-2 rounded-md bg-zinc-950 px-5 text-sm font-bold text-white transition hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-60"><Save size={16} />{saving ? "Đang lưu..." : "Lưu thông tin nhận tiền"}</button></form></div>;
+}
+
+function PaymentInput({ label, placeholder, value, onChange, disabled, inputMode }: { label: string; placeholder: string; value: string; onChange: (value: string) => void; disabled: boolean; inputMode?: "numeric" }) {
+  return <label className="block text-sm font-semibold text-zinc-800">{label}<input value={value} onChange={(event) => onChange(event.target.value)} placeholder={placeholder} disabled={disabled} required inputMode={inputMode} className="mt-2 min-h-11 w-full rounded-md border border-zinc-300 px-3 text-sm font-normal outline-none transition placeholder:text-zinc-400 focus:border-zinc-950 focus:ring-2 focus:ring-zinc-200 disabled:bg-zinc-100" /></label>;
+}
+
 function PlaceholderView() {
   return (
     <div className="rounded-lg border border-zinc-200 bg-white p-8 text-center shadow-sm">
@@ -686,6 +735,7 @@ function EmptyText({ text }: { text: string }) {
 
 function getViewFromMenu(item: string): AdminView {
   if (item === "Dashboard") return "dashboard";
+  if (item === adminMenu[7]) return "payment-settings";
   if (item === "Quản lý album khách hàng" || item === "Album") return "album-manager";
   if (item === "Ảnh cần sửa") return "edit-requests";
   return "placeholder";
