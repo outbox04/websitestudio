@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { randomUUID } from "crypto";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { sendActivationEmail } from "@/lib/gmail";
 
 export const runtime = "nodejs";
 
@@ -37,10 +36,6 @@ export async function POST(request: Request) {
       if (licenseError) throw licenseError;
       const { error: updateStudioError } = await admin.from("studio_payment_orders").update({ status: "paid", paid_at: new Date().toISOString(), transaction_id: String((payload as { transaction?: { transaction_id?: string } }).transaction?.transaction_id || ""), license_key: licenseKey }).eq("id", studioOrder.id);
       if (updateStudioError) throw updateStudioError;
-      if (studioOrder.email && !studioOrder.activation_email_sent_at) {
-        await sendActivationEmail({ to: studioOrder.email, studioName: studioOrder.studio_name, orderId, plan: studioOrder.plan.toUpperCase(), domain: studioOrder.domain || "tlgroup.site", username: studioOrder.username || "Đang khởi tạo", licenseKey });
-        await admin.from("studio_payment_orders").update({ activation_email_sent_at: new Date().toISOString() }).eq("id", studioOrder.id);
-      }
       return NextResponse.json({ ok: true, orderId, type: "studio" });
     }
     const expectedAmount = Math.max(gallery.total_cost_vnd - gallery.deposit_paid_vnd, 0);

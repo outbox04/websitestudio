@@ -16,7 +16,7 @@ export function PaymentReceipt({ orderId }: { orderId: string }) {
   }, []);
   const info = receipt || { studio: "Studio của bạn", plan: "TLORA Platform", total: 0, domain: "Đang khởi tạo", username: "Đang khởi tạo", email: "", phone: "" };
   function download() {
-    const text = `TLORA STUDIO PLATFORM\nHOA DON THANH TOAN\n\nMa don: ${orderId}\nTrang thai: Da tiep nhan thanh toan\n\nStudio: ${info.studio}\nGoi: ${info.plan}\nTong thanh toan: ${new Intl.NumberFormat("vi-VN").format(info.total)}d\nTen mien: ${info.domain}\nTen dang nhap: ${info.username}\nEmail: ${info.email}\nSo dien thoai: ${info.phone}\n\nTLORA se kich hoat khong gian Studio cua ban ngay sau khi giao dich duoc xac minh.`;
+    const text = `TLORA STUDIO PLATFORM\nHÓA ĐƠN THANH TOÁN\n\nMã đơn: ${orderId}\nTrạng thái: Đã tiếp nhận thanh toán\n\nStudio: ${info.studio}\nGói: ${info.plan}\nTổng thanh toán: ${new Intl.NumberFormat("vi-VN").format(info.total)}đ\nTên miền: ${info.domain}\nTên đăng nhập: ${info.username}\nEmail: ${info.email}\nSố điện thoại: ${info.phone}\n\nTLORA sẽ kích hoạt không gian Studio của bạn ngay sau khi giao dịch được xác minh.`;
     const url = URL.createObjectURL(new Blob([text], { type: "text/plain;charset=utf-8" }));
     const link = document.createElement("a"); link.href = url; link.download = `hoa-don-${orderId}.txt`; link.click(); URL.revokeObjectURL(url);
   }
