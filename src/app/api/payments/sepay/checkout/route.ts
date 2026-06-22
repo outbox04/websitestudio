@@ -18,7 +18,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Chưa cấu hình SePay Merchant ID và Secret Key trên máy chủ." }, { status: 503 });
   }
 
-  const body = (await request.json()) as { plan?: string; studioName?: string };
+  const body = (await request.json()) as { plan?: string; studioName?: string; representativeName?: string; email?: string; phone?: string; username?: string; domain?: string };
   if (!body.plan || !(body.plan in plans)) {
     return NextResponse.json({ error: "Gói thanh toán không hợp lệ." }, { status: 400 });
   }
@@ -30,6 +30,11 @@ export async function POST(request: Request) {
     studio_name: body.studioName?.trim() || "Studio mới",
     plan,
     amount_vnd: plans[plan],
+    representative_name: body.representativeName?.trim() || null,
+    email: body.email?.trim().toLowerCase() || null,
+    phone: body.phone?.trim() || null,
+    username: body.username?.trim() || null,
+    domain: body.domain?.trim().toLowerCase() || null,
   });
   if (orderError) return NextResponse.json({ error: "Không lưu được đơn thanh toán Studio." }, { status: 500 });
   const origin = new URL(request.url).origin;

@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
+import { randomUUID } from "crypto";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { sendActivationEmail } from "@/lib/gmail";
 
 export const runtime = "nodejs";
 
@@ -20,12 +22,17 @@ export async function POST(request: Request) {
       .maybeSingle();
     if (error) throw error;
     if (!gallery) {
-      const { data: studioOrder, error: studioOrderError } = await admin.from("studio_payment_orders").select("id,amount_vnd").eq("order_id", orderId).maybeSingle();
+      const { data: studioOrder, error: studioOrderError } = await admin.from("studio_payment_orders").select("id,amount_vnd,studio_name,plan,email,username,domain,license_key,activation_email_sent_at").eq("order_id", orderId).maybeSingle();
       if (studioOrderError) throw studioOrderError;
       if (!studioOrder) return NextResponse.json({ error: "Không tìm thấy đơn thanh toán." }, { status: 404 });
       if (amount && amount !== studioOrder.amount_vnd) return NextResponse.json({ error: "Số tiền IPN không khớp đơn Studio." }, { status: 400 });
-      const { error: updateStudioError } = await admin.from("studio_payment_orders").update({ status: "paid", paid_at: new Date().toISOString(), transaction_id: String((payload as { transaction?: { transaction_id?: string } }).transaction?.transaction_id || "") }).eq("id", studioOrder.id);
+      const licenseKey = studioOrder.license_key || `TLORA-${randomUUID().replace(/-/g, "").slice(0, 16).toUpperCase()}`;
+      const { error: updateStudioError } = await admin.from("studio_payment_orders").update({ status: "paid", paid_at: new Date().toISOString(), transaction_id: String((payload as { transaction?: { transaction_id?: string } }).transaction?.transaction_id || ""), license_key: licenseKey }).eq("id", studioOrder.id);
       if (updateStudioError) throw updateStudioError;
+      if (studioOrder.email && !studioOrder.activation_email_sent_at) {
+        await sendActivationEmail({ to: studioOrder.email, studioName: studioOrder.studio_name, orderId, plan: studioOrder.plan.toUpperCase(), domain: studioOrder.domain || "tlgroup.site", username: studioOrder.username || "Đang khởi tạo", licenseKey });
+        await admin.from("studio_payment_orders").update({ activation_email_sent_at: new Date().toISOString() }).eq("id", studioOrder.id);
+      }
       return NextResponse.json({ ok: true, orderId, type: "studio" });
     }
     const expectedAmount = Math.max(gallery.total_cost_vnd - gallery.deposit_paid_vnd, 0);
