@@ -1,33 +1,16 @@
-import { timingSafeEqual } from "crypto";
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 export const runtime = "nodejs";
 
-function equalsSecret(value: string | null, secret: string) {
-  if (!value) return false;
-  const received = Buffer.from(value); const expected = Buffer.from(secret);
-  return received.length === expected.length && timingSafeEqual(received, expected);
-}
-
-function bearerToken(request: Request) {
-  const authorization = request.headers.get("authorization");
-  if (authorization?.startsWith("Bearer ")) return authorization.slice(7).trim();
-  return request.headers.get("x-api-key") || request.headers.get("x-sepay-secret");
-}
-
 export async function POST(request: Request) {
-  const secret = process.env.SEPAY_IPN_SECRET;
-  if (!secret) return NextResponse.json({ error: "IPN chưa được cấu hình trên máy chủ." }, { status: 503 });
-  if (!equalsSecret(bearerToken(request), secret)) return NextResponse.json({ error: "IPN secret không hợp lệ." }, { status: 401 });
-
   try {
-    const payload = await request.json() as Record<string, unknown>;
-    const orderId = String(payload.order_invoice_number || payload.orderId || payload.order_id || "").trim();
-    const status = String(payload.order_status || payload.status || payload.transaction_status || "").toLowerCase();
-    const amount = Number(payload.order_amount || payload.amount || 0);
+    const payload = await request.json() as { notification_type?: string; order?: { order_invoice_number?: string; order_status?: string; order_amount?: string | number } };
+    const orderId = String(payload.order?.order_invoice_number || "").trim();
+    const status = String(payload.order?.order_status || "").toLowerCase();
+    const amount = Number(payload.order?.order_amount || 0);
     if (!orderId) return NextResponse.json({ error: "Thiếu mã đơn hàng." }, { status: 400 });
-    if (!["paid", "success", "completed", "complete"].includes(status)) return NextResponse.json({ ok: true, ignored: true });
+    if (payload.notification_type !== "ORDER_PAID" || !["captured", "paid", "success", "completed"].includes(status)) return NextResponse.json({ ok: true, ignored: true });
 
     const admin = createAdminClient();
     const { data: gallery, error } = await admin
