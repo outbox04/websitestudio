@@ -19,7 +19,15 @@ export async function POST(request: Request) {
       .eq("payment_order_id", orderId)
       .maybeSingle();
     if (error) throw error;
-    if (!gallery) return NextResponse.json({ error: "Không tìm thấy đơn thanh toán." }, { status: 404 });
+    if (!gallery) {
+      const { data: studioOrder, error: studioOrderError } = await admin.from("studio_payment_orders").select("id,amount_vnd").eq("order_id", orderId).maybeSingle();
+      if (studioOrderError) throw studioOrderError;
+      if (!studioOrder) return NextResponse.json({ error: "Không tìm thấy đơn thanh toán." }, { status: 404 });
+      if (amount && amount !== studioOrder.amount_vnd) return NextResponse.json({ error: "Số tiền IPN không khớp đơn Studio." }, { status: 400 });
+      const { error: updateStudioError } = await admin.from("studio_payment_orders").update({ status: "paid", paid_at: new Date().toISOString(), transaction_id: String((payload as { transaction?: { transaction_id?: string } }).transaction?.transaction_id || "") }).eq("id", studioOrder.id);
+      if (updateStudioError) throw updateStudioError;
+      return NextResponse.json({ ok: true, orderId, type: "studio" });
+    }
     const expectedAmount = Math.max(gallery.total_cost_vnd - gallery.deposit_paid_vnd, 0);
     if (amount && amount !== expectedAmount) return NextResponse.json({ error: "Số tiền IPN không khớp đơn hàng." }, { status: 400 });
 

@@ -1,6 +1,7 @@
 import { randomUUID } from "crypto";
 import { NextResponse } from "next/server";
 import { SePayPgClient } from "sepay-pg-node";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 export const runtime = "nodejs";
 
@@ -24,6 +25,13 @@ export async function POST(request: Request) {
 
   const plan = body.plan as PlanId;
   const orderId = `TLORA-${randomUUID().replace(/-/g, "").slice(0, 12).toUpperCase()}`;
+  const { error: orderError } = await createAdminClient().from("studio_payment_orders").insert({
+    order_id: orderId,
+    studio_name: body.studioName?.trim() || "Studio mới",
+    plan,
+    amount_vnd: plans[plan],
+  });
+  if (orderError) return NextResponse.json({ error: "Không lưu được đơn thanh toán Studio." }, { status: 500 });
   const origin = new URL(request.url).origin;
   const environment = process.env.SEPAY_ENV === "sandbox" ? "sandbox" : "production";
   const client = new SePayPgClient({
