@@ -40,10 +40,10 @@ export function PlatformRegistration() {
     sessionStorage.setItem("tlora-registration-receipt", JSON.stringify({ studio, plan: plan.name, total, domain: preview, username: "Đang khởi tạo", email: "", phone: "" }));
     setCheckoutLoading(true);
     try {
-      const form = event.currentTarget;
-      const textInputs = Array.from(form.querySelectorAll<HTMLInputElement>('input[type="text"]'));
-      const email = form.querySelector<HTMLInputElement>('input[type="email"]')?.value || "";
-      const phone = form.querySelector<HTMLInputElement>('input[type="tel"]')?.value || "";
+      const registrationForm = event.currentTarget;
+      const textInputs = Array.from(registrationForm.querySelectorAll<HTMLInputElement>('input[type="text"]'));
+      const email = registrationForm.querySelector<HTMLInputElement>('input[type="email"]')?.value || "";
+      const phone = registrationForm.querySelector<HTMLInputElement>('input[type="tel"]')?.value || "";
       const response = await fetch("/api/payments/sepay/checkout", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ plan: planId, studioName: studio, representativeName: textInputs[1]?.value || "", email, phone, username: textInputs[2]?.value || "", domain: preview }) });
       const payload = await response.json() as { checkoutUrl?: string; fields?: Record<string, string | number>; error?: string };
       if (!response.ok || !payload.checkoutUrl || !payload.fields) throw new Error(payload.error || "Không tạo được phiên thanh toán SePay.");
