@@ -27,6 +27,14 @@ export async function POST(request: Request) {
       if (!studioOrder) return NextResponse.json({ error: "Không tìm thấy đơn thanh toán." }, { status: 404 });
       if (amount && amount !== studioOrder.amount_vnd) return NextResponse.json({ error: "Số tiền IPN không khớp đơn Studio." }, { status: 400 });
       const licenseKey = studioOrder.license_key || `TLORA-${randomUUID().replace(/-/g, "").slice(0, 16).toUpperCase()}`;
+      const { error: licenseError } = await admin.from("licenses").upsert({
+        license_key: licenseKey,
+        status: "active",
+        plan: studioOrder.plan,
+        max_devices: 1,
+        metadata: { orderId, studioName: studioOrder.studio_name, domain: studioOrder.domain || null },
+      }, { onConflict: "license_key" });
+      if (licenseError) throw licenseError;
       const { error: updateStudioError } = await admin.from("studio_payment_orders").update({ status: "paid", paid_at: new Date().toISOString(), transaction_id: String((payload as { transaction?: { transaction_id?: string } }).transaction?.transaction_id || ""), license_key: licenseKey }).eq("id", studioOrder.id);
       if (updateStudioError) throw updateStudioError;
       if (studioOrder.email && !studioOrder.activation_email_sent_at) {
