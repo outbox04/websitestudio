@@ -606,6 +606,7 @@ export function RegistrationWizard() {
                           <input
                             style={{
                               flex: 1,
+                              minWidth: 0,
                               padding: ".75rem 1rem",
                               border: "none",
                               borderRadius: "0",
@@ -627,15 +628,16 @@ export function RegistrationWizard() {
                           <div style={{
                             display: "flex",
                             alignItems: "center",
-                            padding: "0 0.75rem",
+                            padding: "0 .625rem",
                             background: "rgba(255,255,255,0.02)",
                             borderLeft: "1px solid rgba(244,236,224,0.12)",
                             color: "#c99a5e",
-                            fontSize: ".875rem",
+                            fontSize: ".8125rem",
                             fontFamily: "'JetBrains Mono', monospace",
                             fontWeight: 600,
                             userSelect: "none",
-                            flexShrink: 0
+                            flexShrink: 0,
+                            whiteSpace: "nowrap"
                           }}>
                             .tlgroup.site
                           </div>
