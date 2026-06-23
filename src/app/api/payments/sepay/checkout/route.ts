@@ -47,7 +47,7 @@ export async function POST(request: Request) {
     const rootDomain = (process.env.ROOT_DOMAIN || "tlgroup.site").toLowerCase();
     const domainSuffix = `.${rootDomain}`;
     const slug = domain?.endsWith(domainSuffix) ? domain.slice(0, -domainSuffix.length) : "";
-    if (!/^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$/.test(slug)) {
+    if (!/^[a-z0-9](?:[a-z0-9-]{1,61}[a-z0-9])?$/.test(slug)) {
       return NextResponse.json({ error: "Subdomain không hợp lệ." }, { status: 400 });
     }
     const [studioResult, orderResult] = await Promise.all([

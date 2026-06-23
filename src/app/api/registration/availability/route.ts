@@ -10,7 +10,7 @@ export async function GET(request: Request) {
   const requestedDomain = url.searchParams.get("domain")?.trim().toLowerCase();
   const domainSuffix = `.${rootDomain}`;
   const domainSlug = requestedDomain?.endsWith(domainSuffix) ? requestedDomain.slice(0, -domainSuffix.length) : "";
-  const basicDomain = /^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$/.test(domainSlug) ? requestedDomain : undefined;
+  const basicDomain = /^[a-z0-9](?:[a-z0-9-]{1,61}[a-z0-9])?$/.test(domainSlug) ? requestedDomain : undefined;
   if (!email && !username && !phone && !basicDomain) return NextResponse.json({ emailTaken: false, usernameTaken: false, phoneTaken: false, domainTaken: false });
   try {
     const admin = createAdminClient();

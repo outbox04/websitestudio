@@ -10,6 +10,10 @@ export async function updateSession(request: NextRequest) {
   const isProtected = protectedPrefixes.some((prefix) => pathname.startsWith(prefix));
   const isAdmin = adminPrefixes.some((prefix) => pathname.startsWith(prefix));
   const isAdminApi = pathname.startsWith("/api/admin");
+  const forwardedHost = request.headers.get("x-forwarded-host")?.split(",")[0]?.trim();
+  const hostname = (forwardedHost || request.headers.get("host") || "").split(":")[0].toLowerCase();
+  const rootDomain = (process.env.ROOT_DOMAIN || "tlgroup.site").toLowerCase();
+  const isStudioSubdomain = hostname.endsWith(`.${rootDomain}`) && !hostname.startsWith(`www.${rootDomain}`);
 
   if (!isProtected && !isAdmin) {
     return response;
@@ -56,15 +60,16 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  if (isAdmin && user) {
+  // Tenant APIs authorize against studio_members in their route handlers.
+  // The platform console remains reserved for TLORA platform administrators.
+  if (isAdmin && user && !(isAdminApi && isStudioSubdomain)) {
     const { data: profile } = await supabase
       .from("profiles")
-      .select("role,is_active")
+      .select("is_active,is_platform_admin")
       .eq("id", user.id)
       .maybeSingle();
-    const role = profile?.role || user.app_metadata?.role || user.user_metadata?.role;
 
-    if (!profile?.is_active || !["admin", "staff"].includes(role)) {
+    if (!profile?.is_active || !profile.is_platform_admin) {
       if (isAdminApi) {
         return NextResponse.json({ error: "Forbidden" }, { status: 403 });
       }

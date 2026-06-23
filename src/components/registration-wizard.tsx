@@ -89,6 +89,8 @@ export function RegistrationWizard() {
     .toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/đ/g, "d")
     .replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "") || "ten-studio";
   const domain = plan === "basic" ? `${form.domain || slug}.tlgroup.site` : form.domain;
+  const basicSubdomain = form.domain || slug;
+  const isBasicDomainValid = plan !== "basic" || /^[a-z0-9](?:[a-z0-9-]{1,61}[a-z0-9])?$/.test(basicSubdomain);
 
   /* Availability check */
   useEffect(() => {
@@ -140,7 +142,7 @@ export function RegistrationWizard() {
       const isSpecialValid = /[!@#$%^&*(),.?":{}|<>]/.test(form.password);
       const isPasswordMatch = form.password === form.confirm;
 
-      if (d.emailTaken || d.usernameTaken || d.phoneTaken || d.domainTaken || !isLengthValid || !isCaseValid || !isSpecialValid || !isPasswordMatch) {
+      if (d.emailTaken || d.usernameTaken || d.phoneTaken || d.domainTaken || !isBasicDomainValid || !isLengthValid || !isCaseValid || !isSpecialValid || !isPasswordMatch) {
         return;
       }
       setStep(2);
@@ -610,7 +612,7 @@ export function RegistrationWizard() {
                           alignItems: "stretch",
                           borderRadius: ".75rem",
                           overflow: "hidden",
-                          border: domFocused ? "1px solid rgba(201,154,94,0.7)" : clickedSubmit && taken.domain ? "1px solid rgba(239,68,68,.6)" : "1px solid rgba(244,236,224,0.12)",
+                          border: domFocused ? "1px solid rgba(201,154,94,0.7)" : clickedSubmit && (taken.domain || !isBasicDomainValid) ? "1px solid rgba(239,68,68,.6)" : "1px solid rgba(244,236,224,0.12)",
                           boxShadow: domFocused ? "0 0 0 3px rgba(201,154,94,0.12)" : "none",
                           background: "rgba(255,255,255,0.04)",
                           transition: "border-color .3s, box-shadow .3s"
@@ -657,6 +659,7 @@ export function RegistrationWizard() {
                           </div>
                         </div>
                         {clickedSubmit && taken.domain && <p style={{ display: "block", marginTop: ".25rem", fontSize: ".6875rem", color: "#FCA5A5" }}>Subdomain này đã được sử dụng.</p>}
+                        {clickedSubmit && !isBasicDomainValid && <p style={{ display: "block", marginTop: ".25rem", fontSize: ".6875rem", color: "#FCA5A5" }}>Subdomain cần từ 3 đến 63 ký tự.</p>}
                         </>
                       ) : (
                         <input className="tl-input" placeholder="mystudio.com" value={form.domain} onChange={update("domain")} />
@@ -664,7 +667,7 @@ export function RegistrationWizard() {
                     </div>
 
                     <button
-                      disabled={checkingAvailability || taken.email || taken.username || taken.phone || taken.domain || !form.studio || !form.representative || !form.email || !form.phone || !form.username || !form.password || !form.confirm || !domain}
+                      disabled={checkingAvailability || taken.email || taken.username || taken.phone || taken.domain || !isBasicDomainValid || !form.studio || !form.representative || !form.email || !form.phone || !form.username || !form.password || !form.confirm || !domain}
                       onClick={handleConfirmStep1}
                       className="tl-btn-primary"
                       style={{ width: "100%", marginTop: "1.5rem" }}
