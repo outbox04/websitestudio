@@ -10,9 +10,16 @@ export async function generateStaticParams() {
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
   const post = posts.find((item) => item.slug === slug);
+  const title = post?.title || "Bài viết";
+  const description = post?.excerpt || "Kênh thông tin về chụp ảnh concept và studio tips.";
   return {
-    title: post?.title || "Bài viết",
-    description: post?.excerpt,
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      images: ["/brand/tlora-logo.png"],
+    },
   };
 }
 

@@ -5,6 +5,11 @@ import { services } from "@/lib/site-data";
 export const metadata: Metadata = {
   title: "Dịch vụ chụp ảnh concept",
   description: "Các gói chụp concept cá nhân, gia đình, lookbook và retouch hậu kỳ trong studio.",
+  openGraph: {
+    title: "Dịch vụ chụp ảnh concept",
+    description: "Các gói chụp concept cá nhân, gia đình, lookbook và retouch hậu kỳ trong studio.",
+    images: ["/brand/tlora-logo.png"],
+  },
 };
 
 export default function ServicesPage() {

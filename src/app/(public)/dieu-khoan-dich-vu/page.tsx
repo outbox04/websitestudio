@@ -4,6 +4,11 @@ import Link from "next/link";
 export const metadata: Metadata = {
   title: "Điều khoản dịch vụ",
   description: "Điều khoản sử dụng website và dịch vụ của TLORA Studio.",
+  openGraph: {
+    title: "Điều khoản dịch vụ",
+    description: "Điều khoản sử dụng website và dịch vụ của TLORA Studio.",
+    images: ["/brand/tlora-logo.png"],
+  },
 };
 
 const sections = [

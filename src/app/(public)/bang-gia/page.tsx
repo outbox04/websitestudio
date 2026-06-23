@@ -6,6 +6,11 @@ import { pricing } from "@/lib/site-data";
 export const metadata: Metadata = {
   title: "Bảng giá chụp ảnh concept",
   description: "Combo chụp ảnh concept cá nhân, couple, gia đình, lookbook và editorial.",
+  openGraph: {
+    title: "Bảng giá chụp ảnh concept",
+    description: "Combo chụp ảnh concept cá nhân, couple, gia đình, lookbook và editorial.",
+    images: ["/brand/tlora-logo.png"],
+  },
 };
 
 export default function PricingPage() {

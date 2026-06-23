@@ -16,11 +16,30 @@ export async function generateMetadata({ params }: { params: Promise<{ customerS
       .eq("customer_name_slug", customerSlug)
       .maybeSingle();
 
+    const title = data?.customer_name ? `${data.customer_name} - File hoàn thiện` : "File hoàn thiện - TLORA Studio";
+    const description = data?.customer_name ? `Album ảnh hoàn thiện chất lượng cao dành riêng cho ${data.customer_name} tại TLORA Studio.` : "Tải ảnh hoàn thiện chất lượng cao tại TLORA Studio.";
+
     return {
-      title: data?.customer_name ? `${data.customer_name} - File hoàn thiện` : "File hoàn thiện - TLORA Studio",
+      title,
+      description,
+      openGraph: {
+        title,
+        description,
+        images: ["/brand/tlora-logo.png"],
+      },
     };
   } catch {
-    return { title: "File hoàn thiện - TLORA Studio" };
+    const title = "File hoàn thiện - TLORA Studio";
+    const description = "Tải ảnh hoàn thiện chất lượng cao tại TLORA Studio.";
+    return {
+      title,
+      description,
+      openGraph: {
+        title,
+        description,
+        images: ["/brand/tlora-logo.png"],
+      },
+    };
   }
 }
 

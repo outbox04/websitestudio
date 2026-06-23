@@ -7,6 +7,11 @@ import { createAdminClient } from "@/lib/supabase/admin";
 export const metadata: Metadata = {
   title: "TLORA Admin",
   description: "Dashboard quản lý khách hàng, album, ảnh cần sửa, tin tức và AI workflow.",
+  openGraph: {
+    title: "TLORA Admin",
+    description: "Dashboard quản lý khách hàng, album, ảnh cần sửa, tin tức và AI workflow.",
+    images: ["/brand/tlora-logo.png"],
+  },
 };
 
 export const dynamic = "force-dynamic";

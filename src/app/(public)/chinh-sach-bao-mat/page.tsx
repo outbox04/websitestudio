@@ -4,6 +4,11 @@ import Link from "next/link";
 export const metadata: Metadata = {
   title: "Chính sách bảo mật",
   description: "Chính sách bảo vệ dữ liệu cá nhân của TLORA Studio.",
+  openGraph: {
+    title: "Chính sách bảo mật",
+    description: "Chính sách bảo vệ dữ liệu cá nhân của TLORA Studio.",
+    images: ["/brand/tlora-logo.png"],
+  },
 };
 
 const sections = [

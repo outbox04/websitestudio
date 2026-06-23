@@ -5,6 +5,11 @@ import { createClient } from "@/lib/supabase/server";
 export const metadata: Metadata = {
   title: "AI Concept",
   description: "Tạo bản tham khảo concept 50.000đ/ảnh trước khi đặt lịch chụp chất lượng cao tại TLORA Studio.",
+  openGraph: {
+    title: "AI Concept",
+    description: "Tạo bản tham khảo concept 50.000đ/ảnh trước khi đặt lịch chụp chất lượng cao tại TLORA Studio.",
+    images: ["/brand/tlora-logo.png"],
+  },
 };
 
 export default async function AiConceptPage() {

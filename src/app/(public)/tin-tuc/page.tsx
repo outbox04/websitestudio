@@ -7,6 +7,11 @@ import { posts } from "@/lib/site-data";
 export const metadata: Metadata = {
   title: "Tin tức studio",
   description: "Kênh thông tin về chụp ảnh concept, studio tips và quy trình chọn ảnh, retouch.",
+  openGraph: {
+    title: "Tin tức studio",
+    description: "Kênh thông tin về chụp ảnh concept, studio tips và quy trình chọn ảnh, retouch.",
+    images: ["/brand/tlora-logo.png"],
+  },
 };
 
 export default function NewsPage() {

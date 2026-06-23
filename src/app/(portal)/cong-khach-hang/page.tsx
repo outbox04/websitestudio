@@ -4,6 +4,11 @@ import { AlbumGallery } from "@/components/album-gallery";
 export const metadata: Metadata = {
   title: "Cổng khách hàng",
   description: "Xem album cá nhân, chọn ảnh chỉnh sửa và ghi chú từng ảnh.",
+  openGraph: {
+    title: "Cổng khách hàng",
+    description: "Xem album cá nhân, chọn ảnh chỉnh sửa và ghi chú từng ảnh.",
+    images: ["/brand/tlora-logo.png"],
+  },
 };
 
 export default function CustomerPortalPage() {
