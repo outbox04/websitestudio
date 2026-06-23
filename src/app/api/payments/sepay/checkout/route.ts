@@ -47,7 +47,7 @@ export async function POST(request: Request) {
     email,
     password,
     email_confirm: true,
-    user_metadata: { full_name: representativeName, username },
+    user_metadata: { full_name: representativeName, username, role: "admin" },
   });
   if (createUserError || !createdUser.user) {
     return NextResponse.json({ error: "Email hoặc tên đăng nhập này đã được sử dụng. Vui lòng chọn thông tin khác." }, { status: 409 });
@@ -58,7 +58,7 @@ export async function POST(request: Request) {
     full_name: representativeName,
     phone,
     username,
-    role: "customer",
+    role: "admin",
     is_active: false,
   }).eq("id", createdUser.user.id);
   if (profileError) {

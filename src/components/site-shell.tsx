@@ -58,13 +58,13 @@ export function SiteHeader() {
 
 export function SiteFooter() {
   const pathname = usePathname();
-  const isDangKy = pathname === "/dang-ky";
+  const isMinimalFooter = pathname === "/dang-ky" || pathname === "/dang-nhap";
 
-  if (isDangKy) {
+  if (isMinimalFooter) {
     return (
       <footer className="border-t border-white/10 bg-[#07080a] py-6">
         <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 px-4 text-sm text-zinc-500 sm:flex-row sm:px-6 lg:px-8">
-          <p>© {new Date().getFullYear()} TLORA Studio OS. Bảo lưu mọi quyền.</p>
+          <p>© {new Date().getFullYear()} {pathname === "/dang-ky" ? "TLORA Studio OS" : "TLORA Studio"}. Bảo lưu mọi quyền.</p>
           <nav className="flex flex-wrap gap-x-5 gap-y-2" aria-label="Liên kết pháp lý">
             <Link href="/chinh-sach-bao-mat" className="transition hover:text-[#f3d88e]">
               Chính sách bảo mật

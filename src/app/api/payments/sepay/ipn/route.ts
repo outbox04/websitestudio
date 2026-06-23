@@ -72,7 +72,9 @@ export async function POST(request: Request) {
         }, { onConflict: "studio_id,user_id" });
         if (memberError) throw memberError;
         const { error: profileError } = await admin.from("profiles").update({
-          default_studio_id: studioId, is_active: true,
+          default_studio_id: studioId,
+          is_active: true,
+          role: "admin",
         }).eq("id", studioOrder.owner_user_id);
         if (profileError) throw profileError;
       }
