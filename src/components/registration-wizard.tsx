@@ -70,6 +70,8 @@ export function RegistrationWizard() {
   const [taken,   setTaken]   = useState({ email: false, username: false, phone: false });
   const [form,    setForm]    = useState({ studio: "", representative: "", email: "", phone: "", username: "", password: "", confirm: "", domain: "" });
   const [domFocused, setDomFocused] = useState(false);
+  const [clickedSubmit, setClickedSubmit] = useState(false);
+  const [checkingAvailability, setCheckingAvailability] = useState(false);
 
   const formRef  = useRef<HTMLDivElement>(null);
   const selected = plans.find(x => x.id === plan);
@@ -110,11 +112,32 @@ export function RegistrationWizard() {
     }
   };
 
-  const valid = !!(
-    form.studio && form.representative && form.email && form.phone &&
-    form.username && form.password.length >= 8 && form.password === form.confirm &&
-    !taken.email && !taken.username && !taken.phone && domain
-  );
+  async function handleConfirmStep1() {
+    setClickedSubmit(true);
+    setCheckingAvailability(true);
+
+    try {
+      const r = await fetch(`/api/registration/availability?email=${encodeURIComponent(form.email)}&username=${encodeURIComponent(form.username)}&phone=${encodeURIComponent(form.phone)}`);
+      if (r.ok) {
+        const d = await r.json();
+        setTaken({ email: d.emailTaken, username: d.usernameTaken, phone: d.phoneTaken });
+        
+        const isLengthValid = form.password.length >= 6;
+        const isCaseValid = /[A-Z]/.test(form.password) && /[a-z]/.test(form.password);
+        const isSpecialValid = /[!@#$%^&*(),.?":{}|<>]/.test(form.password);
+        const isPasswordMatch = form.password === form.confirm;
+
+        if (d.emailTaken || d.usernameTaken || d.phoneTaken || !isLengthValid || !isCaseValid || !isSpecialValid || !isPasswordMatch) {
+          setCheckingAvailability(false);
+          return;
+        }
+      }
+    } catch (err) {
+      console.error(err);
+    }
+    setCheckingAvailability(false);
+    setStep(2);
+  }
 
   /* Checkout (logic unchanged) */
   async function checkout() {
@@ -201,7 +224,10 @@ export function RegistrationWizard() {
         .tl-feat-card:hover{transform:translateY(-4px);border-color:rgba(201,154,94,0.3);box-shadow:0 8px 40px rgba(201,154,94,0.08);}
 
         /* plan cards — equal height columns */
-        .tl-plan-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;align-items:stretch;}
+        .tl-plan-grid{display:grid;grid-template-columns:1fr;gap:1.5rem;align-items:stretch;}
+        @media (min-width: 768px) {
+          .tl-plan-grid{grid-template-columns:repeat(3,1fr);gap:1rem;}
+        }
         .tl-plan-wrap{display:flex;flex-direction:column;}
         .tl-plan-card{
           position:relative;border-radius:1.25rem;padding:1.75rem;cursor:pointer;
@@ -249,7 +275,7 @@ export function RegistrationWizard() {
       {/* ════════════════════════════════════════════════
           HERO
       ════════════════════════════════════════════════ */}
-      <section style={{ minHeight: "calc(100svh - 73px)", display: "flex", alignItems: "center", padding: "5rem 1.5rem 4rem", position: "relative", overflow: "hidden" }}>
+      <section className="flex min-h-[calc(100vh-73px)] items-center py-16 md:py-24 relative overflow-hidden px-4 sm:px-6 lg:px-8">
         {/* Light ray effect */}
         <div className="tl-rays-wrap">
           <div className="tl-spotlight" />
@@ -263,7 +289,7 @@ export function RegistrationWizard() {
           <div style={{ position: "absolute", width: 400, height: 400, borderRadius: "50%", background: "radial-gradient(circle, rgba(243,216,142,0.05) 0%, transparent 65%)", top: "20%", right: "10%", filter: "blur(60px)", animation: "tlFloat 9s ease-in-out infinite" }} />
         </div>
 
-        <div style={{ maxWidth: 1200, margin: "0 auto", width: "100%", display: "grid", gridTemplateColumns: "1fr 1fr", gap: "4rem", alignItems: "center", position: "relative", zIndex: 1 }}>
+        <div className="mx-auto w-full max-w-6xl grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center relative z-10">
           {/* Left */}
           <div>
             <h1 style={{ fontSize: "clamp(2.5rem,6vw,4.75rem)", fontWeight: 900, lineHeight: 1.05, letterSpacing: "-.04em", animation: "tlFadeUp .8s ease .1s both" }}>
@@ -365,8 +391,8 @@ export function RegistrationWizard() {
       {/* ════════════════════════════════════════════════
           FEATURES
       ════════════════════════════════════════════════ */}
-      <section id="tinh-nang" style={{ padding: "6rem 1.5rem" }}>
-        <div style={{ maxWidth: 1200, margin: "0 auto" }}>
+      <section id="tinh-nang" className="py-16 md:py-24 px-4 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-6xl">
           <RevealDiv style={{ textAlign: "center", marginBottom: "3rem" }}>
             <Eyebrow center>Giải pháp</Eyebrow>
             <h2 style={{ fontSize: "clamp(1.875rem,4.5vw,3rem)", fontWeight: 800, letterSpacing: "-.035em", lineHeight: 1.1, margin: ".75rem auto 1rem", color: "#f4ece0", maxWidth: "22ch" }}>Mọi thứ một Studio cần, trong một nền tảng</h2>
@@ -392,8 +418,8 @@ export function RegistrationWizard() {
       {/* ════════════════════════════════════════════════
           WORKFLOW
       ════════════════════════════════════════════════ */}
-      <section id="workflow" style={{ padding: "6rem 1.5rem", background: "#1c1813" }}>
-        <div style={{ maxWidth: 1200, margin: "0 auto", display: "grid", gridTemplateColumns: "1fr 1fr", gap: "5rem", alignItems: "start" }}>
+      <section id="workflow" className="py-16 md:py-24 px-4 sm:px-6 lg:px-8 bg-[#1c1813]">
+        <div className="mx-auto max-w-6xl grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-start">
           <RevealDiv>
             <Eyebrow>Quy trình</Eyebrow>
             <h2 style={{ fontSize: "clamp(1.875rem,4.5vw,3rem)", fontWeight: 800, letterSpacing: "-.035em", lineHeight: 1.1, margin: ".75rem 0 1rem", color: "#f4ece0" }}>Từ thẻ nhớ đến<br />bàn giao khách hàng</h2>
@@ -420,8 +446,8 @@ export function RegistrationWizard() {
       {/* ════════════════════════════════════════════════
           PRICING
       ════════════════════════════════════════════════ */}
-      <section id="bang-gia" style={{ padding: "6rem 1.5rem" }}>
-        <div style={{ maxWidth: 1200, margin: "0 auto" }}>
+      <section id="bang-gia" className="py-16 md:py-24 px-4 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-6xl">
           <RevealDiv style={{ textAlign: "center", marginBottom: "3rem" }}>
             <Eyebrow center>Bảng giá</Eyebrow>
             <h2 style={{ fontSize: "clamp(1.875rem,4.5vw,3rem)", fontWeight: 800, letterSpacing: "-.035em", lineHeight: 1.1, margin: ".75rem auto 1rem", color: "#f4ece0", maxWidth: "22ch" }}>Giá minh bạch, không ẩn phí</h2>
@@ -463,8 +489,8 @@ export function RegistrationWizard() {
       {/* ════════════════════════════════════════════════
           REGISTRATION FORM
       ════════════════════════════════════════════════ */}
-      <div ref={formRef} style={{ padding: "0 1.5rem 6rem", background: "#14110f" }}>
-        <div style={{ maxWidth: 1100, margin: "0 auto" }}>
+      <div ref={formRef} className="py-16 md:py-24 px-4 sm:px-6 lg:px-8 bg-[#14110f]">
+        <div className="mx-auto max-w-6xl">
           {/* Step breadcrumb */}
           {plan && (
             <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: ".5rem", marginBottom: "2rem" }}>
@@ -493,29 +519,71 @@ export function RegistrationWizard() {
               <a href="#bang-gia" className="tl-btn-primary" style={{ display: "inline-flex", marginTop: "1.5rem" }}>Xem bảng giá <ArrowRight size={15} /></a>
             </div>
           ) : (
-            <div style={{ display: "grid", gridTemplateColumns: "minmax(0,1fr) 300px", gap: "1.5rem", alignItems: "start" }}>
+            <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-6 lg:gap-8 items-start">
               {/* Form panel */}
               <div style={{ background: "#1c1813", border: "1px solid rgba(244,236,224,0.08)", borderRadius: "1.25rem", padding: "2rem", boxShadow: "0 40px 80px rgba(0,0,0,.35)" }}>
                 {step === 1 ? (
                   <>
                     <h2 style={{ fontSize: "1.5rem", fontWeight: 800, letterSpacing: "-.02em", marginBottom: ".375rem", color: "#f4ece0" }}>Thông tin Studio & tài khoản</h2>
                     <p style={{ fontSize: ".8125rem", color: "#8c8174", marginBottom: "1.75rem" }}>Thông tin này sẽ được dùng để khởi tạo không gian Studio riêng của bạn.</p>
-                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <TlInput label="Tên Studio"        value={form.studio}         onChange={update("studio")} />
                       <TlInput label="Người đại diện"   value={form.representative} onChange={update("representative")} />
-                      <TlInput label="Email"             type="email" value={form.email} onChange={update("email")}  error={taken.email    ? "Email đã được sử dụng." : undefined} />
-                      <TlInput label="Số điện thoại"    value={form.phone}          onChange={update("phone")}  error={taken.phone    ? "Số điện thoại đã tồn tại." : undefined} />
-                      <TlInput label="Tên đăng nhập"    value={form.username}       onChange={update("username")} error={taken.username ? "Tên đăng nhập đã tồn tại." : undefined} />
-                      <div style={{ position: "relative" }}>
-                        <TlInput label="Mật khẩu" type={show ? "text" : "password"} value={form.password} onChange={update("password")} />
-                        <button onClick={() => setShow(!show)} style={{ position: "absolute", right: ".75rem", bottom: ".75rem", background: "none", border: "none", color: "#8c8174", cursor: "pointer", padding: ".125rem" }}>
-                          {show ? <EyeOff size={16} /> : <Eye size={16} />}
-                        </button>
-                        <p style={{ marginTop: ".3rem", fontSize: ".6875rem", color: form.password.length >= 8 ? "#c99a5e" : "#8c8174" }}>
-                          {form.password.length >= 8 ? "✓ Hợp lệ — tối thiểu 8 ký tự" : "Tối thiểu 8 ký tự"}
-                        </p>
+                      <TlInput label="Email"             type="email" value={form.email} onChange={update("email")}  error={clickedSubmit && taken.email ? "Email đã được sử dụng." : undefined} />
+                      <TlInput label="Số điện thoại"    value={form.phone}          onChange={update("phone")}  error={clickedSubmit && taken.phone ? "Số điện thoại đã tồn tại." : undefined} />
+                      <TlInput label="Tên đăng nhập"    value={form.username}       onChange={update("username")} error={clickedSubmit && taken.username ? "Tên đăng nhập đã tồn tại." : undefined} />
+                      
+                      <div>
+                        <TlInput
+                          label="Mật khẩu"
+                          type={show ? "text" : "password"}
+                          value={form.password}
+                          onChange={update("password")}
+                          error={clickedSubmit && (!/[A-Z]/.test(form.password) || !/[a-z]/.test(form.password) || !/[!@#$%^&*(),.?":{}|<>]/.test(form.password) || form.password.length < 6) ? "Mật khẩu chưa đạt yêu cầu bảo mật." : undefined}
+                          suffix={
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                setShow(!show);
+                              }}
+                              style={{
+                                background: "none",
+                                border: "none",
+                                color: "#8c8174",
+                                cursor: "pointer",
+                                padding: ".25rem",
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                              }}
+                            >
+                              {show ? <EyeOff size={16} /> : <Eye size={16} />}
+                            </button>
+                          }
+                        />
+                        <div style={{ marginTop: ".5rem", display: "flex", flexDirection: "column", gap: ".25rem" }}>
+                          {[
+                            { label: "Mật khẩu phải từ 6 kí tự trở lên", met: form.password.length >= 6 },
+                            { label: "Mật khẩu phải có từ 1 chữ hoa và 1 chữ thường trở lên", met: /[A-Z]/.test(form.password) && /[a-z]/.test(form.password) },
+                            { label: "Mật khẩu phải có ký tự đặc biệt", met: /[!@#$%^&*(),.?":{}|<>]/.test(form.password) },
+                          ].map((rule, idx) => (
+                            <div key={idx} style={{ display: "flex", alignItems: "center", gap: ".375rem", fontSize: ".6875rem", color: rule.met ? "#c99a5e" : "#8c8174", transition: "color 0.3s" }}>
+                              <span style={{ fontSize: ".875rem", lineHeight: 1 }}>{rule.met ? "✓" : "○"}</span>
+                              <span>{rule.label}</span>
+                            </div>
+                          ))}
+                        </div>
                       </div>
-                      <TlInput label="Xác nhận mật khẩu" type={show ? "text" : "password"} value={form.confirm} onChange={update("confirm")} error={form.confirm && form.confirm !== form.password ? "Mật khẩu chưa khớp." : undefined} />
+
+                      <TlInput
+                        label="Xác nhận mật khẩu"
+                        type={show ? "text" : "password"}
+                        value={form.confirm}
+                        onChange={update("confirm")}
+                        error={form.confirm && form.confirm !== form.password ? "Mật khẩu chưa khớp." : (clickedSubmit && form.password !== form.confirm ? "Mật khẩu xác nhận chưa khớp." : undefined)}
+                      />
                     </div>
 
                     {/* Domain */}
@@ -559,14 +627,15 @@ export function RegistrationWizard() {
                           <div style={{
                             display: "flex",
                             alignItems: "center",
-                            padding: "0 1.25rem",
+                            padding: "0 0.75rem",
                             background: "rgba(255,255,255,0.02)",
                             borderLeft: "1px solid rgba(244,236,224,0.12)",
                             color: "#c99a5e",
                             fontSize: ".875rem",
                             fontFamily: "'JetBrains Mono', monospace",
                             fontWeight: 600,
-                            userSelect: "none"
+                            userSelect: "none",
+                            flexShrink: 0
                           }}>
                             .tlgroup.site
                           </div>
@@ -576,8 +645,14 @@ export function RegistrationWizard() {
                       )}
                     </div>
 
-                    <button disabled={!valid} onClick={() => setStep(2)} className="tl-btn-primary" style={{ width: "100%", marginTop: "1.5rem" }}>
-                      Xác nhận thông tin <ArrowRight size={15} />
+                    <button
+                      disabled={checkingAvailability || !form.studio || !form.representative || !form.email || !form.phone || !form.username || !form.password || !form.confirm || !domain}
+                      onClick={handleConfirmStep1}
+                      className="tl-btn-primary"
+                      style={{ width: "100%", marginTop: "1.5rem" }}
+                    >
+                      {checkingAvailability ? "Đang xác minh..." : "Xác nhận thông tin"}
+                      <ArrowRight size={15} />
                     </button>
                     <button onClick={() => setPlan(null)} className="tl-btn-ghost" style={{ width: "100%", marginTop: ".75rem" }}>
                       ← Chọn gói khác
@@ -654,12 +729,12 @@ export function RegistrationWizard() {
       {/* ════════════════════════════════════════════════
           FAQ — 2 column layout
       ════════════════════════════════════════════════ */}
-      <section id="faq" style={{ padding: "6rem 1.5rem", background: "#1c1813", position: "relative", overflow: "hidden" }}>
+      <section id="faq" className="py-16 md:py-24 px-4 sm:px-6 lg:px-8 bg-[#1c1813] relative overflow-hidden">
         {/* subtle light accent */}
         <div style={{ position: "absolute", right: 0, top: "50%", width: 400, height: 400, borderRadius: "50%", background: "radial-gradient(circle, rgba(201,154,94,0.07) 0%, transparent 70%)", filter: "blur(60px)", transform: "translateY(-50%)", pointerEvents: "none" }} />
-        <div style={{ maxWidth: 1200, margin: "0 auto", display: "grid", gridTemplateColumns: "1fr 1.6fr", gap: "5rem", alignItems: "start" }}>
+        <div className="mx-auto max-w-6xl grid grid-cols-1 lg:grid-cols-[1fr_1.6fr] gap-12 lg:gap-20 items-start">
           {/* Left: heading */}
-          <RevealDiv style={{ position: "sticky", top: "7rem" }}>
+          <RevealDiv className="lg:sticky lg:top-28">
             <Eyebrow>FAQ</Eyebrow>
             <h2 style={{ fontSize: "clamp(1.875rem,3.5vw,2.5rem)", fontWeight: 800, letterSpacing: "-.035em", lineHeight: 1.15, margin: ".75rem 0 1rem", color: "#f4ece0" }}>Câu hỏi<br />thường gặp</h2>
             <div style={{ width: 40, height: 2, background: "#c99a5e", borderRadius: 99, margin: "1rem 0 1.25rem" }} />
@@ -688,7 +763,7 @@ export function RegistrationWizard() {
       {/* ════════════════════════════════════════════════
           FINAL CTA
       ════════════════════════════════════════════════ */}
-      <section style={{ padding: "6rem 1.5rem", background: "#14110f", textAlign: "center", position: "relative", overflow: "hidden" }}>
+      <section className="py-16 md:py-24 px-4 sm:px-6 lg:px-8 bg-[#14110f] text-center relative overflow-hidden">
         <div style={{ position: "absolute", inset: 0, pointerEvents: "none" }}>
           <div style={{ position: "absolute", width: 500, height: 500, borderRadius: "50%", background: "radial-gradient(circle, rgba(201,154,94,0.14) 0%, transparent 65%)", top: "50%", left: "50%", transform: "translate(-50%,-50%)", filter: "blur(60px)", animation: "tlFloat 6s ease-in-out infinite" }} />
         </div>
@@ -723,7 +798,7 @@ function Eyebrow({ children, center }: { children: React.ReactNode; center?: boo
   );
 }
 
-function RevealDiv({ children, style }: { children: React.ReactNode; style?: React.CSSProperties }) {
+function RevealDiv({ children, style, className }: { children: React.ReactNode; style?: React.CSSProperties; className?: string }) {
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => {
     const el = ref.current; if (!el) return;
@@ -731,16 +806,23 @@ function RevealDiv({ children, style }: { children: React.ReactNode; style?: Rea
     obs.observe(el);
     return () => obs.disconnect();
   }, []);
-  return <div ref={ref} className="tl-reveal" style={style}>{children}</div>;
+  return <div ref={ref} className={`tl-reveal ${className || ""}`.trim()} style={style}>{children}</div>;
 }
 
-function TlInput({ label, error, ...props }: { label: string; error?: string } & React.InputHTMLAttributes<HTMLInputElement>) {
+function TlInput({ label, error, suffix, ...props }: { label: string; error?: string; suffix?: React.ReactNode } & React.InputHTMLAttributes<HTMLInputElement>) {
   return (
-    <label style={{ display: "block", fontSize: ".8125rem", fontWeight: 600, color: "#cbc0b0" }}>
+    <div style={{ display: "flex", flexDirection: "column", fontSize: ".8125rem", fontWeight: 600, color: "#cbc0b0" }}>
       <span>{label}</span>
-      <input {...props} className={`tl-input${error ? " err" : ""}`} style={{ marginTop: ".45rem", display: "block" }} />
+      <div style={{ position: "relative", marginTop: ".45rem" }}>
+        <input {...props} className={`tl-input${error ? " err" : ""}`} style={{ display: "block", width: "100%" }} />
+        {suffix && (
+          <div style={{ position: "absolute", right: ".75rem", top: "50%", transform: "translateY(-50%)", display: "flex", alignItems: "center", zIndex: 10 }}>
+            {suffix}
+          </div>
+        )}
+      </div>
       {error && <span style={{ display: "block", marginTop: ".25rem", fontSize: ".6875rem", color: "#FCA5A5" }}>{error}</span>}
-    </label>
+    </div>
   );
 }
 
