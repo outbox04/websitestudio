@@ -48,7 +48,7 @@ const faqs = [
   { q: "TLORA Studio OS có thể dùng thử miễn phí không?",               a: "Gói Starter hoàn toàn miễn phí vĩnh viễn cho 5 jobs/tháng. Gói Studio và Pro có 14 ngày dùng thử không cần thẻ tín dụng." },
   { q: "Drive Sync hoạt động với Google Drive và OneDrive không?",       a: "Hiện tại TLORA hỗ trợ Google Drive đầy đủ. OneDrive và Dropbox đang được phát triển và sẽ ra mắt trong Q3 2025." },
   { q: "Khách hàng có cần tạo tài khoản để dùng Client Portal không?",  a: "Không. Khách hàng chỉ cần nhận link duy nhất từ bạn gửi. Không cần đăng ký, không cần app, xem trực tiếp trên trình duyệt bất kỳ thiết bị nào." },
-  { q: "Website Builder hỗ trợ custom domain không?",                    a: "Có, từ gói MEDIUM trở lên bạn có thể kết nối custom domain. Gói BASIC sẽ dùng subdomain dạng yourstudio.tlora-studio-os." },
+  { q: "Website Builder hỗ trợ custom domain không?",                    a: "Có, từ gói MEDIUM trở lên bạn có thể kết nối custom domain. Gói BASIC sẽ dùng subdomain dạng yourstudio.tlgroup.site." },
   { q: "Dữ liệu ảnh của tôi có an toàn không?",                         a: "TLORA không lưu trữ file ảnh gốc — chỉ đồng bộ metadata và thumbnail. Ảnh gốc luôn nằm trên Drive của bạn, bạn có toàn quyền kiểm soát." },
   { q: "Tôi có thể hủy bất kỳ lúc nào không?",                          a: "Hoàn toàn có thể. Không có hợp đồng ràng buộc. Hủy bất kỳ lúc nào, dữ liệu được giữ 30 ngày để bạn export ra nếu cần." },
 ];
@@ -69,6 +69,7 @@ export function RegistrationWizard() {
   const [openFaq, setOpenFaq] = useState<number | null>(null);
   const [taken,   setTaken]   = useState({ email: false, username: false, phone: false });
   const [form,    setForm]    = useState({ studio: "", representative: "", email: "", phone: "", username: "", password: "", confirm: "", domain: "" });
+  const [domFocused, setDomFocused] = useState(false);
 
   const formRef  = useRef<HTMLDivElement>(null);
   const selected = plans.find(x => x.id === plan);
@@ -77,7 +78,7 @@ export function RegistrationWizard() {
   const slug = form.studio
     .toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/đ/g, "d")
     .replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "") || "ten-studio";
-  const domain = plan === "basic" ? `${slug}.tlora-studio-os` : form.domain;
+  const domain = plan === "basic" ? `${form.domain || slug}.tlgroup.site` : form.domain;
 
   /* Availability check (logic unchanged) */
   useEffect(() => {
@@ -89,8 +90,25 @@ export function RegistrationWizard() {
     return () => clearTimeout(t);
   }, [form.email, form.username, form.phone]);
 
-  const update = (key: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement>) =>
-    setForm({ ...form, [key]: e.target.value });
+  const update = (key: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value;
+    if (key === "studio") {
+      const newSlug = val
+        .toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/đ/g, "d")
+        .replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
+      const oldSlug = form.studio
+        .toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/đ/g, "d")
+        .replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
+      
+      setForm(prev => ({
+        ...prev,
+        studio: val,
+        domain: (prev.domain === "" || prev.domain === oldSlug) ? newSlug : prev.domain
+      }));
+    } else {
+      setForm(prev => ({ ...prev, [key]: val }));
+    }
+  };
 
   const valid = !!(
     form.studio && form.representative && form.email && form.phone &&
@@ -504,11 +522,54 @@ export function RegistrationWizard() {
                     <div style={{ marginTop: "1.5rem", borderTop: "1px solid rgba(244,236,224,0.07)", paddingTop: "1.5rem" }}>
                       <p style={{ fontWeight: 700, marginBottom: ".35rem", color: "#f4ece0", fontSize: ".9375rem" }}>{plan === "basic" ? "Subdomain miễn phí" : "Tên miền riêng"}</p>
                       <p style={{ fontSize: ".8125rem", color: "#8c8174", marginBottom: ".875rem" }}>
-                        {plan === "basic" ? "Subdomain được tạo tự động dựa trên tên Studio." : "Nhập tên miền riêng của bạn. Chúng tôi hỗ trợ cài đặt."}
+                        {plan === "basic" ? "Nhập tên subdomain mong muốn cho không gian Studio của bạn." : "Nhập tên miền riêng của bạn. Chúng tôi hỗ trợ cài đặt."}
                       </p>
                       {plan === "basic" ? (
-                        <div style={{ display: "flex", alignItems: "center", gap: ".5rem", padding: ".75rem 1rem", borderRadius: ".75rem", background: "rgba(201,154,94,0.08)", border: "1px solid rgba(201,154,94,0.2)", fontSize: ".875rem", fontFamily: "'JetBrains Mono', monospace", color: "#c99a5e" }}>
-                          🌐 {domain}
+                        <div style={{
+                          display: "flex",
+                          alignItems: "stretch",
+                          borderRadius: ".75rem",
+                          overflow: "hidden",
+                          border: domFocused ? "1px solid rgba(201,154,94,0.7)" : "1px solid rgba(244,236,224,0.12)",
+                          boxShadow: domFocused ? "0 0 0 3px rgba(201,154,94,0.12)" : "none",
+                          background: "rgba(255,255,255,0.04)",
+                          transition: "border-color .3s, box-shadow .3s"
+                        }}>
+                          <input
+                            style={{
+                              flex: 1,
+                              padding: ".75rem 1rem",
+                              border: "none",
+                              borderRadius: "0",
+                              background: "transparent",
+                              color: "#f4ece0",
+                              fontFamily: "inherit",
+                              fontSize: ".875rem",
+                              outline: "none"
+                            }}
+                            placeholder="ten-studio"
+                            value={form.domain}
+                            onFocus={() => setDomFocused(true)}
+                            onBlur={() => setDomFocused(false)}
+                            onChange={(e) => {
+                              const val = e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, "");
+                              setForm({ ...form, domain: val });
+                            }}
+                          />
+                          <div style={{
+                            display: "flex",
+                            alignItems: "center",
+                            padding: "0 1.25rem",
+                            background: "rgba(255,255,255,0.02)",
+                            borderLeft: "1px solid rgba(244,236,224,0.12)",
+                            color: "#c99a5e",
+                            fontSize: ".875rem",
+                            fontFamily: "'JetBrains Mono', monospace",
+                            fontWeight: 600,
+                            userSelect: "none"
+                          }}>
+                            .tlgroup.site
+                          </div>
                         </div>
                       ) : (
                         <input className="tl-input" placeholder="mystudio.com" value={form.domain} onChange={update("domain")} />
