@@ -133,8 +133,19 @@ const faqs = [
 ];
 
 export default function HomePage() {
+  const structuredData = {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    name: "TLORA Studio",
+    url: "https://tlgroup.site",
+    description: "TLORA Studio chụp ảnh concept cá nhân, chọn ảnh online và quản lý album riêng.",
+    inLanguage: "vi-VN",
+  };
+
   return (
-    <div className="bg-[#14110f] text-[#f4ece0]">
+    <>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }} />
+      <div className="bg-[#14110f] text-[#f4ece0]">
       <section className="relative min-h-[calc(100svh-73px)] overflow-hidden px-4 py-16 sm:px-6 sm:py-20 lg:px-8 lg:py-28">
         <Image
           src="https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=1800&q=85"
@@ -321,7 +332,8 @@ export default function HomePage() {
           </div>
         </div>
       </section>
-    </div>
+      </div>
+    </>
   );
 }
 
