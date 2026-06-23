@@ -7,11 +7,12 @@ export async function proxy(request: NextRequest) {
   const rootDomain = (process.env.ROOT_DOMAIN || "tlgroup.site").toLowerCase();
   const isStudioSubdomain = hostname.endsWith(`.${rootDomain}`) && !hostname.startsWith(`www.${rootDomain}`);
 
-  if (isStudioSubdomain && ["/", "/quan-tri"].includes(request.nextUrl.pathname)) {
+  const isStudioRoute = request.nextUrl.pathname === "/" || request.nextUrl.pathname === "/quan-tri" || request.nextUrl.pathname === "/tin-tuc" || request.nextUrl.pathname.startsWith("/tin-tuc/");
+  if (isStudioSubdomain && isStudioRoute) {
     const studioSlug = hostname.slice(0, -(rootDomain.length + 1));
     if (studioSlug && !studioSlug.includes(".")) {
       const url = request.nextUrl.clone();
-      url.pathname = request.nextUrl.pathname === "/quan-tri" ? `/studio-site/${studioSlug}/quan-tri` : `/studio-site/${studioSlug}`;
+      url.pathname = request.nextUrl.pathname === "/quan-tri" ? `/studio-site/${studioSlug}/quan-tri` : request.nextUrl.pathname === "/" ? `/studio-site/${studioSlug}` : `/studio-site/${studioSlug}${request.nextUrl.pathname}`;
       return NextResponse.rewrite(url);
     }
   }

@@ -31,6 +31,7 @@ create table if not exists public.studio_members (
 
 -- 2) Preserve registration data and connect payments, auth and licenses.
 alter table public.profiles add column if not exists username text;
+alter table public.profiles add column if not exists is_platform_admin boolean not null default false;
 alter table public.profiles add column if not exists default_studio_id uuid references public.studios(id) on delete set null;
 alter table public.studio_payment_orders add column if not exists representative_name text;
 alter table public.studio_payment_orders add column if not exists email text;
@@ -76,7 +77,7 @@ create or replace function public.is_platform_operator()
 returns boolean language sql security definer set search_path = public stable as $$
   select exists (
     select 1 from public.profiles
-    where id = auth.uid() and is_active = true and role in ('admin', 'staff')
+    where id = auth.uid() and is_active = true and is_platform_admin = true
   );
 $$;
 

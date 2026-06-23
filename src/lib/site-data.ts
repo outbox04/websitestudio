@@ -110,7 +110,6 @@ export const aiPresets = {
 
 export const adminMenu = [
   "Dashboard",
-  "Khách hàng",
   "Quản lý album khách hàng",
   "Album",
   "Ảnh cần sửa",

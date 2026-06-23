@@ -5,6 +5,7 @@ update public.profiles
 set
   role = 'admin',
   is_active = true,
+  is_platform_admin = true,
   updated_at = now()
 where email = 'decaztran@gmail.com';
 

@@ -19,6 +19,7 @@ import Image from "next/image";
 import { Fragment, useEffect, useMemo, useState } from "react";
 import { CustomerGalleryCreator } from "@/components/admin/customer-gallery-creator";
 import { StudioDriveConnection } from "@/components/admin/studio-drive-connection";
+import { StudioNewsManager } from "@/components/admin/studio-news-manager";
 import { adminMenu } from "@/lib/site-data";
 
 export type AdminGallery = {
@@ -53,7 +54,7 @@ export type AdminEditRequest = {
   selected: boolean;
 };
 
-type AdminView = "dashboard" | "album-manager" | "edit-requests" | "payment-settings" | "placeholder";
+type AdminView = "dashboard" | "album-manager" | "edit-requests" | "payment-settings" | "news" | "placeholder";
 
 type AdminStudioWorkspaceProps = {
   galleries: AdminGallery[];
@@ -123,6 +124,8 @@ export function AdminStudioWorkspace({ galleries, editRequests, databaseError, s
           )}
 
           {activeView === "payment-settings" && <PaymentSettingsView />}
+
+          {activeView === "news" && <StudioNewsManager />}
 
           {activeView === "placeholder" && (
             <PlaceholderView />
@@ -753,7 +756,8 @@ function EmptyText({ text }: { text: string }) {
 
 function getViewFromMenu(item: string): AdminView {
   if (item === "Dashboard") return "dashboard";
-  if (item === adminMenu[7]) return "payment-settings";
+  if (item === "Cài đặt") return "payment-settings";
+  if (item === "Tin tức") return "news";
   if (item === "Quản lý album khách hàng" || item === "Album") return "album-manager";
   if (item === "Ảnh cần sửa") return "edit-requests";
   return "placeholder";
