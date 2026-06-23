@@ -1,6 +1,9 @@
+"use client";
+
 import { CalendarCheck, Menu } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { ButtonLink } from "@/components/ui";
 
 const nav = [
@@ -11,7 +14,22 @@ const nav = [
   { href: "/tin-tuc", label: "Tin tức" },
 ];
 
+const dangKyNav = [
+  { href: "/", label: "Trang chủ" },
+  { href: "/dich-vu", label: "Dịch vụ" },
+  { href: "#tinh-nang", label: "Tính năng" },
+  { href: "#workflow", label: "Quy trình" },
+  { href: "#bang-gia", label: "Bảng giá" },
+  { href: "#faq", label: "FAQ" },
+  { href: "/ai-concept", label: "AI Concept" },
+  { href: "/tin-tuc", label: "Tin tức" },
+];
+
 export function SiteHeader() {
+  const pathname = usePathname();
+  const isDangKy = pathname === "/dang-ky";
+  const currentNav = isDangKy ? dangKyNav : nav;
+
   return (
     <header className="sticky top-0 z-40 border-b border-white/10 bg-[#07080a]/85 backdrop-blur-xl">
       <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 sm:px-6 lg:px-8">
@@ -19,15 +37,15 @@ export function SiteHeader() {
           <Image src="/brand/tlora-logo.png" alt="TLORA Studio" width={1536} height={1024} priority className="h-12 w-auto object-contain" />
         </Link>
         <nav className="hidden items-center gap-6 text-sm font-medium text-zinc-300 lg:flex">
-          {nav.map((item) => (
+          {currentNav.map((item) => (
             <Link key={item.href} href={item.href} className="transition hover:text-[#f3d88e]">
               {item.label}
             </Link>
           ))}
         </nav>
         <div className="hidden items-center gap-3 md:flex">
-          <ButtonLink href="/dang-ky">
-            <CalendarCheck size={16} /> Đặt lịch tư vấn
+          <ButtonLink href={isDangKy ? "#bang-gia" : "/dang-ky"}>
+            <CalendarCheck size={16} /> {isDangKy ? "Đăng ký ngay" : "Đặt lịch tư vấn"}
           </ButtonLink>
         </div>
         <button className="grid size-10 place-items-center rounded-md border border-white/10 bg-white/[0.04] text-white lg:hidden" aria-label="Mở menu">
@@ -39,6 +57,27 @@ export function SiteHeader() {
 }
 
 export function SiteFooter() {
+  const pathname = usePathname();
+  const isDangKy = pathname === "/dang-ky";
+
+  if (isDangKy) {
+    return (
+      <footer className="border-t border-white/10 bg-[#07080a] py-6">
+        <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 px-4 text-sm text-zinc-500 sm:flex-row sm:px-6 lg:px-8">
+          <p>© {new Date().getFullYear()} TLORA Studio OS. Bảo lưu mọi quyền.</p>
+          <nav className="flex flex-wrap gap-x-5 gap-y-2" aria-label="Liên kết pháp lý">
+            <Link href="/chinh-sach-bao-mat" className="transition hover:text-[#f3d88e]">
+              Chính sách bảo mật
+            </Link>
+            <Link href="/dieu-khoan-dich-vu" className="transition hover:text-[#f3d88e]">
+              Điều khoản dịch vụ
+            </Link>
+          </nav>
+        </div>
+      </footer>
+    );
+  }
+
   return (
     <footer className="border-t border-white/10 bg-[#07080a]">
       <div className="mx-auto grid max-w-7xl gap-8 px-4 py-10 sm:px-6 md:grid-cols-[1.4fr_1fr_1fr] lg:px-8">

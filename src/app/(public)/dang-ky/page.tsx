@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
 import { RegistrationWizard } from "@/components/registration-wizard";
 
-export const metadata: Metadata = { title: "Khởi tạo Studio Platform", description: "Đăng ký TLORA Studio Platform: Website, quản lý ảnh, chọn ảnh online và Cloud Storage cho studio." };
+export const metadata: Metadata = { title: "Khởi tạo TLORA Studio OS", description: "Đăng ký TLORA Studio OS — tlora-studio-os: Website, quản lý ảnh, chọn ảnh online và Cloud Storage dành riêng cho studio ảnh." };
 export default function RegistrationPage() { return <RegistrationWizard />; }
