@@ -79,7 +79,7 @@ export function LoginForm() {
     <form
       onSubmit={handleSubmit}
       className="w-full max-w-md rounded-2xl border border-white/10 bg-[#1c1813] p-8 shadow-2xl shadow-black/55 text-[#f4ece0]"
-      style={{ fontFamily: "'Outfit', -apple-system, sans-serif" }}
+      style={{ fontFamily: "var(--font-body), sans-serif" }}
     >
       <div className="flex justify-center mb-4">
         <div style={{ width: 56, height: 56, borderRadius: "1rem", display: "flex", alignItems: "center", justifyContent: "center", border: "1px solid rgba(201,154,94,0.2)", background: "rgba(201,154,94,0.1)" }}>

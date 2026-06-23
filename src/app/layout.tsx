@@ -1,16 +1,20 @@
 import type { Metadata } from "next";
-import { Be_Vietnam_Pro, Inter } from "next/font/google";
+import { Google_Sans, Google_Sans_Code } from "next/font/google";
 import "./globals.css";
 
-const heading = Be_Vietnam_Pro({
-  variable: "--font-heading",
-  subsets: ["latin", "vietnamese"],
-  weight: ["500", "600", "700", "800"],
+const body = Google_Sans({
+  variable: "--font-body",
+  subsets: ["vietnamese"],
+  weight: "variable",
+  style: ["normal", "italic"],
+  axes: ["opsz"],
 });
 
-const body = Inter({
-  variable: "--font-body",
-  subsets: ["latin", "vietnamese"],
+const code = Google_Sans_Code({
+  variable: "--font-code",
+  subsets: ["vietnamese"],
+  weight: "variable",
+  style: ["normal", "italic"],
 });
 
 export const metadata: Metadata = {
@@ -35,7 +39,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="vi" className={`${heading.variable} ${body.variable} h-full scroll-smooth`}>
+    <html lang="vi" className={`${body.variable} ${code.variable} h-full scroll-smooth`}>
       <body className="min-h-full bg-[#07080a] text-[#f8f5ee] antialiased">{children}</body>
     </html>
   );

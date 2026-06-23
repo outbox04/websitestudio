@@ -25,10 +25,10 @@ const plans = [
     features: ["Tất cả tính năng Medium", "Thiết kế theo thương hiệu", "Landing Page riêng", "Thiệp cưới online", "Hỗ trợ mua tên miền", "Triển khai 1:1"] },
 ] as const;
 type Plan = typeof plans[number]["id"];
-type Availability = { emailTaken: boolean; usernameTaken: boolean; phoneTaken: boolean };
+type Availability = { emailTaken: boolean; usernameTaken: boolean; phoneTaken: boolean; domainTaken: boolean };
 
-async function getAvailability(email: string, username: string, phone: string): Promise<Availability> {
-  const r = await fetch(`/api/registration/availability?email=${encodeURIComponent(email)}&username=${encodeURIComponent(username)}&phone=${encodeURIComponent(phone)}`);
+async function getAvailability(email: string, username: string, phone: string, domain: string): Promise<Availability> {
+  const r = await fetch(`/api/registration/availability?email=${encodeURIComponent(email)}&username=${encodeURIComponent(username)}&phone=${encodeURIComponent(phone)}&domain=${encodeURIComponent(domain)}`);
   if (!r.ok) throw new Error("Không thể kiểm tra thông tin đăng ký.");
   return r.json();
 }
@@ -74,7 +74,7 @@ export function RegistrationWizard() {
   const [step,    setStep]    = useState(1);
   const [show,    setShow]    = useState(false);
   const [openFaq, setOpenFaq] = useState<number | null>(null);
-  const [taken,   setTaken]   = useState({ email: false, username: false, phone: false });
+  const [taken,   setTaken]   = useState({ email: false, username: false, phone: false, domain: false });
   const [availabilityError, setAvailabilityError] = useState<string | null>(null);
   const [form,    setForm]    = useState({ studio: "", representative: "", email: "", phone: "", username: "", password: "", confirm: "", domain: "" });
   const [domFocused, setDomFocused] = useState(false);
@@ -96,19 +96,19 @@ export function RegistrationWizard() {
     const t = setTimeout(async () => {
       if (!form.email && !form.username && !form.phone) return;
       try {
-        const d = await getAvailability(form.email, form.username, form.phone);
-        if (!cancelled) setTaken({ email: d.emailTaken, username: d.usernameTaken, phone: d.phoneTaken });
+        const d = await getAvailability(form.email, form.username, form.phone, plan === "basic" ? domain : "");
+        if (!cancelled) setTaken({ email: d.emailTaken, username: d.usernameTaken, phone: d.phoneTaken, domain: d.domainTaken });
       } catch {
         // The final confirmation handles and displays verification failures.
       }
     }, 400);
     return () => { cancelled = true; clearTimeout(t); };
-  }, [form.email, form.username, form.phone]);
+  }, [form.email, form.username, form.phone, domain, plan]);
 
   const update = (key: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value;
     setAvailabilityError(null);
-    setTaken({ email: false, username: false, phone: false });
+    setTaken({ email: false, username: false, phone: false, domain: false });
     if (key === "studio") {
       const newSlug = val
         .toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/đ/g, "d")
@@ -133,14 +133,14 @@ export function RegistrationWizard() {
     setAvailabilityError(null);
 
     try {
-      const d = await getAvailability(form.email, form.username, form.phone);
-      setTaken({ email: d.emailTaken, username: d.usernameTaken, phone: d.phoneTaken });
+      const d = await getAvailability(form.email, form.username, form.phone, plan === "basic" ? domain : "");
+      setTaken({ email: d.emailTaken, username: d.usernameTaken, phone: d.phoneTaken, domain: d.domainTaken });
       const isLengthValid = form.password.length >= 8;
       const isCaseValid = /[A-Z]/.test(form.password) && /[a-z]/.test(form.password);
       const isSpecialValid = /[!@#$%^&*(),.?":{}|<>]/.test(form.password);
       const isPasswordMatch = form.password === form.confirm;
 
-      if (d.emailTaken || d.usernameTaken || d.phoneTaken || !isLengthValid || !isCaseValid || !isSpecialValid || !isPasswordMatch) {
+      if (d.emailTaken || d.usernameTaken || d.phoneTaken || d.domainTaken || !isLengthValid || !isCaseValid || !isSpecialValid || !isPasswordMatch) {
         return;
       }
       setStep(2);
@@ -177,11 +177,10 @@ export function RegistrationWizard() {
   }
 
   return (
-    <div className="bg-[#14110f] text-[#f4ece0]" style={{ fontFamily: "'Outfit', -apple-system, sans-serif", overflowX: "hidden" }}>
+    <div className="bg-[#14110f] text-[#f4ece0]" style={{ fontFamily: "var(--font-body), sans-serif", overflowX: "hidden" }}>
 
       {/* ── Global styles ── */}
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap');
         @keyframes tlFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-30px)}}
         @keyframes tlFadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
         @keyframes tlMarquee{from{transform:translateX(0)}to{transform:translateX(-50%)}}
@@ -340,7 +339,7 @@ export function RegistrationWizard() {
                   <div style={{ width: 9, height: 9, borderRadius: "50%", background: "#FF5F57" }} />
                   <div style={{ width: 9, height: 9, borderRadius: "50%", background: "#FFBD2E" }} />
                   <div style={{ width: 9, height: 9, borderRadius: "50%", background: "#28C840" }} />
-                  <span style={{ marginLeft: "auto", fontSize: ".7rem", color: "#8c8174", fontFamily: "'JetBrains Mono', monospace" }}>TLORA Studio OS · Dashboard</span>
+                    <span style={{ marginLeft: "auto", fontSize: ".7rem", color: "#8c8174", fontFamily: "var(--font-code), monospace" }}>TLORA Studio OS · Dashboard</span>
                 </div>
                 {/* Stats */}
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: ".5rem", marginBottom: ".875rem" }}>
@@ -605,12 +604,13 @@ export function RegistrationWizard() {
                         {plan === "basic" ? "Nhập tên subdomain mong muốn cho không gian Studio của bạn." : "Nhập tên miền riêng của bạn. Chúng tôi hỗ trợ cài đặt."}
                       </p>
                       {plan === "basic" ? (
+                        <>
                         <div style={{
                           display: "flex",
                           alignItems: "stretch",
                           borderRadius: ".75rem",
                           overflow: "hidden",
-                          border: domFocused ? "1px solid rgba(201,154,94,0.7)" : "1px solid rgba(244,236,224,0.12)",
+                          border: domFocused ? "1px solid rgba(201,154,94,0.7)" : clickedSubmit && taken.domain ? "1px solid rgba(239,68,68,.6)" : "1px solid rgba(244,236,224,0.12)",
                           boxShadow: domFocused ? "0 0 0 3px rgba(201,154,94,0.12)" : "none",
                           background: "rgba(255,255,255,0.04)",
                           transition: "border-color .3s, box-shadow .3s"
@@ -634,6 +634,8 @@ export function RegistrationWizard() {
                             onBlur={() => setDomFocused(false)}
                             onChange={(e) => {
                               const val = e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, "");
+                              setAvailabilityError(null);
+                              setTaken({ email: false, username: false, phone: false, domain: false });
                               setForm({ ...form, domain: val });
                             }}
                           />
@@ -645,7 +647,7 @@ export function RegistrationWizard() {
                             borderLeft: "1px solid rgba(244,236,224,0.12)",
                             color: "#c99a5e",
                             fontSize: ".8125rem",
-                            fontFamily: "'JetBrains Mono', monospace",
+                            fontFamily: "var(--font-code), monospace",
                             fontWeight: 600,
                             userSelect: "none",
                             flexShrink: 0,
@@ -654,13 +656,15 @@ export function RegistrationWizard() {
                             .tlgroup.site
                           </div>
                         </div>
+                        {clickedSubmit && taken.domain && <p style={{ display: "block", marginTop: ".25rem", fontSize: ".6875rem", color: "#FCA5A5" }}>Subdomain này đã được sử dụng.</p>}
+                        </>
                       ) : (
                         <input className="tl-input" placeholder="mystudio.com" value={form.domain} onChange={update("domain")} />
                       )}
                     </div>
 
                     <button
-                      disabled={checkingAvailability || taken.email || taken.username || taken.phone || !form.studio || !form.representative || !form.email || !form.phone || !form.username || !form.password || !form.confirm || !domain}
+                      disabled={checkingAvailability || taken.email || taken.username || taken.phone || taken.domain || !form.studio || !form.representative || !form.email || !form.phone || !form.username || !form.password || !form.confirm || !domain}
                       onClick={handleConfirmStep1}
                       className="tl-btn-primary"
                       style={{ width: "100%", marginTop: "1.5rem" }}
@@ -721,7 +725,7 @@ export function RegistrationWizard() {
                   </div>
                   <div style={{ marginTop: "1.125rem", padding: ".75rem", borderRadius: ".75rem", background: "rgba(201,154,94,0.06)", border: "1px solid rgba(201,154,94,0.18)" }}>
                     <p style={{ fontSize: ".625rem", fontWeight: 600, textTransform: "uppercase", letterSpacing: ".12em", color: "#c99a5e", marginBottom: ".35rem" }}>Tên miền</p>
-                    <p style={{ fontSize: ".8rem", fontFamily: "'JetBrains Mono', monospace", color: "#cbc0b0", wordBreak: "break-all" }}>{domain || `${slug}.tlora-studio-os`}</p>
+                    <p style={{ fontSize: ".8rem", fontFamily: "var(--font-code), monospace", color: "#cbc0b0", wordBreak: "break-all" }}>{domain || `${slug}.tlora-studio-os`}</p>
                   </div>
                   <div style={{ marginTop: "1.125rem", display: "flex", flexDirection: "column", gap: ".4375rem" }}>
                     <p style={{ fontSize: ".625rem", fontWeight: 600, textTransform: "uppercase", letterSpacing: ".12em", color: "#8c8174", marginBottom: ".2rem" }}>Bạn sẽ nhận được</p>

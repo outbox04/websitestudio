@@ -43,6 +43,24 @@ export async function POST(request: Request) {
   }
 
   const admin = createAdminClient();
+  if (plan === "basic") {
+    const rootDomain = (process.env.ROOT_DOMAIN || "tlgroup.site").toLowerCase();
+    const domainSuffix = `.${rootDomain}`;
+    const slug = domain?.endsWith(domainSuffix) ? domain.slice(0, -domainSuffix.length) : "";
+    if (!/^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$/.test(slug)) {
+      return NextResponse.json({ error: "Subdomain không hợp lệ." }, { status: 400 });
+    }
+    const [studioResult, orderResult] = await Promise.all([
+      admin.from("studios").select("id").or(`slug.eq.${slug},primary_domain.eq.${domain}`).maybeSingle(),
+      admin.from("studio_payment_orders").select("id").eq("domain", domain).in("status", ["pending", "paid"]).maybeSingle(),
+    ]);
+    if (studioResult.error || orderResult.error) {
+      return NextResponse.json({ error: "Không thể kiểm tra subdomain lúc này." }, { status: 500 });
+    }
+    if (studioResult.data || orderResult.data) {
+      return NextResponse.json({ error: "Subdomain này đã được sử dụng. Vui lòng chọn tên khác." }, { status: 409 });
+    }
+  }
   const { data: createdUser, error: createUserError } = await admin.auth.admin.createUser({
     email,
     password,
