@@ -1,16 +1,21 @@
 import { NextResponse } from "next/server";
 import { listDriveImages } from "@/lib/google-drive";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { getStudioAdminContext, studioSlugFromHost } from "@/lib/studio-admin";
 
 export const runtime = "nodejs";
 
-export async function POST(_: Request, { params }: { params: Promise<{ slug: string }> }) {
+export async function POST(request: Request, { params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
+  const studioSlug = studioSlugFromHost(request.headers.get("x-forwarded-host") || request.headers.get("host"));
+  const context = studioSlug ? await getStudioAdminContext(studioSlug) : null;
+  if (!context) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   const supabase = createAdminClient();
 
   const { data: gallery, error: galleryError } = await supabase
     .from("customer_galleries")
     .select("*")
+    .eq("studio_id", context.studioId)
     .eq("customer_name_slug", slug)
     .single();
 

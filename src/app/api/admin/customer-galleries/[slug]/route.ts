@@ -1,8 +1,12 @@
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { getStudioAdminContext, studioSlugFromHost } from "@/lib/studio-admin";
 
 export async function PATCH(request: Request, { params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
+  const studioSlug = studioSlugFromHost(request.headers.get("x-forwarded-host") || request.headers.get("host"));
+  const context = studioSlug ? await getStudioAdminContext(studioSlug) : null;
+  if (!context) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   const { rawDownloadEnabled, editedDownloadEnabled } = (await request.json()) as {
     rawDownloadEnabled?: boolean;
     editedDownloadEnabled?: boolean;
@@ -29,6 +33,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ sl
   const { data, error } = await supabase
     .from("customer_galleries")
     .update(patch)
+    .eq("studio_id", context.studioId)
     .eq("customer_name_slug", slug)
     .select("*")
     .single();

@@ -58,11 +58,14 @@ type AdminStudioWorkspaceProps = {
   galleries: AdminGallery[];
   editRequests: AdminEditRequest[];
   databaseError?: string;
+  studioName?: string;
+  tenantMode?: boolean;
 };
 
-export function AdminStudioWorkspace({ galleries, editRequests, databaseError }: AdminStudioWorkspaceProps) {
+export function AdminStudioWorkspace({ galleries, editRequests, databaseError, studioName, tenantMode = false }: AdminStudioWorkspaceProps) {
   const [activeMenu, setActiveMenu] = useState("Dashboard");
   const activeView = getViewFromMenu(activeMenu);
+  const menu = tenantMode ? adminMenu.filter((item) => item !== "Cài đặt") : adminMenu;
 
   return (
     <main className="min-h-screen bg-[#f4f6f8] text-zinc-950">
@@ -71,13 +74,13 @@ export function AdminStudioWorkspace({ galleries, editRequests, databaseError }:
           <div className="flex items-center gap-3 rounded-md bg-zinc-950 p-3 text-white">
             <Image src="/brand/tlora-logo.png" alt="TLORA Studio" width={1536} height={1024} className="h-11 w-auto object-contain" />
             <div>
-              <p className="font-heading text-base font-bold">TLORA Admin</p>
-              <p className="text-xs text-zinc-300">Management Console</p>
+              <p className="font-heading text-base font-bold">{studioName || "TLORA Admin"}</p>
+              <p className="text-xs text-zinc-300">{studioName ? "Studio Management" : "Management Console"}</p>
             </div>
           </div>
 
           <nav className="mt-6 space-y-1">
-            {adminMenu.map((item) => {
+            {menu.map((item) => {
               const isActive = item === activeMenu;
 
               return (

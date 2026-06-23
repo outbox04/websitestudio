@@ -3,6 +3,7 @@ import { createCustomerDriveFolders } from "@/lib/google-drive";
 import { customerDoneUrlFromOrigin, customerUrlFromOrigin, publicOriginFromHeaders } from "@/lib/public-origin";
 import { createSlug } from "@/lib/slug";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { getStudioAdminContext, studioSlugFromHost } from "@/lib/studio-admin";
 
 export const runtime = "nodejs";
 
@@ -41,6 +42,9 @@ function getErrorMessage(error: unknown) {
 
 export async function GET(request: Request) {
   try {
+    const studioSlug = studioSlugFromHost(request.headers.get("x-forwarded-host") || request.headers.get("host"));
+    const context = studioSlug ? await getStudioAdminContext(studioSlug) : null;
+    if (!context) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     const supabase = createAdminClient();
     const [{ data, error }, { data: selectedPhotosData, error: selectedPhotosError }] = await Promise.all([
       supabase
@@ -48,10 +52,12 @@ export async function GET(request: Request) {
         .select(
           "id,customer_name,customer_name_slug,shoot_date,raw_drive_folder_url,edited_drive_folder_url,raw_download_enabled,edited_download_enabled,created_at,updated_at",
         )
+        .eq("studio_id", context.studioId)
         .order("created_at", { ascending: false }),
       supabase
         .from("customer_gallery_photos")
-        .select("gallery_id,file_name")
+        .select("gallery_id,file_name,customer_galleries!inner(studio_id)")
+        .eq("customer_galleries.studio_id", context.studioId)
         .eq("selected", true)
         .eq("kind", "raw")
         .order("file_name", { ascending: true }),
@@ -104,12 +110,16 @@ export async function POST(request: Request) {
   }
 
   try {
+    const studioSlug = studioSlugFromHost(request.headers.get("x-forwarded-host") || request.headers.get("host"));
+    const context = studioSlug ? await getStudioAdminContext(studioSlug) : null;
+    if (!context) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     const supabase = createAdminClient();
     const url = customerUrl(request, slug);
 
     const { data: existingGallery, error: existingError } = await supabase
       .from("customer_galleries")
       .select("*")
+      .eq("studio_id", context.studioId)
       .eq("customer_name_slug", slug)
       .maybeSingle();
 
@@ -133,6 +143,7 @@ export async function POST(request: Request) {
       .insert({
         customer_name: name.trim(),
         customer_name_slug: slug,
+        studio_id: context.studioId,
         shoot_date: shootDate,
         root_drive_folder_id: folders.rootFolderId,
         raw_drive_folder_id: folders.rawFolderId,
