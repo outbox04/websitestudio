@@ -18,6 +18,7 @@ import {
 import Image from "next/image";
 import { Fragment, useEffect, useMemo, useState } from "react";
 import { CustomerGalleryCreator } from "@/components/admin/customer-gallery-creator";
+import { StudioDriveConnection } from "@/components/admin/studio-drive-connection";
 import { adminMenu } from "@/lib/site-data";
 
 export type AdminGallery = {
@@ -110,7 +111,7 @@ export function AdminStudioWorkspace({ galleries, editRequests, databaseError, s
           )}
 
           {activeView === "dashboard" && (
-            <DashboardView galleries={galleries} editRequests={editRequests} />
+            <DashboardView galleries={galleries} editRequests={editRequests} tenantMode={tenantMode} />
           )}
 
           {activeView === "album-manager" && (
@@ -132,7 +133,7 @@ export function AdminStudioWorkspace({ galleries, editRequests, databaseError, s
   );
 }
 
-function DashboardView({ galleries, editRequests }: { galleries: AdminGallery[]; editRequests: AdminEditRequest[] }) {
+function DashboardView({ galleries, editRequests, tenantMode }: { galleries: AdminGallery[]; editRequests: AdminEditRequest[]; tenantMode: boolean }) {
   const totalJobs = galleries.length;
   const completedJobs = galleries.filter((gallery) => gallery.editedPhotoCount > 0).length;
   const pendingJobs = Math.max(totalJobs - completedJobs, 0);
@@ -142,6 +143,7 @@ function DashboardView({ galleries, editRequests }: { galleries: AdminGallery[];
 
   return (
     <div className="space-y-5">
+      {tenantMode && <StudioDriveConnection />}
       <HeaderCard
         title="Dashboard"
         description="Tổng quan job, doanh thu, tiến độ hoàn thiện và trạng thái album."

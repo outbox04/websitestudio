@@ -1,13 +1,11 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
-const protectedPrefixes = ["/cong-khach-hang"];
 const adminPrefixes = ["/admin-studio", "/api/admin"];
 
 export async function updateSession(request: NextRequest) {
   let response = NextResponse.next({ request });
   const pathname = request.nextUrl.pathname;
-  const isProtected = protectedPrefixes.some((prefix) => pathname.startsWith(prefix));
   const isAdmin = adminPrefixes.some((prefix) => pathname.startsWith(prefix));
   const isAdminApi = pathname.startsWith("/api/admin");
   const forwardedHost = request.headers.get("x-forwarded-host")?.split(",")[0]?.trim();
@@ -15,7 +13,7 @@ export async function updateSession(request: NextRequest) {
   const rootDomain = (process.env.ROOT_DOMAIN || "tlgroup.site").toLowerCase();
   const isStudioSubdomain = hostname.endsWith(`.${rootDomain}`) && !hostname.startsWith(`www.${rootDomain}`);
 
-  if (!isProtected && !isAdmin) {
+  if (!isAdmin) {
     return response;
   }
 
@@ -50,7 +48,7 @@ export async function updateSession(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  if ((isProtected || isAdmin) && !user) {
+  if (!user) {
     if (isAdminApi) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -74,7 +72,7 @@ export async function updateSession(request: NextRequest) {
         return NextResponse.json({ error: "Forbidden" }, { status: 403 });
       }
       const url = request.nextUrl.clone();
-      url.pathname = "/cong-khach-hang";
+      url.pathname = "/";
       return NextResponse.redirect(url);
     }
   }

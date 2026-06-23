@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { listDriveImages } from "@/lib/google-drive";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getStudioAdminContext, studioSlugFromHost } from "@/lib/studio-admin";
+import { getStudioDriveClient, getStudioDriveConnection } from "@/lib/studio-google-drive";
 
 export const runtime = "nodejs";
 
@@ -23,10 +24,14 @@ export async function POST(request: Request, { params }: { params: Promise<{ slu
     return NextResponse.json({ error: "Không tìm thấy thư mục khách hàng" }, { status: 404 });
   }
 
+  const connection = await getStudioDriveConnection(context.studioId);
+  if (!connection) return NextResponse.json({ error: "Google Drive chưa được kết nối cho studio này." }, { status: 400 });
+  const drive = getStudioDriveClient(connection);
+
   try {
     const [rawPhotos, editedPhotos] = await Promise.all([
-      listDriveImages(gallery.raw_drive_folder_id),
-      listDriveImages(gallery.edited_drive_folder_id),
+      listDriveImages(gallery.raw_drive_folder_id, drive),
+      listDriveImages(gallery.edited_drive_folder_id, drive),
     ]);
 
     const rows = [

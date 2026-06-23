@@ -694,7 +694,7 @@ export function RegistrationWizard() {
                     </div>
                     <div style={{ display: "flex", gap: ".75rem", marginTop: "1.25rem", padding: "1rem", borderRadius: ".875rem", background: "rgba(201,154,94,0.06)", border: "1px solid rgba(201,154,94,0.18)" }}>
                       <Sparkles size={15} style={{ color: "#c99a5e", flexShrink: 0, marginTop: 2 }} />
-                      <p style={{ fontSize: ".8125rem", color: "#cbc0b0", lineHeight: 1.6 }}>Studio sẽ được kích hoạt ngay sau khi thanh toán thành công qua SePay. Thông tin đăng nhập và license sẽ gửi về email của bạn.</p>
+                      <p style={{ fontSize: ".8125rem", color: "#cbc0b0", lineHeight: 1.6 }}>Studio sẽ được kích hoạt ngay sau khi thanh toán thành công qua SePay. Thông tin đăng nhập và license sẽ hiển thị tại trang xác nhận thanh toán.</p>
                     </div>
                     <button onClick={checkout} className="tl-btn-primary" style={{ width: "100%", marginTop: "1.5rem" }}>
                       Xác minh thanh toán SePay <ArrowRight size={15} />

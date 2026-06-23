@@ -1,4 +1,5 @@
 import { google } from "googleapis";
+import type { drive_v3 } from "googleapis";
 import { Readable } from "node:stream";
 
 export type DrivePhoto = {
@@ -55,8 +56,7 @@ function escapeDriveQuery(value: string) {
   return value.replace(/\\/g, "\\\\").replace(/'/g, "\\'");
 }
 
-async function createFolder(name: string, parentId: string) {
-  const drive = getDriveClient();
+async function createFolder(name: string, parentId: string, drive: drive_v3.Drive = getDriveClient()) {
   const response = await drive.files.create({
     supportsAllDrives: true,
     requestBody: {
@@ -74,8 +74,7 @@ async function createFolder(name: string, parentId: string) {
   return response.data.id;
 }
 
-async function shareFolderWithLink(folderId: string) {
-  const drive = getDriveClient();
+async function shareFolderWithLink(folderId: string, drive: drive_v3.Drive = getDriveClient()) {
   await drive.permissions.create({
     fileId: folderId,
     supportsAllDrives: true,
@@ -113,8 +112,23 @@ export async function createCustomerDriveFolders(customerName: string): Promise<
   };
 }
 
-export async function listDriveImages(folderId: string): Promise<DrivePhoto[]> {
-  const drive = getDriveClient();
+export async function createCustomerDriveFoldersInStudioDrive(drive: drive_v3.Drive, parentFolderId: string, customerName: string): Promise<CustomerDriveFolders> {
+  const rootFolderId = await createFolder(customerName, parentFolderId, drive);
+  const rawFolderId = await createFolder("FILE GỐC", rootFolderId, drive);
+  const editedFolderId = await createFolder("FILE CHỈNH SỬA", rootFolderId, drive);
+  await Promise.all([shareFolderWithLink(rootFolderId, drive), shareFolderWithLink(rawFolderId, drive), shareFolderWithLink(editedFolderId, drive)]);
+
+  return {
+    rootFolderId,
+    rawFolderId,
+    editedFolderId,
+    rootFolderUrl: driveFolderUrl(rootFolderId),
+    rawFolderUrl: driveFolderUrl(rawFolderId),
+    editedFolderUrl: driveFolderUrl(editedFolderId),
+  };
+}
+
+export async function listDriveImages(folderId: string, drive: drive_v3.Drive = getDriveClient()): Promise<DrivePhoto[]> {
   const response = await drive.files.list({
     supportsAllDrives: true,
     includeItemsFromAllDrives: true,

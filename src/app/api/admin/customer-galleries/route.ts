@@ -1,9 +1,10 @@
 import { NextResponse } from "next/server";
-import { createCustomerDriveFolders } from "@/lib/google-drive";
+import { createCustomerDriveFoldersInStudioDrive } from "@/lib/google-drive";
 import { customerDoneUrlFromOrigin, customerUrlFromOrigin, publicOriginFromHeaders } from "@/lib/public-origin";
 import { createSlug } from "@/lib/slug";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getStudioAdminContext, studioSlugFromHost } from "@/lib/studio-admin";
+import { getStudioDriveClient, getStudioDriveConnection } from "@/lib/studio-google-drive";
 
 export const runtime = "nodejs";
 
@@ -136,7 +137,9 @@ export async function POST(request: Request) {
       });
     }
 
-    const folders = await createCustomerDriveFolders(name.trim());
+    const connection = await getStudioDriveConnection(context.studioId);
+    if (!connection) return NextResponse.json({ error: "Hãy kết nối Google Drive trước khi tạo album." }, { status: 400 });
+    const folders = await createCustomerDriveFoldersInStudioDrive(getStudioDriveClient(connection), connection.root_folder_id, name.trim());
 
     const { data, error } = await supabase
       .from("customer_galleries")
