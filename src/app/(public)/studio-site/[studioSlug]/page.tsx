@@ -25,14 +25,10 @@ export const dynamic = "force-dynamic";
 
 export async function generateMetadata({ params }: { params: Promise<{ studioSlug: string }> }): Promise<Metadata> {
   const { studioSlug } = await params;
-
   try {
     const studio = await getStudio(studioSlug);
     if (!studio) return { title: "Studio" };
-    return {
-      title: studio.display_name,
-      description: `Website chính thức của ${studio.display_name}.`,
-    };
+    return { title: studio.display_name, description: `Website chính thức của ${studio.display_name}.` };
   } catch {
     return { title: "Studio" };
   }
@@ -41,7 +37,6 @@ export async function generateMetadata({ params }: { params: Promise<{ studioSlu
 export default async function StudioHomePage({ params }: { params: Promise<{ studioSlug: string }> }) {
   const { studioSlug } = await params;
   let studio: Studio | null = null;
-
   try {
     studio = await getStudio(studioSlug);
   } catch {
@@ -55,12 +50,8 @@ export default async function StudioHomePage({ params }: { params: Promise<{ stu
       <section className="w-full max-w-2xl rounded-[2rem] border border-[#c99a5e]/25 bg-[#1c1813] p-8 text-center shadow-2xl shadow-black/30 sm:p-12">
         <p className="text-xs font-bold uppercase tracking-[.2em] text-[#c99a5e]">TLORA Studio</p>
         <h1 className="mt-5 text-4xl font-bold tracking-tight sm:text-5xl">{studio.display_name}</h1>
-        <p className="mx-auto mt-5 max-w-lg text-base leading-7 text-[#cbc0b0]">
-          Website studio đang được hoàn thiện. Hãy quay lại sớm để khám phá portfolio và các dịch vụ của chúng tôi.
-        </p>
-        <div className="mt-9 border-t border-white/10 pt-6 text-sm text-[#8c8174]">
-          {studio.primary_domain || `${studioSlug}.tlgroup.site`}
-        </div>
+        <p className="mx-auto mt-5 max-w-lg text-base leading-7 text-[#cbc0b0]">Website studio đang được hoàn thiện. Hãy quay lại sớm để khám phá portfolio và các dịch vụ của chúng tôi.</p>
+        <div className="mt-9 border-t border-white/10 pt-6 text-sm text-[#8c8174]">{studio.primary_domain || `${studioSlug}.tlgroup.site`}</div>
       </section>
     </main>
   );

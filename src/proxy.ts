@@ -11,7 +11,7 @@ export async function proxy(request: NextRequest) {
     const studioSlug = hostname.slice(0, -(rootDomain.length + 1));
     if (studioSlug && !studioSlug.includes(".")) {
       const url = request.nextUrl.clone();
-      url.pathname = request.nextUrl.pathname === "/quan-tri" ? `/_studio/${studioSlug}/quan-tri` : `/_studio/${studioSlug}`;
+      url.pathname = request.nextUrl.pathname === "/quan-tri" ? `/studio-site/${studioSlug}/quan-tri` : `/studio-site/${studioSlug}`;
       return NextResponse.rewrite(url);
     }
   }
