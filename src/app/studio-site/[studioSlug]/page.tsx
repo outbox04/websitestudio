@@ -36,7 +36,7 @@ export async function generateMetadata({ params }: { params: Promise<{ studioSlu
     if (!studio) return { title: "Studio" };
     const description = studio.settings?.site_description || `Website chính thức của ${studio.display_name}.`;
     const ogImage = studio.settings?.og_image_url;
-    return { title: studio.display_name, description, openGraph: ogImage ? { images: [{ url: ogImage, width: 1200, height: 630 }] } : undefined };
+    return { title: studio.display_name, description, keywords: studio.settings?.seo_keywords?.split(",").map((item: string) => item.trim()).filter(Boolean), alternates: studio.settings?.canonical_url ? { canonical: studio.settings.canonical_url } : undefined, icons: { icon: `/studio-site/${studioSlug}/favicon` }, openGraph: ogImage ? { images: [{ url: ogImage, width: 1200, height: 630 }] } : undefined };
   } catch {
     return { title: "Studio" };
   }
