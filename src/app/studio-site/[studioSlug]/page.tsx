@@ -54,6 +54,7 @@ export default async function StudioHomePage({ params }: { params: Promise<{ stu
   if (!studio || studio.status !== "active") notFound();
 
   const setupCompleted = Boolean(studio.settings?.setup_completed);
+  const activeTheme = studio.settings?.theme === "wedding" || studio.settings?.theme === "concept" ? studio.settings.theme : null;
 
   if (!setupCompleted) {
     return (
@@ -70,6 +71,12 @@ export default async function StudioHomePage({ params }: { params: Promise<{ stu
         </section>
       </main>
     );
+  }
+
+  // Each supplied theme remains an independent HTML source, including its own responsive CSS and interactions.
+  // The /theme route picks it from the studio's registration setting and injects studio branding server-side.
+  if (activeTheme) {
+    return <iframe title={`${studio.display_name} website`} src={`/studio-site/${studioSlug}/theme`} className="block min-h-screen w-full border-0" style={{ height: "100svh" }} />;
   }
 
   // Fetch studio specific data

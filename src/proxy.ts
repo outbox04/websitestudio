@@ -7,7 +7,7 @@ export async function proxy(request: NextRequest) {
   const rootDomain = (process.env.ROOT_DOMAIN || "tlgroup.site").toLowerCase();
   const isStudioSubdomain = hostname.endsWith(`.${rootDomain}`) && !hostname.startsWith(`www.${rootDomain}`);
 
-  const isStudioRoute = request.nextUrl.pathname === "/" || request.nextUrl.pathname === "/quan-tri" || request.nextUrl.pathname === "/tin-tuc" || request.nextUrl.pathname.startsWith("/tin-tuc/");
+  const isStudioRoute = request.nextUrl.pathname === "/" || request.nextUrl.pathname === "/theme" || request.nextUrl.pathname === "/quan-tri" || request.nextUrl.pathname === "/tin-tuc" || request.nextUrl.pathname.startsWith("/tin-tuc/");
   if (isStudioSubdomain && isStudioRoute) {
     const studioSlug = hostname.slice(0, -(rootDomain.length + 1));
     if (studioSlug && !studioSlug.includes(".")) {
