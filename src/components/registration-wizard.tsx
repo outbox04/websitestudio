@@ -157,7 +157,7 @@ export function RegistrationWizard() {
   async function checkout() {
     if (!selected) return;
     sessionStorage.setItem("tlora-registration-receipt", JSON.stringify({
-      studio: form.studio, plan: selected.name, total: selected.price, industry: form.industry,
+      studio: form.studio, representative: form.representative, plan: selected.name, total: selected.price, industry: form.industry,
       domain, username: form.username, email: form.email, phone: form.phone, address: form.address,
     }));
     const r = await fetch("/api/payments/sepay/checkout", {
