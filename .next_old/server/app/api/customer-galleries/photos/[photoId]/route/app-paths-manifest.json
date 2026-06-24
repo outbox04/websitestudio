@@ -1,3 +1,0 @@
-{
-  "/api/customer-galleries/photos/[photoId]/route": "app/api/customer-galleries/photos/[photoId]/route.js"
-}

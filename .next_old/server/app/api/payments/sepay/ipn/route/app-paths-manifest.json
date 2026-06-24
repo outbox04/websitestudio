@@ -1,3 +1,0 @@
-{
-  "/api/payments/sepay/ipn/route": "app/api/payments/sepay/ipn/route.js"
-}
