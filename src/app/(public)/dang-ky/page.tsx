@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { RegistrationWizard } from "@/components/registration-wizard";
+import { redirect } from "next/navigation";
 
 export const metadata: Metadata = {
   title: "Khởi tạo TLORA Studio OS",
@@ -10,4 +10,4 @@ export const metadata: Metadata = {
     images: ["/brand/tlora-logo.png"],
   },
 };
-export default function RegistrationPage() { return <RegistrationWizard />; }
+export default function RegistrationPage() { redirect("/dang-ky-studio"); }
