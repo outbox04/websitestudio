@@ -51,7 +51,7 @@ export async function GET(request: Request) {
 
     let photosQuery = supabase
       .from("customer_gallery_photos")
-      .select("gallery_id,file_name" + (context ? ",customer_galleries!inner(studio_id)" : ""))
+      .select("gallery_id,file_name,customer_galleries!inner(studio_id)")
       .eq("selected", true)
       .eq("kind", "raw")
       .order("file_name", { ascending: true });
@@ -59,6 +59,9 @@ export async function GET(request: Request) {
     if (context) {
       galleriesQuery = galleriesQuery.eq("studio_id", context.studioId);
       photosQuery = photosQuery.eq("customer_galleries.studio_id", context.studioId);
+    } else {
+      galleriesQuery = galleriesQuery.is("studio_id", null);
+      photosQuery = photosQuery.is("customer_galleries.studio_id", null);
     }
 
     const [{ data, error }, { data: selectedPhotosData, error: selectedPhotosError }] = await Promise.all([

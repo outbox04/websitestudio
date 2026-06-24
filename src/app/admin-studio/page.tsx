@@ -54,10 +54,12 @@ async function getAdminGalleryData(): Promise<{
       supabase
         .from("customer_galleries")
         .select("id,customer_name,customer_name_slug,shoot_date,raw_drive_folder_url,edited_drive_folder_url,raw_download_enabled,edited_download_enabled,studio_id,studios(slug)")
+        .is("studio_id", null)
         .order("created_at", { ascending: false }),
       supabase
         .from("customer_gallery_photos")
-        .select("id,gallery_id,file_name,preview_url,download_url,kind,selected,edit_note,updated_at")
+        .select("id,gallery_id,file_name,preview_url,download_url,kind,selected,edit_note,updated_at,customer_galleries!inner(studio_id)")
+        .is("customer_galleries.studio_id", null)
         .order("updated_at", { ascending: false }),
     ]);
 
