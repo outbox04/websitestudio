@@ -1,12 +1,14 @@
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { getStudioAdminContext, studioSlugFromHost } from "@/lib/studio-admin";
+import { checkAuthContext } from "@/lib/studio-admin";
 
 export async function PATCH(request: Request, { params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const studioSlug = studioSlugFromHost(request.headers.get("x-forwarded-host") || request.headers.get("host"));
-  const context = studioSlug ? await getStudioAdminContext(studioSlug) : null;
-  if (!context) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  
+  const auth = await checkAuthContext(request);
+  if (auth.errorResponse) return auth.errorResponse;
+  const { isPlatformAdmin, context } = auth;
+
   const { rawDownloadEnabled, editedDownloadEnabled } = (await request.json()) as {
     rawDownloadEnabled?: boolean;
     editedDownloadEnabled?: boolean;
@@ -30,11 +32,18 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ sl
   }
 
   const supabase = createAdminClient();
-  const { data, error } = await supabase
+  let query = supabase
     .from("customer_galleries")
     .update(patch)
-    .eq("studio_id", context.studioId)
-    .eq("customer_name_slug", slug)
+    .eq("customer_name_slug", slug);
+
+  if (context) {
+    query = query.eq("studio_id", context.studioId);
+  } else if (!isPlatformAdmin) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
+  const { data, error } = await query
     .select("*")
     .single();
 

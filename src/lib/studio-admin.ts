@@ -47,3 +47,35 @@ export async function getStudioAdminContext(studioSlug: string): Promise<StudioA
 
   return { studioId: studio.id, studioSlug: studio.slug, studioName: studio.display_name, userId: user.id, settings: studio.settings };
 }
+
+export async function checkAuthContext(request: Request) {
+  const host = request.headers.get("x-forwarded-host") || request.headers.get("host");
+  const studioSlug = studioSlugFromHost(host);
+  const context = studioSlug ? await getStudioAdminContext(studioSlug) : null;
+  
+  if (context) {
+    return { isPlatformAdmin: false, context };
+  }
+  
+  const supabaseClient = await createClient();
+  const { data: { user } } = await supabaseClient.auth.getUser();
+  if (user) {
+    const admin = createAdminClient();
+    const { data: profile } = await admin
+      .from("profiles")
+      .select("is_active,is_platform_admin")
+      .eq("id", user.id)
+      .maybeSingle();
+    
+    if (profile?.is_active && profile.is_platform_admin) {
+      return { isPlatformAdmin: true, context: null };
+    }
+  }
+  
+  const { NextResponse } = await import("next/server");
+  return {
+    isPlatformAdmin: false,
+    context: null,
+    errorResponse: NextResponse.json({ error: "Forbidden" }, { status: 403 })
+  };
+}

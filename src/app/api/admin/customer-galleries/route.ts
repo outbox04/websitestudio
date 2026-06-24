@@ -3,7 +3,7 @@ import { createCustomerDriveFoldersInStudioDrive } from "@/lib/google-drive";
 import { getGalleryUrls, publicOriginFromHeaders } from "@/lib/public-origin";
 import { createSlug } from "@/lib/slug";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { getStudioAdminContext, studioSlugFromHost } from "@/lib/studio-admin";
+import { checkAuthContext, getStudioAdminContext, studioSlugFromHost } from "@/lib/studio-admin";
 import { getStudioDriveClient, getStudioDriveConnection } from "@/lib/studio-google-drive";
 
 export const runtime = "nodejs";
@@ -36,25 +36,34 @@ function getErrorMessage(error: unknown) {
 
 export async function GET(request: Request) {
   try {
-    const studioSlug = studioSlugFromHost(request.headers.get("x-forwarded-host") || request.headers.get("host"));
-    const context = studioSlug ? await getStudioAdminContext(studioSlug) : null;
-    if (!context) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    const auth = await checkAuthContext(request);
+    if (auth.errorResponse) return auth.errorResponse;
+    const { context } = auth;
+
     const supabase = createAdminClient();
+    
+    let galleriesQuery = supabase
+      .from("customer_galleries")
+      .select(
+        "id,customer_name,customer_name_slug,shoot_date,raw_drive_folder_url,edited_drive_folder_url,raw_download_enabled,edited_download_enabled,created_at,updated_at,studio_id,studios(slug)",
+      )
+      .order("created_at", { ascending: false });
+
+    let photosQuery = supabase
+      .from("customer_gallery_photos")
+      .select("gallery_id,file_name" + (context ? ",customer_galleries!inner(studio_id)" : ""))
+      .eq("selected", true)
+      .eq("kind", "raw")
+      .order("file_name", { ascending: true });
+
+    if (context) {
+      galleriesQuery = galleriesQuery.eq("studio_id", context.studioId);
+      photosQuery = photosQuery.eq("customer_galleries.studio_id", context.studioId);
+    }
+
     const [{ data, error }, { data: selectedPhotosData, error: selectedPhotosError }] = await Promise.all([
-      supabase
-        .from("customer_galleries")
-        .select(
-          "id,customer_name,customer_name_slug,shoot_date,raw_drive_folder_url,edited_drive_folder_url,raw_download_enabled,edited_download_enabled,created_at,updated_at",
-        )
-        .eq("studio_id", context.studioId)
-        .order("created_at", { ascending: false }),
-      supabase
-        .from("customer_gallery_photos")
-        .select("gallery_id,file_name,customer_galleries!inner(studio_id)")
-        .eq("customer_galleries.studio_id", context.studioId)
-        .eq("selected", true)
-        .eq("kind", "raw")
-        .order("file_name", { ascending: true }),
+      galleriesQuery,
+      photosQuery,
     ]);
 
     if (error) {
@@ -67,7 +76,7 @@ export async function GET(request: Request) {
 
     const selectedFilesByGalleryId = new Map<string, string[]>();
 
-    for (const photo of selectedPhotosData || []) {
+    for (const photo of (selectedPhotosData || []) as any[]) {
       const existing = selectedFilesByGalleryId.get(photo.gallery_id) || [];
       existing.push(photo.file_name);
       selectedFilesByGalleryId.set(photo.gallery_id, existing);
@@ -76,7 +85,11 @@ export async function GET(request: Request) {
     return NextResponse.json({
       galleries: (data || []).map((gallery) => {
         const origin = publicOrigin(request);
-        const urls = getGalleryUrls(gallery.customer_name_slug, studioSlug, origin);
+        const studiosData = gallery.studios;
+        const galleryStudioSlug = studiosData
+          ? (Array.isArray(studiosData) ? studiosData[0]?.slug : (studiosData as any).slug)
+          : null;
+        const urls = getGalleryUrls(gallery.customer_name_slug, galleryStudioSlug, origin);
         return {
           ...gallery,
           customerUrl: urls.customerUrl,
@@ -108,19 +121,27 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Tên không hợp lệ để tạo slug" }, { status: 400 });
     }
 
-    const studioSlug = studioSlugFromHost(request.headers.get("x-forwarded-host") || request.headers.get("host"));
-    const context = studioSlug ? await getStudioAdminContext(studioSlug) : null;
-    if (!context) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    const auth = await checkAuthContext(request);
+    if (auth.errorResponse) return auth.errorResponse;
+    const { context } = auth;
+
     const supabase = createAdminClient();
     const origin = publicOrigin(request);
+    const studioSlug = context?.studioSlug || null;
     const urls = getGalleryUrls(slug, studioSlug, origin);
 
-    const { data: existingGallery, error: existingError } = await supabase
+    let checkQuery = supabase
       .from("customer_galleries")
       .select("*")
-      .eq("studio_id", context.studioId)
-      .eq("customer_name_slug", slug)
-      .maybeSingle();
+      .eq("customer_name_slug", slug);
+
+    if (context) {
+      checkQuery = checkQuery.eq("studio_id", context.studioId);
+    } else {
+      checkQuery = checkQuery.is("studio_id", null);
+    }
+
+    const { data: existingGallery, error: existingError } = await checkQuery.maybeSingle();
 
     if (existingError) {
       throw existingError;
@@ -136,8 +157,14 @@ export async function POST(request: Request) {
     }
 
     let folders;
-    const connection = await getStudioDriveConnection(context.studioId);
-    if (!process.env.GOOGLE_OAUTH_CLIENT_ID || (connection && connection.root_folder_id.startsWith("mock-"))) {
+    let connection = null;
+    if (context) {
+      try {
+        connection = await getStudioDriveConnection(context.studioId);
+      } catch (err) {}
+    }
+
+    if (!process.env.GOOGLE_OAUTH_CLIENT_ID || !connection || connection.root_folder_id.startsWith("mock-")) {
       folders = {
         rootFolderId: `mock-root-${slug}`,
         rawFolderId: `mock-raw-${slug}`,
@@ -147,25 +174,29 @@ export async function POST(request: Request) {
         editedFolderUrl: `https://drive.google.com/drive/folders/mock-edited-${slug}`,
       };
     } else {
-      if (!connection) return NextResponse.json({ error: "Hãy kết nối Google Drive trước khi tạo album." }, { status: 400 });
-      folders = await createCustomerDriveFoldersInStudioDrive(getStudioDriveClient(connection), connection.root_folder_id, name.trim());
+      folders = await createCustomerDriveFoldersInStudioDrive(getStudioDriveClient(connection!), connection.root_folder_id, name.trim());
+    }
+
+    const insertData: any = {
+      customer_name: name.trim(),
+      customer_name_slug: slug,
+      shoot_date: shootDate,
+      root_drive_folder_id: folders.rootFolderId,
+      raw_drive_folder_id: folders.rawFolderId,
+      edited_drive_folder_id: folders.editedFolderId,
+      root_drive_folder_url: folders.rootFolderUrl,
+      raw_drive_folder_url: folders.rawFolderUrl,
+      edited_drive_folder_url: folders.editedFolderUrl,
+      edited_download_enabled: false,
+    };
+
+    if (context) {
+      insertData.studio_id = context.studioId;
     }
 
     const { data, error } = await supabase
       .from("customer_galleries")
-      .insert({
-        customer_name: name.trim(),
-        customer_name_slug: slug,
-        studio_id: context.studioId,
-        shoot_date: shootDate,
-        root_drive_folder_id: folders.rootFolderId,
-        raw_drive_folder_id: folders.rawFolderId,
-        edited_drive_folder_id: folders.editedFolderId,
-        root_drive_folder_url: folders.rootFolderUrl,
-        raw_drive_folder_url: folders.rawFolderUrl,
-        edited_drive_folder_url: folders.editedFolderUrl,
-        edited_download_enabled: false,
-      })
+      .insert(insertData)
       .select("*")
       .single();
 
