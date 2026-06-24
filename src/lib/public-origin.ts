@@ -31,3 +31,23 @@ export function customerUrlFromOrigin(origin: string, slug: string) {
 export function customerDoneUrlFromOrigin(origin: string, slug: string) {
   return `${customerUrlFromOrigin(origin, slug)}/done`;
 }
+
+export function getGalleryUrls(customerSlug: string, studioSlug: string | null, requestOrigin?: string) {
+  const rootDomain = process.env.ROOT_DOMAIN || "tlgroup.site";
+  let origin = "";
+
+  if (studioSlug) {
+    origin = `https://${studioSlug}.${rootDomain}`;
+  } else if (requestOrigin && !requestOrigin.includes(rootDomain)) {
+    // For localhost or IP addresses, preserve the requested dev server host
+    origin = requestOrigin;
+  } else {
+    origin = process.env.NEXT_PUBLIC_SITE_URL || `https://${rootDomain}`;
+  }
+
+  const customerUrl = `${origin.replace(/\/$/, "")}/${customerSlug}`;
+  return {
+    customerUrl,
+    customerDoneUrl: `${customerUrl}/done`
+  };
+}

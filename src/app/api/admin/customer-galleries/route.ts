@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { createCustomerDriveFoldersInStudioDrive } from "@/lib/google-drive";
-import { customerDoneUrlFromOrigin, customerUrlFromOrigin, publicOriginFromHeaders } from "@/lib/public-origin";
+import { getGalleryUrls, publicOriginFromHeaders } from "@/lib/public-origin";
 import { createSlug } from "@/lib/slug";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getStudioAdminContext, studioSlugFromHost } from "@/lib/studio-admin";
@@ -12,13 +12,6 @@ function publicOrigin(request: Request) {
   return publicOriginFromHeaders(request.headers) || new URL(request.url).origin;
 }
 
-function customerUrl(request: Request, slug: string) {
-  return customerUrlFromOrigin(publicOrigin(request), slug);
-}
-
-function customerDoneUrl(request: Request, slug: string) {
-  return customerDoneUrlFromOrigin(publicOrigin(request), slug);
-}
 
 function getErrorMessage(error: unknown) {
   if (error instanceof Error) {
@@ -81,13 +74,17 @@ export async function GET(request: Request) {
     }
 
     return NextResponse.json({
-      galleries: (data || []).map((gallery) => ({
-        ...gallery,
-        customerUrl: customerUrl(request, gallery.customer_name_slug),
-        customerDoneUrl: customerDoneUrl(request, gallery.customer_name_slug),
-        selected_photo_file_names: selectedFilesByGalleryId.get(gallery.id) || [],
-        selected_photo_count: selectedFilesByGalleryId.get(gallery.id)?.length || 0,
-      })),
+      galleries: (data || []).map((gallery) => {
+        const origin = publicOrigin(request);
+        const urls = getGalleryUrls(gallery.customer_name_slug, studioSlug, origin);
+        return {
+          ...gallery,
+          customerUrl: urls.customerUrl,
+          customerDoneUrl: urls.customerDoneUrl,
+          selected_photo_file_names: selectedFilesByGalleryId.get(gallery.id) || [],
+          selected_photo_count: selectedFilesByGalleryId.get(gallery.id)?.length || 0,
+        };
+      }),
     });
   } catch (error) {
     return NextResponse.json({ error: getErrorMessage(error) }, { status: 500 });
@@ -95,27 +92,28 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
-  const { name, shootDate } = (await request.json()) as {
-    name?: string;
-    shootDate?: string;
-  };
-
-  if (!name?.trim() || !shootDate) {
-    return NextResponse.json({ error: "Tên và ngày chụp là bắt buộc" }, { status: 400 });
-  }
-
-  const slug = createSlug(name);
-
-  if (!slug) {
-    return NextResponse.json({ error: "Tên không hợp lệ để tạo slug" }, { status: 400 });
-  }
-
   try {
+    const { name, shootDate } = (await request.json()) as {
+      name?: string;
+      shootDate?: string;
+    };
+
+    if (!name?.trim() || !shootDate) {
+      return NextResponse.json({ error: "Tên và ngày chụp là bắt buộc" }, { status: 400 });
+    }
+
+    const slug = createSlug(name);
+
+    if (!slug) {
+      return NextResponse.json({ error: "Tên không hợp lệ để tạo slug" }, { status: 400 });
+    }
+
     const studioSlug = studioSlugFromHost(request.headers.get("x-forwarded-host") || request.headers.get("host"));
     const context = studioSlug ? await getStudioAdminContext(studioSlug) : null;
     if (!context) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     const supabase = createAdminClient();
-    const url = customerUrl(request, slug);
+    const origin = publicOrigin(request);
+    const urls = getGalleryUrls(slug, studioSlug, origin);
 
     const { data: existingGallery, error: existingError } = await supabase
       .from("customer_galleries")
@@ -131,8 +129,8 @@ export async function POST(request: Request) {
     if (existingGallery) {
       return NextResponse.json({
         gallery: existingGallery,
-        customerUrl: url,
-        customerDoneUrl: customerDoneUrl(request, slug),
+        customerUrl: urls.customerUrl,
+        customerDoneUrl: urls.customerDoneUrl,
         reused: true,
       });
     }
@@ -177,8 +175,8 @@ export async function POST(request: Request) {
 
     return NextResponse.json({
       gallery: data,
-      customerUrl: url,
-      customerDoneUrl: customerDoneUrl(request, slug),
+      customerUrl: urls.customerUrl,
+      customerDoneUrl: urls.customerDoneUrl,
       reused: false,
     });
   } catch (error) {

@@ -1,7 +1,7 @@
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { AdminStudioWorkspace, type AdminEditRequest, type AdminGallery } from "@/components/admin/admin-studio-workspace";
-import { customerDoneUrlFromOrigin, customerUrlFromOrigin, publicOriginFromHeaders } from "@/lib/public-origin";
+import { getGalleryUrls, publicOriginFromHeaders } from "@/lib/public-origin";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getStudioAdminContext } from "@/lib/studio-admin";
 
@@ -22,9 +22,10 @@ export default async function StudioAdminPage({ params }: { params: Promise<{ st
     const photos = photosData || [];
     const galleries: AdminGallery[] = (galleriesData || []).map((gallery) => {
       const galleryPhotos = photos.filter((photo) => photo.gallery_id === gallery.id);
+      const urls = getGalleryUrls(gallery.customer_name_slug, studioSlug, siteUrl);
       return {
         id: gallery.id, customerName: gallery.customer_name, customerSlug: gallery.customer_name_slug, shootDate: gallery.shoot_date,
-        customerUrl: customerUrlFromOrigin(siteUrl, gallery.customer_name_slug), customerDoneUrl: customerDoneUrlFromOrigin(siteUrl, gallery.customer_name_slug), rawDriveUrl: gallery.raw_drive_folder_url, editedDriveUrl: gallery.edited_drive_folder_url,
+        customerUrl: urls.customerUrl, customerDoneUrl: urls.customerDoneUrl, rawDriveUrl: gallery.raw_drive_folder_url, editedDriveUrl: gallery.edited_drive_folder_url,
         rawDownloadEnabled: gallery.raw_download_enabled, editedDownloadEnabled: gallery.edited_download_enabled, rawPhotoCount: galleryPhotos.filter((photo) => photo.kind === "raw").length,
         selectedPhotoCount: galleryPhotos.filter((photo) => photo.kind === "raw" && photo.selected).length, editedPhotoCount: galleryPhotos.filter((photo) => photo.kind === "edited").length,
       };

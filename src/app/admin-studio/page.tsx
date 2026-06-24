@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { headers } from "next/headers";
 import { AdminStudioWorkspace, type AdminEditRequest, type AdminGallery } from "@/components/admin/admin-studio-workspace";
-import { customerDoneUrlFromOrigin, customerUrlFromOrigin, publicOriginFromHeaders } from "@/lib/public-origin";
+import { getGalleryUrls, publicOriginFromHeaders } from "@/lib/public-origin";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 export const metadata: Metadata = {
@@ -25,6 +25,8 @@ type CustomerGalleryRow = {
   edited_drive_folder_url: string;
   raw_download_enabled: boolean;
   edited_download_enabled: boolean;
+  studio_id?: string;
+  studios?: { slug: string } | { slug: string }[] | null;
 };
 
 type CustomerGalleryPhotoRow = {
@@ -51,7 +53,7 @@ async function getAdminGalleryData(): Promise<{
     const [{ data: galleriesData, error: galleriesError }, { data: photosData, error: photosError }] = await Promise.all([
       supabase
         .from("customer_galleries")
-        .select("id,customer_name,customer_name_slug,shoot_date,raw_drive_folder_url,edited_drive_folder_url,raw_download_enabled,edited_download_enabled")
+        .select("id,customer_name,customer_name_slug,shoot_date,raw_drive_folder_url,edited_drive_folder_url,raw_download_enabled,edited_download_enabled,studio_id,studios(slug)")
         .order("created_at", { ascending: false }),
       supabase
         .from("customer_gallery_photos")
@@ -67,7 +69,7 @@ async function getAdminGalleryData(): Promise<{
       throw photosError;
     }
 
-    const galleriesRows = (galleriesData || []) as CustomerGalleryRow[];
+    const galleriesRows = (galleriesData || []) as unknown as CustomerGalleryRow[];
     const photosRows = (photosData || []) as CustomerGalleryPhotoRow[];
     const galleryById = new Map(galleriesRows.map((gallery) => [gallery.id, gallery]));
 
@@ -77,13 +79,19 @@ async function getAdminGalleryData(): Promise<{
       const selectedPhotos = rawPhotos.filter((photo) => photo.selected);
       const editedPhotos = galleryPhotos.filter((photo) => photo.kind === "edited");
 
+      const studiosData = gallery.studios;
+      const studioSlug = studiosData
+        ? (Array.isArray(studiosData) ? studiosData[0]?.slug : studiosData.slug)
+        : null;
+      const urls = getGalleryUrls(gallery.customer_name_slug, studioSlug, siteUrl);
+
       return {
         id: gallery.id,
         customerName: gallery.customer_name,
         customerSlug: gallery.customer_name_slug,
         shootDate: gallery.shoot_date,
-        customerUrl: customerUrlFromOrigin(siteUrl, gallery.customer_name_slug),
-        customerDoneUrl: customerDoneUrlFromOrigin(siteUrl, gallery.customer_name_slug),
+        customerUrl: urls.customerUrl,
+        customerDoneUrl: urls.customerDoneUrl,
         rawDriveUrl: gallery.raw_drive_folder_url,
         editedDriveUrl: gallery.edited_drive_folder_url,
         rawDownloadEnabled: gallery.raw_download_enabled,
@@ -104,14 +112,20 @@ async function getAdminGalleryData(): Promise<{
           return null;
         }
 
+        const studiosData = gallery.studios;
+        const studioSlug = studiosData
+          ? (Array.isArray(studiosData) ? studiosData[0]?.slug : studiosData.slug)
+          : null;
+        const urls = getGalleryUrls(gallery.customer_name_slug, studioSlug, siteUrl);
+
         return {
           id: photo.id,
           galleryId: photo.gallery_id,
           customerName: gallery.customer_name,
           customerSlug: gallery.customer_name_slug,
           shootDate: gallery.shoot_date,
-          customerUrl: customerUrlFromOrigin(siteUrl, gallery.customer_name_slug),
-          customerDoneUrl: customerDoneUrlFromOrigin(siteUrl, gallery.customer_name_slug),
+          customerUrl: urls.customerUrl,
+          customerDoneUrl: urls.customerDoneUrl,
           fileName: photo.file_name,
           editNote: photo.edit_note,
           previewUrl: photo.preview_url,
