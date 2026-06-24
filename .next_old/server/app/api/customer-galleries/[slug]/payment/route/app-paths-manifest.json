@@ -1,0 +1,3 @@
+{
+  "/api/customer-galleries/[slug]/payment/route": "app/api/customer-galleries/[slug]/payment/route.js"
+}

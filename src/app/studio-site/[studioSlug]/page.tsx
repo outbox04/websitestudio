@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { ArrowUpRight, Calendar, Clock, Mail, MapPin, Phone, Sparkles } from "lucide-react";
 import { createAdminClient } from "@/lib/supabase/admin";
+import type { CSSProperties } from "react";
 
 type Studio = {
   id: string;
@@ -33,7 +34,9 @@ export async function generateMetadata({ params }: { params: Promise<{ studioSlu
   try {
     const studio = await getStudio(studioSlug);
     if (!studio) return { title: "Studio" };
-    return { title: studio.display_name, description: `Website chính thức của ${studio.display_name}.` };
+    const description = studio.settings?.site_description || `Website chính thức của ${studio.display_name}.`;
+    const ogImage = studio.settings?.og_image_url;
+    return { title: studio.display_name, description, openGraph: ogImage ? { images: [{ url: ogImage, width: 1200, height: 630 }] } : undefined };
   } catch {
     return { title: "Studio" };
   }
@@ -93,6 +96,11 @@ export default async function StudioHomePage({ params }: { params: Promise<{ stu
   const contactEmail = studio.settings?.email || `contact@${studioSlug}.tlgroup.site`;
   const contactPhone = studio.settings?.phone || "0901 234 567";
   const contactAddress = studio.settings?.address || "123 Đường Ba Tháng Hai, Quận 10, TP. Hồ Chí Minh";
+  const primaryColor = studio.settings?.primary_color || "#0d0a08";
+  const accentColor = studio.settings?.accent_color || "#c99a5e";
+  const heroTitle = studio.settings?.hero_title || "Lưu giữ cá tính qua từng khung hình nghệ thuật";
+  const heroDescription = studio.settings?.hero_description || `Chào mừng bạn đến với không gian sáng tạo của ${studio.display_name}. Chúng tôi mang tới giải pháp nhiếp ảnh cá nhân hóa từ lên ý tưởng concept, hướng dẫn tạo dáng chuyên nghiệp đến chọn ảnh online tiện lợi.`;
+  const heroImage = studio.settings?.hero_image_url || "https://images.unsplash.com/photo-1492691527719-9d1e07e534b4?auto=format&fit=crop&w=1800&q=80";
 
   const services = [
     {
@@ -119,39 +127,39 @@ export default async function StudioHomePage({ params }: { params: Promise<{ stu
   ];
 
   return (
-    <div className="min-h-screen bg-[#0d0a08] text-[#f4ece0] selection:bg-[#c99a5e]/30 selection:text-[#f4ece0]">
+    <div className="min-h-screen text-[#f4ece0] selection:text-[#f4ece0]" style={{ backgroundColor: primaryColor, ["--studio-accent" as string]: accentColor } as CSSProperties}>
       {/* Hero Section */}
       <section className="relative flex min-h-[90vh] items-center justify-center overflow-hidden px-6 py-24 text-center sm:px-12">
         <Image
-          src="https://images.unsplash.com/photo-1492691527719-9d1e07e534b4?auto=format&fit=crop&w=1800&q=80"
+          src={heroImage}
           alt="Studio background"
           fill
           priority
+          unoptimized
           sizes="100vw"
           className="object-cover opacity-30 blur-2xs"
         />
         <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[#0d0a08]/80 to-[#0d0a08]" />
         
         <div className="relative z-10 max-w-4xl space-y-8">
-          <div className="inline-flex items-center gap-2 rounded-full border border-[#c99a5e]/30 bg-[#c99a5e]/10 px-4 py-1.5 text-xs font-semibold tracking-widest text-[#c99a5e] uppercase">
+          {studio.settings?.logo_url && <Image src={studio.settings.logo_url} alt={`${studio.display_name} logo`} width={200} height={80} unoptimized className="mx-auto h-12 w-auto object-contain" />}
+          <div className="inline-flex items-center gap-2 rounded-full border px-4 py-1.5 text-xs font-semibold tracking-widest uppercase" style={{ borderColor: `${accentColor}55`, backgroundColor: `${accentColor}1a`, color: accentColor }}>
             <Sparkles size={14} className="animate-pulse" /> {studio.display_name}
           </div>
           
           <h1 className="font-heading text-5xl font-extrabold tracking-tight sm:text-7xl">
-            Lưu giữ cá tính qua <br />
-            <span className="bg-gradient-to-r from-[#e6c193] to-[#c99a5e] bg-clip-text text-transparent italic">
-              từng khung hình nghệ thuật
-            </span>
+            {heroTitle}
           </h1>
           
           <p className="mx-auto max-w-2xl text-base leading-8 text-[#cbc0b0] sm:text-lg">
-            Chào mừng bạn đến với không gian sáng tạo của {studio.display_name}. Chúng tôi mang tới giải pháp nhiếp ảnh cá nhân hóa từ lên ý tưởng concept, hướng dẫn tạo dáng chuyên nghiệp đến chọn ảnh online tiện lợi.
+            {heroDescription}
           </p>
           
           <div className="flex flex-col justify-center gap-4 sm:flex-row">
             <a
               href="#services"
-              className="inline-flex min-h-12 items-center justify-center rounded-full bg-[#c99a5e] hover:bg-[#e6c193] px-8 text-sm font-bold text-[#0d0a08] transition-all hover:scale-105 shadow-lg shadow-[#c99a5e]/20"
+              className="inline-flex min-h-12 items-center justify-center rounded-full px-8 text-sm font-bold text-[#0d0a08] transition-all hover:scale-105 shadow-lg"
+              style={{ backgroundColor: accentColor }}
             >
               Xem dịch vụ & Bảng giá
             </a>
@@ -354,4 +362,3 @@ export default async function StudioHomePage({ params }: { params: Promise<{ stu
     </div>
   );
 }
-

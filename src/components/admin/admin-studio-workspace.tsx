@@ -21,6 +21,7 @@ import { Fragment, useEffect, useMemo, useState } from "react";
 import { CustomerGalleryCreator } from "@/components/admin/customer-gallery-creator";
 import { StudioDriveConnection } from "@/components/admin/studio-drive-connection";
 import { StudioNewsManager } from "@/components/admin/studio-news-manager";
+import { StudioSiteBuilder } from "@/components/admin/studio-site-builder";
 import { adminMenu } from "@/lib/site-data";
 
 export type AdminGallery = {
@@ -55,7 +56,7 @@ export type AdminEditRequest = {
   selected: boolean;
 };
 
-type AdminView = "dashboard" | "album-manager" | "edit-requests" | "payment-settings" | "news" | "placeholder";
+type AdminView = "dashboard" | "album-manager" | "edit-requests" | "payment-settings" | "news" | "site-builder" | "placeholder";
 
 type AdminStudioWorkspaceProps = {
   galleries: AdminGallery[];
@@ -78,7 +79,7 @@ export function AdminStudioWorkspace({
 }: AdminStudioWorkspaceProps) {
   const [activeMenu, setActiveMenu] = useState("Dashboard");
   const activeView = getViewFromMenu(activeMenu);
-  const menu = tenantMode ? adminMenu.filter((item) => item !== "Cài đặt") : adminMenu;
+  const menu = adminMenu;
 
   return (
     <main className="min-h-screen bg-[#f4f6f8] text-zinc-950">
@@ -140,9 +141,10 @@ export function AdminStudioWorkspace({
             <EditRequestsView editRequests={editRequests} />
           )}
 
-          {activeView === "payment-settings" && <PaymentSettingsView />}
+          {activeView === "payment-settings" && (tenantMode ? <StudioSiteBuilder mode="settings" studioSettings={studioSettings} /> : <PaymentSettingsView />)}
 
           {activeView === "news" && <StudioNewsManager />}
+          {activeView === "site-builder" && <StudioSiteBuilder mode="builder" studioSettings={studioSettings} />}
 
           {activeView === "placeholder" && (
             <PlaceholderView />
@@ -337,33 +339,17 @@ function AlbumManagerView({
     window.location.reload();
   }
 
-  async function toggleRawDownload(gallery: AdminGallery) {
-    setBusyId(`raw-${gallery.id}`);
-    const nextValue = !gallery.rawDownloadEnabled;
+  async function toggleDownload(gallery: AdminGallery) {
+    setBusyId(`download-${gallery.id}`);
+    const nextValue = !(gallery.rawDownloadEnabled && gallery.editedDownloadEnabled);
     const response = await fetch(`/api/admin/customer-galleries/${gallery.customerSlug}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ rawDownloadEnabled: nextValue }),
+      body: JSON.stringify({ rawDownloadEnabled: nextValue, editedDownloadEnabled: nextValue }),
     });
 
     if (response.ok) {
-      setGalleries((current) => current.map((item) => item.id === gallery.id ? { ...item, rawDownloadEnabled: nextValue } : item));
-    }
-
-    setBusyId("");
-  }
-
-  async function toggleEditedDownload(gallery: AdminGallery) {
-    setBusyId(`edited-${gallery.id}`);
-    const nextValue = !gallery.editedDownloadEnabled;
-    const response = await fetch(`/api/admin/customer-galleries/${gallery.customerSlug}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ editedDownloadEnabled: nextValue }),
-    });
-
-    if (response.ok) {
-      setGalleries((current) => current.map((item) => item.id === gallery.id ? { ...item, editedDownloadEnabled: nextValue } : item));
+      setGalleries((current) => current.map((item) => item.id === gallery.id ? { ...item, rawDownloadEnabled: nextValue, editedDownloadEnabled: nextValue } : item));
     }
 
     setBusyId("");
@@ -433,8 +419,7 @@ function AlbumManagerView({
                     busyId={busyId}
                     onCopy={copy}
                     onSync={syncGallery}
-                    onToggleRaw={toggleRawDownload}
-                    onToggleEdited={toggleEditedDownload}
+                    onToggleDownload={toggleDownload}
                     onToggleExpanded={() => setExpandedId(isExpanded ? null : gallery.id)}
                   />
                 );
@@ -456,8 +441,7 @@ function FragmentRow({
   busyId,
   onCopy,
   onSync,
-  onToggleRaw,
-  onToggleEdited,
+  onToggleDownload,
   onToggleExpanded,
 }: {
   gallery: AdminGallery;
@@ -467,8 +451,7 @@ function FragmentRow({
   busyId: string;
   onCopy: (value: string, id: string) => void;
   onSync: (slug: string, id: string) => void;
-  onToggleRaw: (gallery: AdminGallery) => void;
-  onToggleEdited: (gallery: AdminGallery) => void;
+  onToggleDownload: (gallery: AdminGallery) => void;
   onToggleExpanded: () => void;
 }) {
   const requestFileNames = requests.map((request) => request.fileName).join(", ");
@@ -526,16 +509,10 @@ function FragmentRow({
         <td className="py-4 pr-4">
           <div className="flex flex-col items-start gap-2">
             <DownloadPermissionButton
-              enabled={gallery.rawDownloadEnabled}
-              loading={busyId === `raw-${gallery.id}`}
-              label="FILE GỐC"
-              onClick={() => onToggleRaw(gallery)}
-            />
-            <DownloadPermissionButton
-              enabled={gallery.editedDownloadEnabled}
-              loading={busyId === `edited-${gallery.id}`}
-              label="HOÀN THIỆN"
-              onClick={() => onToggleEdited(gallery)}
+              enabled={gallery.rawDownloadEnabled && gallery.editedDownloadEnabled}
+              loading={busyId === `download-${gallery.id}`}
+              label="Tải file (gốc & hoàn thiện)"
+              onClick={() => onToggleDownload(gallery)}
             />
           </div>
         </td>
@@ -874,16 +851,18 @@ function getViewFromMenu(item: string): AdminView {
   if (item === "Dashboard") return "dashboard";
   if (item === "Cài đặt") return "payment-settings";
   if (item === "Tin tức") return "news";
-  if (item === "Quản lý album khách hàng" || item === "Album") return "album-manager";
+  if (item === "Build UI / UX") return "site-builder";
+  if (item === "Quản lý album khách hàng") return "album-manager";
   if (item === "Ảnh cần sửa") return "edit-requests";
   return "placeholder";
 }
 
 function getMenuIcon(item: string) {
   if (item === "Dashboard") return <BarChart3 size={17} />;
-  if (item === "Quản lý album khách hàng" || item === "Album") return <LinkIcon size={17} />;
+  if (item === "Quản lý album khách hàng") return <LinkIcon size={17} />;
   if (item === "Ảnh cần sửa") return <ImageUp size={17} />;
   if (item === "Cài đặt") return <Settings size={17} />;
+  if (item === "Build UI / UX") return <Sparkles size={17} />;
   return <span className="size-2 rounded-full bg-current" />;
 }
 

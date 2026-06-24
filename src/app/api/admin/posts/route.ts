@@ -9,7 +9,7 @@ export async function GET(request: Request) {
   const { isPlatformAdmin, context } = auth;
 
   const supabase = createAdminClient();
-  let query = supabase.from("posts").select("id,title,slug,excerpt,published,created_at");
+  let query = supabase.from("posts").select("id,title,slug,excerpt,cover_image_url,keywords,published,created_at");
 
   if (context) {
     query = query.eq("studio_id", context.studioId);
@@ -28,7 +28,7 @@ export async function POST(request: Request) {
   if (auth.errorResponse) return auth.errorResponse;
   const { isPlatformAdmin, context } = auth;
 
-  const body = await request.json() as { title?: string; excerpt?: string; content?: string; published?: boolean };
+  const body = await request.json() as { title?: string; excerpt?: string; content?: string; keywords?: string; coverImageUrl?: string; published?: boolean };
   const title = body.title?.trim() || "";
   const slug = createSlug(title);
   if (!title || !slug) return NextResponse.json({ error: "Tiêu đề không hợp lệ." }, { status: 400 });
@@ -38,6 +38,8 @@ export async function POST(request: Request) {
     slug,
     excerpt: body.excerpt?.trim() || null,
     content: body.content?.trim() || null,
+    keywords: body.keywords?.trim() || null,
+    cover_image_url: body.coverImageUrl?.trim() || null,
     published: Boolean(body.published)
   };
 
@@ -52,7 +54,7 @@ export async function POST(request: Request) {
   const { data, error } = await createAdminClient()
     .from("posts")
     .insert(insertData)
-    .select("id,title,slug,excerpt,published,created_at")
+    .select("id,title,slug,excerpt,cover_image_url,keywords,published,created_at")
     .single();
 
   return error ? NextResponse.json({ error: error.message }, { status: 500 }) : NextResponse.json({ post: data }, { status: 201 });
