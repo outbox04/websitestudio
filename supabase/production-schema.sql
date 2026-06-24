@@ -120,6 +120,7 @@ create table if not exists public.studio_payment_orders (
   transaction_id text,
   paid_at timestamptz,
   representative_name text,
+  industry text check (industry in ('wedding', 'concept')),
   email text,
   phone text,
   username text,

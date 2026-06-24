@@ -12,6 +12,7 @@ type CheckoutBody = {
   plan?: string;
   studioName?: string;
   representativeName?: string;
+  industry?: string;
   email?: string;
   phone?: string;
   username?: string;
@@ -36,10 +37,11 @@ export async function POST(request: Request) {
   const password = body.password || "";
   const studioName = body.studioName?.trim() || "Studio mới";
   const representativeName = body.representativeName?.trim() || studioName;
+  const industry = body.industry === "wedding" || body.industry === "concept" ? body.industry : "";
   const domain = body.domain?.trim().toLowerCase() || null;
 
-  if (!email || !username || !phone || password.length < 8) {
-    return NextResponse.json({ error: "Vui lòng điền đủ email, số điện thoại, tên đăng nhập và mật khẩu tối thiểu 8 ký tự." }, { status: 400 });
+  if (!email || !username || !phone || password.length < 8 || !industry) {
+    return NextResponse.json({ error: "Vui lòng chọn lĩnh vực studio và điền đủ email, số điện thoại, tên đăng nhập, mật khẩu tối thiểu 8 ký tự." }, { status: 400 });
   }
 
   const admin = createAdminClient();
@@ -91,6 +93,7 @@ export async function POST(request: Request) {
     plan,
     amount_vnd: plans[plan],
     representative_name: representativeName,
+    industry,
     email,
     phone,
     username,

@@ -19,6 +19,7 @@ export async function POST(request: Request) {
       .from("studios")
       .update({
         settings: {
+          ...(context.settings || {}),
           setup_completed: true,
           phone: "0901234567",
           email: `contact@${context.studioSlug}.tlgroup.site`,
