@@ -8,12 +8,12 @@ export async function proxy(request: NextRequest) {
   const isStudioSubdomain = hostname.endsWith(`.${rootDomain}`) && !hostname.startsWith(`www.${rootDomain}`);
 
   const themePages = ["/gioi-thieu", "/album", "/dich-vu", "/bang-gia", "/lien-he"];
-  const isStudioRoute = request.nextUrl.pathname === "/" || request.nextUrl.pathname === "/theme" || themePages.includes(request.nextUrl.pathname) || request.nextUrl.pathname === "/quan-tri" || request.nextUrl.pathname === "/tin-tuc" || request.nextUrl.pathname.startsWith("/tin-tuc/");
+  const isStudioRoute = request.nextUrl.pathname === "/" || request.nextUrl.pathname === "/theme" || themePages.includes(request.nextUrl.pathname) || request.nextUrl.pathname === "/quan-tri" || request.nextUrl.pathname.startsWith("/quan-tri/") || request.nextUrl.pathname === "/tin-tuc" || request.nextUrl.pathname.startsWith("/tin-tuc/");
   if (isStudioSubdomain && isStudioRoute) {
     const studioSlug = hostname.slice(0, -(rootDomain.length + 1));
     if (studioSlug && !studioSlug.includes(".")) {
       const url = request.nextUrl.clone();
-      url.pathname = request.nextUrl.pathname === "/quan-tri" ? `/studio-site/${studioSlug}/quan-tri` : request.nextUrl.pathname === "/" ? `/studio-site/${studioSlug}` : themePages.includes(request.nextUrl.pathname) ? `/studio-site/${studioSlug}/theme${request.nextUrl.pathname}` : `/studio-site/${studioSlug}${request.nextUrl.pathname}`;
+      url.pathname = request.nextUrl.pathname === "/quan-tri" ? `/studio-site/${studioSlug}/quan-tri` : request.nextUrl.pathname.startsWith("/quan-tri/") ? `/studio-site/${studioSlug}${request.nextUrl.pathname}` : request.nextUrl.pathname === "/" ? `/studio-site/${studioSlug}` : themePages.includes(request.nextUrl.pathname) ? `/studio-site/${studioSlug}/theme${request.nextUrl.pathname}` : `/studio-site/${studioSlug}${request.nextUrl.pathname}`;
       return NextResponse.rewrite(url);
     }
   }
