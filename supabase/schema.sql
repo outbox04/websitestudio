@@ -8,6 +8,7 @@ create table public.profiles (
   email text unique,
   full_name text,
   phone text,
+  address text,
   avatar_url text,
   credit_balance_vnd integer not null default 0 check (credit_balance_vnd >= 0),
   role public.user_role not null default 'customer',

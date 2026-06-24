@@ -226,6 +226,8 @@ export function RegistrationWizard() {
           transition:border-color .3s,box-shadow .3s;
         }
         .tl-input::placeholder{color:rgba(244,236,224,0.28);}
+        .tl-input option{background:#fff;color:#18181b;}
+        .tl-input option:disabled{color:#71717a;}
         .tl-input:focus{border-color:rgba(201,154,94,0.7);box-shadow:0 0 0 3px rgba(201,154,94,0.12);}
         .tl-input.err{border-color:rgba(239,68,68,.6);animation:tlShake .35s ease;}
 

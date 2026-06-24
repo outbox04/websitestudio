@@ -76,17 +76,21 @@ export async function POST(request: Request) {
   }
 
   const rollbackUser = async () => { await admin.auth.admin.deleteUser(createdUser.user.id); };
-  const { error: profileError } = await admin.from("profiles").update({
+  // Upsert makes registration work whether the database's auth trigger has already
+  // created a profile row or this is a newly upgraded installation without it.
+  const { error: profileError } = await admin.from("profiles").upsert({
+    id: createdUser.user.id,
+    email,
     full_name: representativeName,
     phone,
     address,
     username,
     role: "admin",
     is_active: false,
-  }).eq("id", createdUser.user.id);
+  }, { onConflict: "id" });
   if (profileError) {
     await rollbackUser();
-    return NextResponse.json({ error: "Không thể khởi tạo tài khoản Studio." }, { status: 500 });
+    return NextResponse.json({ error: `Không thể khởi tạo tài khoản Studio: ${profileError.message}` }, { status: 500 });
   }
 
   const orderId = `TLORA-${randomUUID().replace(/-/g, "").slice(0, 12).toUpperCase()}`;
