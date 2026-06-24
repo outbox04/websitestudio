@@ -15,6 +15,7 @@ type CheckoutBody = {
   industry?: string;
   email?: string;
   phone?: string;
+  address?: string;
   username?: string;
   password?: string;
   domain?: string;
@@ -34,14 +35,15 @@ export async function POST(request: Request) {
   const email = body.email?.trim().toLowerCase() || "";
   const username = body.username?.trim().toLowerCase() || "";
   const phone = body.phone?.trim() || "";
+  const address = body.address?.trim() || "";
   const password = body.password || "";
   const studioName = body.studioName?.trim() || "Studio mới";
   const representativeName = body.representativeName?.trim() || studioName;
   const industry = body.industry === "wedding" || body.industry === "concept" ? body.industry : "";
   const domain = body.domain?.trim().toLowerCase() || null;
 
-  if (!email || !username || !phone || password.length < 8 || !industry) {
-    return NextResponse.json({ error: "Vui lòng chọn lĩnh vực studio và điền đủ email, số điện thoại, tên đăng nhập, mật khẩu tối thiểu 8 ký tự." }, { status: 400 });
+  if (!email || !username || !phone || !address || password.length < 8 || !industry) {
+    return NextResponse.json({ error: "Vui lòng chọn lĩnh vực studio và điền đủ email, số điện thoại, địa chỉ, tên đăng nhập, mật khẩu tối thiểu 8 ký tự." }, { status: 400 });
   }
 
   const admin = createAdminClient();
@@ -77,6 +79,7 @@ export async function POST(request: Request) {
   const { error: profileError } = await admin.from("profiles").update({
     full_name: representativeName,
     phone,
+    address,
     username,
     role: "admin",
     is_active: false,

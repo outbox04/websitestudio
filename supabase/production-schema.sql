@@ -123,6 +123,7 @@ create table if not exists public.studio_payment_orders (
   industry text check (industry in ('wedding', 'concept')),
   email text,
   phone text,
+  address text,
   username text,
   domain text,
   license_key text,

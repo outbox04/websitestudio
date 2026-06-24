@@ -34,7 +34,7 @@ export async function POST(request: Request) {
       .maybeSingle();
     if (error) throw error;
     if (!gallery) {
-      const { data: studioOrder, error: studioOrderError } = await admin.from("studio_payment_orders").select("id,amount_vnd,studio_name,plan,industry,email,username,domain,license_key,activation_email_sent_at,studio_id,owner_user_id").eq("order_id", orderId).maybeSingle();
+      const { data: studioOrder, error: studioOrderError } = await admin.from("studio_payment_orders").select("id,amount_vnd,studio_name,plan,industry,email,phone,address,username,domain,license_key,activation_email_sent_at,studio_id,owner_user_id").eq("order_id", orderId).maybeSingle();
       if (studioOrderError) throw studioOrderError;
       if (!studioOrder) return NextResponse.json({ error: "Không tìm thấy đơn thanh toán." }, { status: 404 });
       if (amount && amount !== studioOrder.amount_vnd) return NextResponse.json({ error: "Số tiền IPN không khớp đơn Studio." }, { status: 400 });
@@ -59,7 +59,7 @@ export async function POST(request: Request) {
               plan: studioOrder.plan,
               status: "active",
               owner_user_id: studioOrder.owner_user_id || null,
-              settings: { industry: studioOrder.industry || "concept", theme: studioOrder.industry || "concept" },
+              settings: { industry: studioOrder.industry || "concept", theme: studioOrder.industry || "concept", email: studioOrder.email || "", phone: studioOrder.phone || "", address: studioOrder.address || "" },
             })
             .select("id")
             .single();

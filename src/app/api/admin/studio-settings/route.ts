@@ -10,7 +10,7 @@ export async function PUT(request: Request) {
   if (!body.settings || typeof body.settings !== "object") return NextResponse.json({ error: "Thiếu dữ liệu cài đặt." }, { status: 400 });
 
   // Whitelist keeps this endpoint from overwriting operational settings by accident.
-  const allowed = ["logo_url", "site_description", "og_image_url", "primary_color", "accent_color", "hero_title", "hero_description", "hero_image_url"];
+  const allowed = ["logo_url", "site_description", "og_image_url", "primary_color", "accent_color", "hero_title", "hero_description", "hero_image_url", "facebook_url", "zalo_phone"];
   const next = Object.fromEntries(Object.entries(body.settings).filter(([key]) => allowed.includes(key)));
   const settings = { ...(auth.context.settings || {}), ...next };
   const { data, error } = await createAdminClient().from("studios").update({ settings }).eq("id", auth.context.studioId).select("settings").single();

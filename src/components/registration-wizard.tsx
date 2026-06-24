@@ -76,7 +76,7 @@ export function RegistrationWizard() {
   const [openFaq, setOpenFaq] = useState<number | null>(null);
   const [taken,   setTaken]   = useState({ email: false, username: false, phone: false, domain: false });
   const [availabilityError, setAvailabilityError] = useState<string | null>(null);
-  const [form,    setForm]    = useState({ studio: "", representative: "", industry: "", email: "", phone: "", username: "", password: "", confirm: "", domain: "" });
+  const [form,    setForm]    = useState({ studio: "", representative: "", industry: "", email: "", phone: "", address: "", username: "", password: "", confirm: "", domain: "" });
   const [domFocused, setDomFocused] = useState(false);
   const [clickedSubmit, setClickedSubmit] = useState(false);
   const [checkingAvailability, setCheckingAvailability] = useState(false);
@@ -158,11 +158,11 @@ export function RegistrationWizard() {
     if (!selected) return;
     sessionStorage.setItem("tlora-registration-receipt", JSON.stringify({
       studio: form.studio, plan: selected.name, total: selected.price, industry: form.industry,
-      domain, username: form.username, email: form.email, phone: form.phone,
+      domain, username: form.username, email: form.email, phone: form.phone, address: form.address,
     }));
     const r = await fetch("/api/payments/sepay/checkout", {
       method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ plan, studioName: form.studio, representativeName: form.representative, industry: form.industry, email: form.email, phone: form.phone, username: form.username, password: form.password, domain }),
+      body: JSON.stringify({ plan, studioName: form.studio, representativeName: form.representative, industry: form.industry, email: form.email, phone: form.phone, address: form.address, username: form.username, password: form.password, domain }),
     });
     const p = await r.json();
     if (!r.ok) return alert(p.error);
@@ -552,6 +552,7 @@ export function RegistrationWizard() {
                       </label>
                       <TlInput label="Email"             type="email" value={form.email} onChange={update("email")}  error={clickedSubmit && taken.email ? "Email đã được sử dụng." : undefined} />
                       <TlInput label="Số điện thoại"    value={form.phone}          onChange={update("phone")}  error={clickedSubmit && taken.phone ? "Số điện thoại đã tồn tại." : undefined} />
+                      <TlInput label="Địa chỉ Studio"    value={form.address}        onChange={update("address")} />
                       <TlInput label="Tên đăng nhập"    value={form.username}       onChange={update("username")} error={clickedSubmit && taken.username ? "Tên đăng nhập đã tồn tại." : undefined} />
                       
                       <div>
@@ -675,7 +676,7 @@ export function RegistrationWizard() {
                     </div>
 
                     <button
-                      disabled={checkingAvailability || taken.email || taken.username || taken.phone || taken.domain || !isBasicDomainValid || !form.studio || !form.representative || !form.industry || !form.email || !form.phone || !form.username || !form.password || !form.confirm || !domain}
+                      disabled={checkingAvailability || taken.email || taken.username || taken.phone || taken.domain || !isBasicDomainValid || !form.studio || !form.representative || !form.industry || !form.email || !form.phone || !form.address || !form.username || !form.password || !form.confirm || !domain}
                       onClick={handleConfirmStep1}
                       className="tl-btn-primary"
                       style={{ width: "100%", marginTop: "1.5rem" }}
@@ -693,7 +694,7 @@ export function RegistrationWizard() {
                     <h2 style={{ fontSize: "1.5rem", fontWeight: 800, letterSpacing: "-.02em", marginBottom: ".375rem", color: "#f4ece0" }}>Xác nhận thông tin</h2>
                     <p style={{ fontSize: ".8125rem", color: "#8c8174", marginBottom: "1.75rem" }}>Kiểm tra lại thông tin trước khi thanh toán.</p>
                     <div style={{ borderRadius: ".875rem", border: "1px solid rgba(244,236,224,0.07)", padding: "1.25rem", background: "rgba(255,255,255,.02)" }}>
-                      {[["Studio", form.studio], ["Giao diện", form.industry === "wedding" ? "Wedding" : "Concept"], ["Gói", selected?.name || ""], ["Email", form.email], ["Số điện thoại", form.phone], ["Tên đăng nhập", form.username], ["Tên miền", domain], ["Tổng thanh toán", money(selected?.price || 0)]].map(([label, value]) => (
+                      {[["Studio", form.studio], ["Giao diện", form.industry === "wedding" ? "Wedding" : "Concept"], ["Gói", selected?.name || ""], ["Email", form.email], ["Số điện thoại", form.phone], ["Địa chỉ", form.address], ["Tên đăng nhập", form.username], ["Tên miền", domain], ["Tổng thanh toán", money(selected?.price || 0)]].map(([label, value]) => (
                         <div key={label} style={{ display: "flex", justifyContent: "space-between", gap: "1rem", padding: ".5rem 0", borderBottom: "1px solid rgba(244,236,224,0.05)" }}>
                           <span style={{ fontSize: ".8125rem", color: "#8c8174" }}>{label}</span>
                           <b style={{ fontSize: ".8125rem", color: label === "Tổng thanh toán" ? "#c99a5e" : "#f4ece0" }}>{value}</b>
