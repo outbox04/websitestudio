@@ -15,7 +15,6 @@ import {
   Save,
   Settings,
   Sparkles,
-  Loader2,
 } from "lucide-react";
 import Image from "next/image";
 import { Fragment, useEffect, useMemo, useState } from "react";
@@ -247,7 +246,7 @@ function DashboardView({
                 >
                   {isSettingUp ? (
                     <>
-                      <Loader2 className="animate-spin" size={15} /> Đang thiết lập...
+                      <RefreshCw className="animate-spin" size={15} /> Đang thiết lập...
                     </>
                   ) : (
                     <>
