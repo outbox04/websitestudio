@@ -137,9 +137,21 @@ export async function POST(request: Request) {
       });
     }
 
+    let folders;
     const connection = await getStudioDriveConnection(context.studioId);
-    if (!connection) return NextResponse.json({ error: "Hãy kết nối Google Drive trước khi tạo album." }, { status: 400 });
-    const folders = await createCustomerDriveFoldersInStudioDrive(getStudioDriveClient(connection), connection.root_folder_id, name.trim());
+    if (!process.env.GOOGLE_OAUTH_CLIENT_ID || (connection && connection.root_folder_id.startsWith("mock-"))) {
+      folders = {
+        rootFolderId: `mock-root-${slug}`,
+        rawFolderId: `mock-raw-${slug}`,
+        editedFolderId: `mock-edited-${slug}`,
+        rootFolderUrl: `https://drive.google.com/drive/folders/mock-root-${slug}`,
+        rawFolderUrl: `https://drive.google.com/drive/folders/mock-raw-${slug}`,
+        editedFolderUrl: `https://drive.google.com/drive/folders/mock-edited-${slug}`,
+      };
+    } else {
+      if (!connection) return NextResponse.json({ error: "Hãy kết nối Google Drive trước khi tạo album." }, { status: 400 });
+      folders = await createCustomerDriveFoldersInStudioDrive(getStudioDriveClient(connection), connection.root_folder_id, name.trim());
+    }
 
     const { data, error } = await supabase
       .from("customer_galleries")

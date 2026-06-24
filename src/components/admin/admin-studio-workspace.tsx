@@ -14,6 +14,8 @@ import {
   RefreshCw,
   Save,
   Settings,
+  Sparkles,
+  Loader2,
 } from "lucide-react";
 import Image from "next/image";
 import { Fragment, useEffect, useMemo, useState } from "react";
@@ -62,9 +64,19 @@ type AdminStudioWorkspaceProps = {
   databaseError?: string;
   studioName?: string;
   tenantMode?: boolean;
+  studioSlug?: string;
+  studioSettings?: any;
 };
 
-export function AdminStudioWorkspace({ galleries, editRequests, databaseError, studioName, tenantMode = false }: AdminStudioWorkspaceProps) {
+export function AdminStudioWorkspace({
+  galleries,
+  editRequests,
+  databaseError,
+  studioName,
+  tenantMode = false,
+  studioSlug = "",
+  studioSettings = {},
+}: AdminStudioWorkspaceProps) {
   const [activeMenu, setActiveMenu] = useState("Dashboard");
   const activeView = getViewFromMenu(activeMenu);
   const menu = tenantMode ? adminMenu.filter((item) => item !== "Cài đặt") : adminMenu;
@@ -112,7 +124,13 @@ export function AdminStudioWorkspace({ galleries, editRequests, databaseError, s
           )}
 
           {activeView === "dashboard" && (
-            <DashboardView galleries={galleries} editRequests={editRequests} tenantMode={tenantMode} />
+            <DashboardView
+              galleries={galleries}
+              editRequests={editRequests}
+              tenantMode={tenantMode}
+              studioSlug={studioSlug}
+              studioSettings={studioSettings}
+            />
           )}
 
           {activeView === "album-manager" && (
@@ -136,7 +154,23 @@ export function AdminStudioWorkspace({ galleries, editRequests, databaseError, s
   );
 }
 
-function DashboardView({ galleries, editRequests, tenantMode }: { galleries: AdminGallery[]; editRequests: AdminEditRequest[]; tenantMode: boolean }) {
+function DashboardView({
+  galleries,
+  editRequests,
+  tenantMode,
+  studioSlug,
+  studioSettings,
+}: {
+  galleries: AdminGallery[];
+  editRequests: AdminEditRequest[];
+  tenantMode: boolean;
+  studioSlug: string;
+  studioSettings: any;
+}) {
+  const [setupCompleted, setSetupCompleted] = useState(Boolean(studioSettings?.setup_completed));
+  const [isSettingUp, setIsSettingUp] = useState(false);
+  const [setupError, setSetupError] = useState("");
+
   const totalJobs = galleries.length;
   const completedJobs = galleries.filter((gallery) => gallery.editedPhotoCount > 0).length;
   const pendingJobs = Math.max(totalJobs - completedJobs, 0);
@@ -144,9 +178,92 @@ function DashboardView({ galleries, editRequests, tenantMode }: { galleries: Adm
   const openRawCount = galleries.filter((gallery) => gallery.rawDownloadEnabled).length;
   const revenue = completedJobs * 1900000;
 
+  const rootDomain = process.env.NEXT_PUBLIC_ROOT_DOMAIN || "tlgroup.site";
+
+  async function handleSetupWebsite() {
+    setIsSettingUp(true);
+    setSetupError("");
+    try {
+      const response = await fetch("/api/admin/setup-website", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.error || "Không thể setup website.");
+      }
+      setSetupCompleted(true);
+      window.location.reload();
+    } catch (err: any) {
+      setSetupError(err.message || "Đã xảy ra lỗi trong quá trình thiết lập.");
+    } finally {
+      setIsSettingUp(false);
+    }
+  }
+
   return (
     <div className="space-y-5">
-      {tenantMode && <StudioDriveConnection />}
+      {tenantMode && (
+        <>
+          {setupCompleted ? (
+            <div className="rounded-lg border border-emerald-200 bg-emerald-50/70 p-5 shadow-sm">
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div>
+                  <h3 className="flex items-center gap-2 text-lg font-bold text-emerald-950">
+                    <Check className="text-emerald-600" size={20} />
+                    Website đã được đưa vào vận hành chính thức!
+                  </h3>
+                  <p className="mt-1 text-sm leading-6 text-emerald-800">
+                    Trang chủ của studio hiện đã sẵn sàng phục vụ khách hàng. Bạn có thể truy cập trang chủ để xem giao diện dịch vụ, bảng giá và portfolio album mẫu.
+                  </p>
+                </div>
+                <a
+                  href={`https://${studioSlug}.${rootDomain}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex min-h-10 items-center justify-center gap-2 rounded-md bg-emerald-600 hover:bg-emerald-700 px-5 text-sm font-semibold text-white shadow-sm transition-all"
+                >
+                  Xem website của tôi <ExternalLink size={15} />
+                </a>
+              </div>
+            </div>
+          ) : (
+            <div className="rounded-lg border border-amber-200 bg-amber-50/70 p-5 shadow-sm">
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div>
+                  <h3 className="flex items-center gap-2 text-lg font-bold text-amber-950">
+                    <Sparkles className="text-amber-600 animate-pulse" size={20} />
+                    Website của bạn chưa được đưa vào vận hành
+                  </h3>
+                  <p className="mt-1 text-sm leading-6 text-amber-800">
+                    Trang chủ subdomain hiện tại đang hiển thị thông báo "Website đang hoàn thiện". Nhấp nút bên dưới để tạo các dữ liệu mẫu (album, ảnh, tin tức, tài khoản ngân hàng) và đưa website vào hoạt động chính thức ngay lập tức!
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleSetupWebsite}
+                  disabled={isSettingUp}
+                  className="inline-flex min-h-10 items-center justify-center gap-2 rounded-md bg-amber-600 hover:bg-amber-700 px-5 text-sm font-semibold text-white shadow-sm transition-all disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {isSettingUp ? (
+                    <>
+                      <Loader2 className="animate-spin" size={15} /> Đang thiết lập...
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles size={15} /> Setup & Vận hành ngay
+                    </>
+                  )}
+                </button>
+              </div>
+              {setupError && (
+                <p className="mt-3 text-xs font-semibold text-red-600">{setupError}</p>
+              )}
+            </div>
+          )}
+          <StudioDriveConnection />
+        </>
+      )}
       <HeaderCard
         title="Dashboard"
         description="Tổng quan job, doanh thu, tiến độ hoàn thiện và trạng thái album."

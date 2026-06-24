@@ -33,5 +33,5 @@ export default async function StudioAdminPage({ params }: { params: Promise<{ st
     const gallery = galleryById.get(photo.gallery_id);
     return gallery ? [{ id: photo.id, galleryId: gallery.id, customerName: gallery.customerName, customerSlug: gallery.customerSlug, shootDate: gallery.shootDate, customerUrl: gallery.customerUrl, customerDoneUrl: gallery.customerDoneUrl, fileName: photo.file_name, editNote: photo.edit_note, previewUrl: photo.preview_url, downloadUrl: photo.download_url, updatedAt: photo.updated_at, selected: photo.selected }] : [];
   });
-  return <AdminStudioWorkspace galleries={galleries} editRequests={editRequests} databaseError={galleriesError || photosError ? "Không thể đọc dữ liệu studio." : undefined} studioName={context.studioName} tenantMode />;
+  return <AdminStudioWorkspace galleries={galleries} editRequests={editRequests} databaseError={galleriesError || photosError ? "Không thể đọc dữ liệu studio." : undefined} studioName={context.studioName} tenantMode studioSlug={studioSlug} studioSettings={context.settings} />;
 }

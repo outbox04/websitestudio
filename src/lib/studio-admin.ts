@@ -8,6 +8,7 @@ export type StudioAdminContext = {
   studioSlug: string;
   studioName: string;
   userId: string;
+  settings?: any;
 };
 
 export function studioSlugFromHost(host: string | null) {
@@ -28,7 +29,7 @@ export async function getStudioAdminContext(studioSlug: string): Promise<StudioA
   const admin = createAdminClient();
   const { data: studio, error: studioError } = await admin
     .from("studios")
-    .select("id,slug,display_name,status")
+    .select("id,slug,display_name,status,settings")
     .eq("slug", studioSlug)
     .eq("status", "active")
     .maybeSingle();
@@ -44,5 +45,5 @@ export async function getStudioAdminContext(studioSlug: string): Promise<StudioA
     .maybeSingle();
   if (membershipError || !membership) return null;
 
-  return { studioId: studio.id, studioSlug: studio.slug, studioName: studio.display_name, userId: user.id };
+  return { studioId: studio.id, studioSlug: studio.slug, studioName: studio.display_name, userId: user.id, settings: studio.settings };
 }
