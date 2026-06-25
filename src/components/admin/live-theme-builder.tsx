@@ -1,36 +1,271 @@
 "use client";
 
-import { ImagePlus, Plus, Save, Trash2, X } from "lucide-react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import {
+  Columns3,
+  Image as ImageIcon,
+  Laptop,
+  MousePointer2,
+  Rows3,
+  Save,
+  Smartphone,
+  SquareMousePointer,
+  Tablet,
+  Trash2,
+  Type,
+} from "lucide-react";
+import { useMemo, useState } from "react";
 
-type Item = { title: string; subtitle: string; description: string; image: string; price: string; features: string };
-type Content = { hero: { title: string; description: string; image: string; cta: string }; about: { title: string; description: string; image: string }; services: Item[]; pricing: Item[]; gallery: Item[] };
-type Group = "hero" | "about" | "services" | "pricing" | "gallery";
-type Selection = { group: Group; index: number };
+type BlockType = "section" | "columns" | "text" | "button" | "image" | "spacer";
+type Device = "desktop" | "tablet" | "mobile";
 
-const newItem = (): Item => ({ title: "Nội dung mới", subtitle: "Danh mục", description: "Nhập nội dung giới thiệu cho mục này.", image: "", price: "Liên hệ", features: "" });
-const initial: Content = { hero: { title: "Câu chuyện của studio bắt đầu từ đây", description: "Chạm vào từng phần tử trên giao diện để thay đổi ảnh và câu chữ.", image: "", cta: "Đặt lịch tư vấn" }, about: { title: "Về studio", description: "Giới thiệu ngắn về phong cách và đội ngũ của bạn.", image: "" }, services: [newItem(), newItem(), newItem()], pricing: [newItem(), newItem(), newItem()], gallery: [newItem(), newItem(), newItem()] };
-const labels: Record<Group, string> = { hero: "Hero đầu trang", about: "Giới thiệu", services: "Dịch vụ", pricing: "Bảng giá", gallery: "Album ảnh" };
+type UxBlock = {
+  id: string;
+  type: BlockType;
+  title?: string;
+  text?: string;
+  href?: string;
+  image?: string;
+  columns?: string[];
+  style: {
+    background?: string;
+    color?: string;
+    align?: "left" | "center" | "right";
+    padding?: number;
+    gap?: number;
+    radius?: number;
+    fontSize?: number;
+    height?: number;
+  };
+};
 
-function hydrate(saved?: Partial<Content>): Content {
-  return { ...initial, ...saved, hero: { ...initial.hero, ...saved?.hero }, about: { ...initial.about, ...saved?.about }, services: saved?.services?.length ? saved.services : initial.services, pricing: saved?.pricing?.length ? saved.pricing : initial.pricing, gallery: saved?.gallery?.length ? saved.gallery : initial.gallery };
+type UxPages = Record<string, UxBlock[]>;
+
+const elements: Array<{ type: BlockType; label: string; icon: typeof Type }> = [
+  { type: "section", label: "Section", icon: Rows3 },
+  { type: "columns", label: "Row / Columns", icon: Columns3 },
+  { type: "text", label: "Text", icon: Type },
+  { type: "button", label: "Button", icon: SquareMousePointer },
+  { type: "image", label: "Image", icon: ImageIcon },
+  { type: "spacer", label: "Spacer", icon: MousePointer2 },
+];
+
+const deviceWidths: Record<Device, string> = {
+  desktop: "100%",
+  tablet: "820px",
+  mobile: "390px",
+};
+
+function id() {
+  return `ux_${Math.random().toString(36).slice(2, 10)}`;
 }
 
-export function LiveThemeBuilder({ src, saved, pageName }: { src: string; saved?: Partial<Content>; pageName: string }) {
-  const iframe = useRef<HTMLIFrameElement>(null); const upload = useRef<HTMLInputElement>(null);
-  const [content, setContent] = useState(() => hydrate(saved)); const contentRef = useRef(content);
-  const [selected, setSelected] = useState<Selection>({ group: "hero", index: 0 }); const [saving, setSaving] = useState(false); const [notice, setNotice] = useState("");
-  useEffect(() => { contentRef.current = content; }, [content]);
-  const active = useMemo(() => selected.group === "hero" || selected.group === "about" ? content[selected.group] : content[selected.group][selected.index] || newItem(), [content, selected]);
-  const preview = (next: Content) => iframe.current?.contentWindow?.postMessage({ type: "tlora-builder-preview", content: next }, window.location.origin);
-  function change(field: string, value: string) { setContent(current => { const next = selected.group === "hero" || selected.group === "about" ? { ...current, [selected.group]: { ...current[selected.group], [field]: value } } : { ...current, [selected.group]: current[selected.group].map((entry, index) => index === selected.index ? { ...entry, [field]: value } : entry) }; preview(next); return next; }); }
-  useEffect(() => { const receive = (event: MessageEvent) => { if (event.origin !== window.location.origin || !event.data) return; if (event.data.type === "tlora-builder-ready") preview(contentRef.current); if (event.data.type === "tlora-builder-select" && typeof event.data.key === "string") { const [group, index] = event.data.key.split(":"); if (["hero", "about", "services", "pricing", "gallery"].includes(group)) { setSelected({ group: group as Group, index: Number(index) || 0 }); setNotice(""); } } }; window.addEventListener("message", receive); return () => window.removeEventListener("message", receive); }, []);
-  function uploadImage(file: File) { const reader = new FileReader(); reader.onload = () => change("image", String(reader.result || "")); reader.readAsDataURL(file); }
-  const collection = selected.group === "services" || selected.group === "pricing" || selected.group === "gallery";
-  function addItem() { if (!collection) return; const group = selected.group as "services" | "pricing" | "gallery"; setContent(current => { const next = { ...current, [group]: [...current[group], newItem()] }; setSelected({ group, index: current[group].length }); preview(next); return next; }); }
-  function deleteItem() { if (!collection) return; const group = selected.group as "services" | "pricing" | "gallery"; setContent(current => { const list = current[group]; if (list.length <= 1) { setNotice("Cần giữ lại ít nhất một mục trong phần này."); return current; } const next = { ...current, [group]: list.filter((_, index) => index !== selected.index) }; setSelected({ group, index: Math.max(0, selected.index - 1) }); preview(next); return next; }); }
-  async function save() { setSaving(true); setNotice(""); try { const response = await fetch("/api/admin/studio-settings", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ settings: { site_content: content } }) }); const data = await response.json() as { error?: string }; if (!response.ok) throw new Error(data.error || "Không thể lưu thay đổi."); setNotice("Đã xác nhận thay đổi và đồng bộ website."); } catch (error) { setNotice(error instanceof Error ? error.message : "Không thể lưu thay đổi."); } finally { setSaving(false); } }
-  return <section className="overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-sm"><input ref={upload} type="file" accept="image/*" className="hidden" onChange={event => { const file = event.target.files?.[0]; if (file) uploadImage(file); event.currentTarget.value = ""; }} /><div className="border-b border-zinc-200 px-5 py-4"><h2 className="text-lg font-extrabold">Chỉnh sửa trực tiếp giao diện</h2><p className="mt-1 text-sm text-zinc-600">Bấm vào ảnh hoặc khối nội dung trên giao diện thật. Bố cục được giữ nguyên, chỉ ảnh và chữ được thay đổi.</p></div><div className="grid min-w-0 xl:grid-cols-[minmax(0,1fr)_360px]"><div className="min-w-0 bg-zinc-100 p-3 sm:p-5"><div className="overflow-hidden rounded-xl border border-zinc-300 bg-white shadow-xl"><div className="flex items-center gap-2 border-b border-zinc-200 bg-zinc-950 px-4 py-2 text-xs text-zinc-300"><span className="size-2 rounded-full bg-red-400"/><span className="size-2 rounded-full bg-amber-400"/><span className="size-2 rounded-full bg-emerald-400"/><span className="ml-2">Bản xem trước — bấm vào vùng cần sửa</span></div><iframe ref={iframe} title={`Giao diện ${pageName}`} src={`${src}?builder=1`} className="h-[72vh] min-h-150 w-full border-0 bg-white" /></div></div><aside className="border-t border-zinc-200 bg-white p-5 xl:sticky xl:top-0 xl:h-[calc(100vh-2rem)] xl:overflow-y-auto xl:border-l xl:border-t-0"><p className="text-xs font-bold uppercase tracking-[.16em] text-sky-700">Thanh công cụ</p><h3 className="mt-1 text-xl font-extrabold">{labels[selected.group]}</h3><p className="mt-1 text-xs leading-5 text-zinc-500">{collection ? `Mục ${selected.index + 1}. ` : ""}Nội dung đang ở bản nháp.</p><div className="mt-5 space-y-4"><Field label="Tiêu đề" value={active.title || ""} onChange={value => change("title", value)} /><Field label="Mô tả" value={active.description || ""} onChange={value => change("description", value)} multiline />{collection && <><Field label="Nhãn phụ / danh mục" value={(active as Item).subtitle} onChange={value => change("subtitle", value)} /><Field label="Giá" value={(active as Item).price} onChange={value => change("price", value)} /></>}{selected.group === "hero" && <Field label="Nhãn nút" value={(active as Content["hero"]).cta} onChange={value => change("cta", value)} />}<div><p className="text-sm font-bold text-zinc-800">Hình ảnh</p><div className="mt-2 aspect-video overflow-hidden rounded-lg border border-zinc-200 bg-zinc-100" style={active.image ? { backgroundImage: `url(${active.image})`, backgroundPosition: "center", backgroundSize: "cover" } : undefined}/><div className="mt-2 flex flex-wrap gap-2"><button type="button" onClick={() => upload.current?.click()} className="inline-flex min-h-10 items-center gap-2 rounded-md border border-zinc-300 px-3 text-sm font-bold"><ImagePlus size={16}/>Thay ảnh</button>{active.image && <button type="button" onClick={() => change("image", "")} className="inline-flex min-h-10 items-center gap-2 rounded-md border border-red-200 px-3 text-sm font-bold text-red-700"><X size={16}/>Xóa ảnh</button>}</div><p className="mt-2 text-xs text-zinc-500">Hero: 1920×1080. Ảnh thẻ/album: tối thiểu 1200×900.</p></div>{collection && <div className="flex flex-wrap gap-2"><button type="button" onClick={addItem} className="inline-flex min-h-10 items-center gap-2 rounded-md border border-zinc-300 px-3 text-sm font-bold"><Plus size={16}/>Thêm mục</button><button type="button" onClick={deleteItem} className="inline-flex min-h-10 items-center gap-2 rounded-md border border-red-200 px-3 text-sm font-bold text-red-700"><Trash2 size={16}/>Xóa mục</button></div>}</div><div className="mt-7 border-t border-zinc-200 pt-5"><button type="button" disabled={saving} onClick={save} className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-md bg-zinc-950 px-4 text-sm font-bold text-white disabled:opacity-60"><Save size={17}/>{saving ? "Đang xác nhận..." : "Xác nhận thay đổi"}</button>{notice && <p className="mt-3 text-center text-xs font-semibold text-emerald-700">{notice}</p>}</div></aside></div></section>;
+function newBlock(type: BlockType): UxBlock {
+  const base = { id: id(), type, style: { padding: 32, gap: 20, radius: 0, align: "left" as const } };
+  if (type === "section") return { ...base, title: "Tiêu đề section", text: "Nội dung giới thiệu ngắn cho khu vực này.", style: { ...base.style, background: "#111111", color: "#ffffff", padding: 72, align: "center" } };
+  if (type === "columns") return { ...base, title: "Row 3 cột", columns: ["Cột nội dung 1", "Cột nội dung 2", "Cột nội dung 3"], style: { ...base.style, background: "#ffffff", color: "#111111", padding: 40, radius: 8 } };
+  if (type === "text") return { ...base, title: "Tiêu đề", text: "Đoạn văn bản của bạn.", style: { ...base.style, color: "#111111", fontSize: 18, padding: 24 } };
+  if (type === "button") return { ...base, text: "Nút hành động", href: "#", style: { ...base.style, background: "#111111", color: "#ffffff", padding: 14, radius: 6, align: "center" } };
+  if (type === "image") return { ...base, image: "/brand/tlora-logo.png", style: { ...base.style, background: "#f4f4f5", padding: 24, radius: 8, align: "center" } };
+  return { ...base, style: { ...base.style, height: 48, padding: 0 } };
 }
 
-function Field({ label, value, onChange, multiline = false }: { label: string; value: string; onChange: (value: string) => void; multiline?: boolean }) { return <label className="block text-sm font-bold text-zinc-800">{label}{multiline ? <textarea value={value} onChange={event => onChange(event.target.value)} className="mt-2 min-h-24 w-full rounded-md border border-zinc-300 p-3 font-normal outline-none focus:border-sky-500" /> : <input value={value} onChange={event => onChange(event.target.value)} className="mt-2 min-h-10 w-full rounded-md border border-zinc-300 px-3 font-normal outline-none focus:border-sky-500" />}</label>; }
+function defaultBlocks(pageName: string): UxBlock[] {
+  return [
+    { ...newBlock("section"), title: pageName, text: "Kéo thả element từ thư viện bên trái để xây dựng trang này." },
+    newBlock("columns"),
+  ];
+}
+
+export function LiveThemeBuilder({
+  saved,
+  pageName,
+  pageKey,
+}: {
+  src: string;
+  saved?: { ux_pages?: UxPages };
+  pageName: string;
+  pageKey: string;
+}) {
+  const initialBlocks = saved?.ux_pages?.[pageKey]?.length ? saved.ux_pages[pageKey] : defaultBlocks(pageName);
+  const [blocks, setBlocks] = useState<UxBlock[]>(initialBlocks);
+  const [selectedId, setSelectedId] = useState(initialBlocks[0]?.id || "");
+  const [device, setDevice] = useState<Device>("desktop");
+  const [saving, setSaving] = useState(false);
+  const [notice, setNotice] = useState("");
+  const selected = useMemo(() => blocks.find((block) => block.id === selectedId) || blocks[0], [blocks, selectedId]);
+
+  function add(type: BlockType, at = blocks.length) {
+    const block = newBlock(type);
+    setBlocks((current) => [...current.slice(0, at), block, ...current.slice(at)]);
+    setSelectedId(block.id);
+  }
+
+  function update(idValue: string, patch: Partial<UxBlock>) {
+    setBlocks((current) => current.map((block) => (block.id === idValue ? { ...block, ...patch, style: { ...block.style, ...patch.style } } : block)));
+  }
+
+  function remove(idValue: string) {
+    setBlocks((current) => {
+      const next = current.filter((block) => block.id !== idValue);
+      setSelectedId(next[0]?.id || "");
+      return next;
+    });
+  }
+
+  async function save() {
+    setSaving(true);
+    setNotice("");
+    try {
+      const response = await fetch("/api/admin/studio-settings", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ settings: { ux_pages: { [pageKey]: blocks } } }),
+      });
+      const data = await response.json() as { error?: string };
+      if (!response.ok) throw new Error(data.error || "Không thể lưu layout.");
+      setNotice("Đã lưu layout và đồng bộ website.");
+    } catch (error) {
+      setNotice(error instanceof Error ? error.message : "Không thể lưu layout.");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <section className="overflow-hidden rounded-lg border border-zinc-200 bg-white shadow-sm">
+      <div className="grid min-h-[calc(100vh-180px)] lg:grid-cols-[260px_minmax(0,1fr)_340px]">
+        <aside className="border-b border-zinc-200 bg-zinc-950 p-4 text-white lg:border-b-0 lg:border-r">
+          <p className="text-xs font-bold uppercase tracking-[.16em] text-[#d8b766]">Elements</p>
+          <div className="mt-4 grid gap-2">
+            {elements.map((element) => {
+              const Icon = element.icon;
+              return (
+                <button
+                  key={element.type}
+                  draggable
+                  onDragStart={(event) => event.dataTransfer.setData("tlora/type", element.type)}
+                  onClick={() => add(element.type)}
+                  className="flex min-h-11 items-center gap-3 rounded-md border border-white/10 bg-white/[.04] px-3 text-sm font-semibold text-zinc-100 transition hover:bg-white/[.1]"
+                >
+                  <Icon size={17} />
+                  {element.label}
+                </button>
+              );
+            })}
+          </div>
+        </aside>
+
+        <main className="min-w-0 bg-zinc-100 p-4">
+          <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <h2 className="text-xl font-extrabold text-zinc-950">UX Builder - {pageName}</h2>
+              <p className="text-sm text-zinc-600">Kéo element vào canvas, chọn block để chỉnh nội dung và giao diện.</p>
+            </div>
+            <div className="flex rounded-md border border-zinc-300 bg-white p-1">
+              {(["desktop", "tablet", "mobile"] as Device[]).map((item) => {
+                const Icon = item === "desktop" ? Laptop : item === "tablet" ? Tablet : Smartphone;
+                return <button key={item} onClick={() => setDevice(item)} className={`grid size-9 place-items-center rounded ${device === item ? "bg-zinc-950 text-white" : "text-zinc-600"}`}><Icon size={17} /></button>;
+              })}
+            </div>
+          </div>
+
+          <div className="mx-auto min-h-[70vh] overflow-hidden rounded-lg border border-zinc-300 bg-white shadow-xl transition-all" style={{ width: deviceWidths[device] }}>
+            <div
+              className="min-h-[70vh]"
+              onDragOver={(event) => event.preventDefault()}
+              onDrop={(event) => {
+                event.preventDefault();
+                const type = event.dataTransfer.getData("tlora/type") as BlockType;
+                if (type) add(type);
+              }}
+            >
+              {blocks.map((block, index) => (
+                <CanvasBlock
+                  key={block.id}
+                  block={block}
+                  selected={selectedId === block.id}
+                  onSelect={() => setSelectedId(block.id)}
+                  onDropBefore={(type) => add(type, index)}
+                />
+              ))}
+              {blocks.length === 0 && <div className="grid min-h-96 place-items-center border-2 border-dashed border-zinc-300 text-sm text-zinc-500">Kéo element vào đây</div>}
+            </div>
+          </div>
+        </main>
+
+        <aside className="border-t border-zinc-200 bg-white p-4 lg:border-l lg:border-t-0">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <p className="text-xs font-bold uppercase tracking-[.16em] text-sky-700">Inspector</p>
+              <h3 className="mt-1 text-lg font-extrabold text-zinc-950">{selected ? selected.type : "Chưa chọn"}</h3>
+            </div>
+            {selected && <button onClick={() => remove(selected.id)} className="grid size-9 place-items-center rounded-md border border-red-200 text-red-700"><Trash2 size={16} /></button>}
+          </div>
+
+          {selected && <Inspector block={selected} onChange={(patch) => update(selected.id, patch)} />}
+
+          <button onClick={save} disabled={saving} className="mt-5 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-md bg-zinc-950 px-4 text-sm font-bold text-white disabled:opacity-60">
+            <Save size={17} />
+            {saving ? "Đang lưu..." : "Lưu layout"}
+          </button>
+          {notice && <p className="mt-3 text-center text-xs font-semibold text-emerald-700">{notice}</p>}
+        </aside>
+      </div>
+    </section>
+  );
+}
+
+function CanvasBlock({ block, selected, onSelect, onDropBefore }: { block: UxBlock; selected: boolean; onSelect: () => void; onDropBefore: (type: BlockType) => void }) {
+  return (
+    <div
+      onClick={(event) => { event.stopPropagation(); onSelect(); }}
+      onDragOver={(event) => event.preventDefault()}
+      onDrop={(event) => {
+        event.preventDefault();
+        const type = event.dataTransfer.getData("tlora/type") as BlockType;
+        if (type) onDropBefore(type);
+      }}
+      className={`relative cursor-pointer border-2 border-transparent ${selected ? "border-sky-500" : "hover:border-sky-300"}`}
+    >
+      <RenderBlock block={block} />
+    </div>
+  );
+}
+
+function RenderBlock({ block }: { block: UxBlock }) {
+  const style = block.style;
+  if (block.type === "spacer") return <div style={{ height: style.height || 48 }} />;
+  if (block.type === "button") return <div className="px-6 py-4" style={{ textAlign: style.align }}><a href={block.href || "#"} className="inline-flex min-h-11 items-center rounded-md px-5 text-sm font-bold" style={{ background: style.background, color: style.color, borderRadius: style.radius }}>{block.text}</a></div>;
+  if (block.type === "image") return <section className="px-6 py-6" style={{ textAlign: style.align, background: style.background }}><img src={block.image || "/brand/tlora-logo.png"} alt="" className="inline-block max-h-96 max-w-full object-contain" style={{ borderRadius: style.radius }} /></section>;
+  if (block.type === "columns") return <section className="grid gap-4 p-8 md:grid-cols-3" style={{ background: style.background, color: style.color, padding: style.padding, gap: style.gap }}>{(block.columns || []).map((column, index) => <div key={index} className="rounded-md border border-current/10 p-5">{column}</div>)}</section>;
+  return <section className="px-6" style={{ background: style.background, color: style.color, padding: style.padding, textAlign: style.align }}><h2 style={{ fontSize: style.fontSize || 42 }} className="font-extrabold leading-tight">{block.title}</h2>{block.text && <p className="mx-auto mt-4 max-w-2xl leading-7 opacity-75">{block.text}</p>}</section>;
+}
+
+function Inspector({ block, onChange }: { block: UxBlock; onChange: (patch: Partial<UxBlock>) => void }) {
+  return (
+    <div className="mt-5 space-y-4">
+      {block.type !== "spacer" && block.type !== "button" && <Field label="Tiêu đề" value={block.title || ""} onChange={(title) => onChange({ title })} />}
+      {["section", "text"].includes(block.type) && <Field label="Nội dung" value={block.text || ""} onChange={(text) => onChange({ text })} multiline />}
+      {block.type === "button" && <><Field label="Nhãn nút" value={block.text || ""} onChange={(text) => onChange({ text })} /><Field label="Link" value={block.href || ""} onChange={(href) => onChange({ href })} /></>}
+      {block.type === "image" && <Field label="Link ảnh" value={block.image || ""} onChange={(image) => onChange({ image })} />}
+      {block.type === "columns" && <Field label="Nội dung cột, mỗi dòng một cột" value={(block.columns || []).join("\n")} onChange={(value) => onChange({ columns: value.split("\n") })} multiline />}
+      <div className="grid grid-cols-2 gap-3">
+        <Field label="Màu nền" value={block.style.background || ""} onChange={(background) => onChange({ style: { background } })} />
+        <Field label="Màu chữ" value={block.style.color || ""} onChange={(color) => onChange({ style: { color } })} />
+        <NumberField label="Padding" value={block.style.padding || 0} onChange={(padding) => onChange({ style: { padding } })} />
+        <NumberField label="Bo góc" value={block.style.radius || 0} onChange={(radius) => onChange({ style: { radius } })} />
+        <NumberField label="Font size" value={block.style.fontSize || 0} onChange={(fontSize) => onChange({ style: { fontSize } })} />
+        <NumberField label="Chiều cao" value={block.style.height || 0} onChange={(height) => onChange({ style: { height } })} />
+      </div>
+      <label className="block text-sm font-bold text-zinc-800">Canh lề<select value={block.style.align || "left"} onChange={(event) => onChange({ style: { align: event.target.value as UxBlock["style"]["align"] } })} className="mt-2 min-h-10 w-full rounded-md border border-zinc-300 px-3 font-normal"><option value="left">Trái</option><option value="center">Giữa</option><option value="right">Phải</option></select></label>
+    </div>
+  );
+}
+
+function Field({ label, value, onChange, multiline = false }: { label: string; value: string; onChange: (value: string) => void; multiline?: boolean }) {
+  return <label className="block text-sm font-bold text-zinc-800">{label}{multiline ? <textarea value={value} onChange={(event) => onChange(event.target.value)} className="mt-2 min-h-24 w-full rounded-md border border-zinc-300 p-3 font-normal outline-none focus:border-sky-500" /> : <input value={value} onChange={(event) => onChange(event.target.value)} className="mt-2 min-h-10 w-full rounded-md border border-zinc-300 px-3 font-normal outline-none focus:border-sky-500" />}</label>;
+}
+
+function NumberField({ label, value, onChange }: { label: string; value: number; onChange: (value: number) => void }) {
+  return <label className="block text-sm font-bold text-zinc-800">{label}<input type="number" value={value} onChange={(event) => onChange(Number(event.target.value || 0))} className="mt-2 min-h-10 w-full rounded-md border border-zinc-300 px-3 font-normal outline-none focus:border-sky-500" /></label>;
+}
