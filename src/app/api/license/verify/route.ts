@@ -1,4 +1,4 @@
-import { authenticatedUser, cachePayload, licenseJson, licenseOptions } from "../_shared";
+import { authenticatedUser, cachePayload, expiredLicensePayload, isLicenseExpired, licenseJson, licenseOptions } from "../_shared";
 
 export function OPTIONS() {
   return licenseOptions();
@@ -33,11 +33,14 @@ export async function POST(request: Request) {
     }
 
     const license = device.licenses;
+    if (license.status === "expired" || isLicenseExpired(license)) {
+      if (license.status !== "expired") {
+        await supabase.from("licenses").update({ status: "expired", updated_at: new Date().toISOString() }).eq("id", license.id);
+      }
+      return licenseJson(expiredLicensePayload(license), 403);
+    }
     if (license.status !== "active") {
       return licenseJson({ ok: false, message: "License không còn active." }, 403);
-    }
-    if (license.expires_at && new Date(license.expires_at).getTime() < Date.now()) {
-      return licenseJson({ ok: false, message: "License đã hết hạn." }, 403);
     }
 
     await supabase
@@ -46,6 +49,7 @@ export async function POST(request: Request) {
         device_name: deviceName || device.device_name,
         platform: platform || device.platform,
         last_seen_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
       })
       .eq("id", device.id);
 

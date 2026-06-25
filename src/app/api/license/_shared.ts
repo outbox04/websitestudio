@@ -37,18 +37,78 @@ export function normalizeLicenseKey(value: unknown) {
     .toUpperCase();
 }
 
+export type LicenseRecord = {
+  id?: string;
+  license_key: string;
+  user_id: string | null;
+  status: string;
+  plan?: string | null;
+  duration_days?: number | null;
+  activated_at?: string | null;
+  expires_at: string | null;
+  last_renewed_at?: string | null;
+  renewal_count?: number | null;
+};
+
+const planDurations: Record<string, number> = {
+  basic: 30,
+  medium: 90,
+  premium: 365,
+  standard: 30,
+};
+
+export function durationDaysForLicense(license: Pick<LicenseRecord, "plan" | "duration_days">) {
+  const explicitDays = Number(license.duration_days || 0);
+  if (Number.isFinite(explicitDays) && explicitDays > 0) {
+    return Math.floor(explicitDays);
+  }
+
+  return planDurations[String(license.plan || "").toLowerCase()] || planDurations.standard;
+}
+
+export function addDays(date: Date, days: number) {
+  const next = new Date(date);
+  next.setUTCDate(next.getUTCDate() + days);
+  return next;
+}
+
+export function isLicenseExpired(license: Pick<LicenseRecord, "expires_at">, now = new Date()) {
+  return Boolean(license.expires_at && new Date(license.expires_at).getTime() <= now.getTime());
+}
+
+export function expiredLicensePayload(license: Pick<LicenseRecord, "license_key" | "expires_at">) {
+  return {
+    ok: false,
+    code: "LICENSE_EXPIRED",
+    locked: true,
+    localDataRetained: true,
+    renewalRequired: true,
+    licenseKey: license.license_key,
+    expiresAt: license.expires_at,
+    message: "License đã hết hạn. Dữ liệu vẫn được giữ trên máy và sẽ mở lại sau khi gia hạn.",
+  };
+}
+
+export function renewedExpiry(license: Pick<LicenseRecord, "expires_at">, durationDays: number, now = new Date()) {
+  const currentExpiry = license.expires_at ? new Date(license.expires_at) : null;
+  const base = currentExpiry && currentExpiry.getTime() > now.getTime() ? currentExpiry : now;
+  return addDays(base, durationDays);
+}
+
 export function cachePayload(license: {
   license_key: string;
   user_id: string | null;
   status: string;
+  activated_at?: string | null;
   expires_at: string | null;
 }, deviceId: string) {
   return {
     licenseKey: license.license_key,
     userId: license.user_id || "",
     deviceId,
-    status: "active",
+    status: license.status,
     checkedAt: new Date().toISOString(),
+    activatedAt: license.activated_at || null,
     expiresAt: license.expires_at,
   };
 }

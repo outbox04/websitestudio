@@ -1,8 +1,15 @@
 import { NextResponse } from "next/server";
 import { randomUUID } from "crypto";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { renewedExpiry } from "@/app/api/license/_shared";
 
 export const runtime = "nodejs";
+
+const licenseDurationByPlan: Record<string, number> = {
+  basic: 30,
+  medium: 90,
+  premium: 365,
+};
 
 function studioSlug(studioName: string, domain: string | null) {
   const fromDomain = (domain || "").split(".")[0];
@@ -19,7 +26,7 @@ function studioSlug(studioName: string, domain: string | null) {
 
 export async function POST(request: Request) {
   try {
-    const payload = await request.json() as { notification_type?: string; order?: { order_invoice_number?: string; order_status?: string; order_amount?: string | number } };
+    const payload = await request.json() as { notification_type?: string; order?: { order_invoice_number?: string; order_status?: string; order_amount?: string | number }; transaction?: { transaction_id?: string } };
     const orderId = String(payload.order?.order_invoice_number || "").trim();
     const status = String(payload.order?.order_status || "").toLowerCase();
     const amount = Number(payload.order?.order_amount || 0);
@@ -36,7 +43,54 @@ export async function POST(request: Request) {
     if (!gallery) {
       const { data: studioOrder, error: studioOrderError } = await admin.from("studio_payment_orders").select("id,amount_vnd,studio_name,plan,industry,email,phone,address,username,domain,license_key,activation_email_sent_at,studio_id,owner_user_id").eq("order_id", orderId).maybeSingle();
       if (studioOrderError) throw studioOrderError;
-      if (!studioOrder) return NextResponse.json({ error: "Không tìm thấy đơn thanh toán." }, { status: 404 });
+      if (!studioOrder) {
+        const { data: renewalOrder, error: renewalOrderError } = await admin
+          .from("license_renewal_orders")
+          .select("id,amount_vnd,duration_days,status,license_id")
+          .eq("order_id", orderId)
+          .maybeSingle();
+        if (renewalOrderError) throw renewalOrderError;
+        if (!renewalOrder) return NextResponse.json({ error: "Không tìm thấy đơn thanh toán." }, { status: 404 });
+        if (renewalOrder.status === "paid") return NextResponse.json({ ok: true, orderId, type: "license_renewal", alreadyProcessed: true });
+        if (amount && amount !== renewalOrder.amount_vnd) return NextResponse.json({ error: "Số tiền IPN không khớp đơn gia hạn." }, { status: 400 });
+
+        const { data: license, error: renewalLicenseError } = await admin
+          .from("licenses")
+          .select("*")
+          .eq("id", renewalOrder.license_id)
+          .single();
+        if (renewalLicenseError) throw renewalLicenseError;
+
+        const now = new Date();
+        const nextExpiresAt = renewedExpiry(license, renewalOrder.duration_days, now).toISOString();
+        const transactionId = String(payload.transaction?.transaction_id || "");
+        const { error: updateLicenseError } = await admin
+          .from("licenses")
+          .update({
+            status: "active",
+            expires_at: nextExpiresAt,
+            last_renewed_at: now.toISOString(),
+            renewal_count: Number(license.renewal_count || 0) + 1,
+            updated_at: now.toISOString(),
+          })
+          .eq("id", license.id);
+        if (updateLicenseError) throw updateLicenseError;
+
+        const { error: updateRenewalError } = await admin
+          .from("license_renewal_orders")
+          .update({
+            status: "paid",
+            paid_at: now.toISOString(),
+            transaction_id: transactionId,
+            previous_expires_at: license.expires_at,
+            renewed_expires_at: nextExpiresAt,
+            updated_at: now.toISOString(),
+          })
+          .eq("id", renewalOrder.id);
+        if (updateRenewalError) throw updateRenewalError;
+
+        return NextResponse.json({ ok: true, orderId, type: "license_renewal", expiresAt: nextExpiresAt });
+      }
       if (amount && amount !== studioOrder.amount_vnd) return NextResponse.json({ error: "Số tiền IPN không khớp đơn Studio." }, { status: 400 });
       let studioId = studioOrder.studio_id;
       if (!studioId) {
@@ -87,6 +141,7 @@ export async function POST(request: Request) {
         status: "active",
         plan: studioOrder.plan,
         max_devices: 1,
+        duration_days: licenseDurationByPlan[studioOrder.plan] || 30,
         metadata: { orderId, studioName: studioOrder.studio_name, domain: studioOrder.domain || null },
       }, { onConflict: "license_key" }).select("id").single();
       if (licenseError) throw licenseError;
