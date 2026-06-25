@@ -149,6 +149,66 @@ export async function listDriveImages(folderId: string, drive: drive_v3.Drive = 
   })) || [];
 }
 
+export async function listPublicDriveImages(folderId: string): Promise<DrivePhoto[]> {
+  const apiKey = process.env.GOOGLE_DRIVE_API_KEY;
+  if (!apiKey) {
+    throw new Error("Missing GOOGLE_DRIVE_API_KEY");
+  }
+
+  const files: DrivePhoto[] = [];
+  let pageToken = "";
+
+  do {
+    const params = new URLSearchParams({
+      key: apiKey,
+      q: `'${escapeDriveQuery(folderId)}' in parents and mimeType contains 'image/' and trashed=false`,
+      fields: "nextPageToken,files(id,name,thumbnailLink,webViewLink,webContentLink,mimeType)",
+      pageSize: "1000",
+      orderBy: "name_natural",
+      supportsAllDrives: "true",
+      includeItemsFromAllDrives: "true",
+    });
+
+    if (pageToken) {
+      params.set("pageToken", pageToken);
+    }
+
+    const response = await fetch(`https://www.googleapis.com/drive/v3/files?${params.toString()}`, {
+      cache: "no-store",
+    });
+    const payload = await response.json() as {
+      error?: { message?: string };
+      nextPageToken?: string;
+      files?: Array<{
+        id?: string;
+        name?: string;
+        thumbnailLink?: string;
+        webViewLink?: string;
+        webContentLink?: string;
+        mimeType?: string;
+      }>;
+    };
+
+    if (!response.ok) {
+      throw new Error(payload.error?.message || "Could not list public Google Drive folder");
+    }
+
+    files.push(...(payload.files || []).map((file) => ({
+      id: file.id || "",
+      name: file.name || "Untitled",
+      thumbnailLink: file.id ? driveImageUrl(file.id, 900) : file.thumbnailLink || undefined,
+      largeThumbnailLink: file.id ? driveImageUrl(file.id, 2400) : file.thumbnailLink || undefined,
+      webViewLink: file.webViewLink || undefined,
+      webContentLink: file.webContentLink || (file.id ? `https://drive.google.com/uc?export=download&id=${file.id}` : undefined),
+      mimeType: file.mimeType || "image/jpeg",
+    })));
+
+    pageToken = payload.nextPageToken || "";
+  } while (pageToken);
+
+  return files;
+}
+
 export async function uploadDriveImage(folderId: string, fileName: string, buffer: Buffer, mimeType = "image/jpeg"): Promise<DrivePhoto> {
   const drive = getDriveClient();
   const existing = await drive.files.list({

@@ -73,6 +73,7 @@ export function CustomerGalleryView({
   const [syncing, setSyncing] = useState(false);
   const [query, setQuery] = useState("");
   const saveTimers = useRef<Record<string, number>>({});
+  const autoSyncStarted = useRef(false);
 
   const selectedPhotos = useMemo(() => photos.filter((photo) => photo.selected), [photos]);
   const notedPhotos = useMemo(() => photos.filter((photo) => Boolean(photo.edit_note?.trim())), [photos]);
@@ -133,6 +134,13 @@ export function CustomerGalleryView({
     return () => window.clearInterval(timer);
   }, [gallery.customer_name_slug, gallery.payment_status]);
 
+  useEffect(() => {
+    if (autoSyncStarted.current || rawPhotos.length > 0 || editedPhotos.length > 0) return;
+    autoSyncStarted.current = true;
+
+    void syncPhotos({ silent: true });
+  }, [editedPhotos.length, rawPhotos.length]);
+
   async function patchPhoto(photoId: string, body: { selected?: boolean; editNote?: string }) {
     await fetch(`/api/customer-galleries/photos/${photoId}`, {
       method: "PATCH",
@@ -155,10 +163,24 @@ export function CustomerGalleryView({
     }, 450);
   }
 
-  async function syncPhotos() {
+  async function syncPhotos(options?: { silent?: boolean }) {
     setSyncing(true);
-    await fetch(`/api/customer-galleries/${gallery.customer_name_slug}/sync`, { method: "POST" });
-    window.location.reload();
+    try {
+      const response = await fetch(`/api/customer-galleries/${gallery.customer_name_slug}/sync`, { method: "POST" });
+      const payload = await response.json().catch(() => ({})) as { rawCount?: number; editedCount?: number; error?: string };
+      if (response.ok) {
+        if ((payload.rawCount || 0) > 0 || (payload.editedCount || 0) > 0 || !options?.silent) {
+          window.location.reload();
+        }
+        return;
+      }
+
+      if (!options?.silent) {
+        alert(payload.error || "Không đồng bộ được ảnh mới.");
+      }
+    } finally {
+      setSyncing(false);
+    }
   }
 
   const downloadAction =
@@ -250,7 +272,7 @@ export function CustomerGalleryView({
                 <Search size={17} />
                 <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Tìm kiếm" className="w-full bg-transparent text-white outline-none placeholder:text-zinc-500 sm:w-44" />
               </label>
-              <button onClick={syncPhotos} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-full border border-white/10 bg-black/20 px-4 text-sm font-semibold text-zinc-200">
+              <button onClick={() => syncPhotos()} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-full border border-white/10 bg-black/20 px-4 text-sm font-semibold text-zinc-200">
                 {syncing ? <Loader2 className="animate-spin" size={16} /> : <RefreshCw size={16} />}
                 Mới nhất
               </button>

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { listDriveImages } from "@/lib/google-drive";
+import { listDriveImages, listPublicDriveImages } from "@/lib/google-drive";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { checkAuthContext } from "@/lib/studio-admin";
 import { getStudioDriveClient, getStudioDriveConnection } from "@/lib/studio-google-drive";
@@ -10,7 +10,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ slu
   const { slug } = await params;
 
   const auth = await checkAuthContext(request);
-  if (auth.errorResponse) return auth.errorResponse;
+  const canUseStudioConnection = !auth.errorResponse;
   const { isPlatformAdmin, context } = auth;
 
   const supabase = createAdminClient();
@@ -22,7 +22,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ slu
 
   if (context) {
     query = query.eq("studio_id", context.studioId);
-  } else if (!isPlatformAdmin) {
+  } else if (canUseStudioConnection && !isPlatformAdmin) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
@@ -34,23 +34,27 @@ export async function POST(request: Request, { params }: { params: Promise<{ slu
 
   let connection = null;
   const studioId = gallery.studio_id || context?.studioId;
-  if (studioId) {
+  if (studioId && canUseStudioConnection) {
     try {
       connection = await getStudioDriveConnection(studioId);
     } catch {}
   }
 
   if (!process.env.GOOGLE_OAUTH_CLIENT_ID || !connection || connection.root_folder_id.startsWith("mock-")) {
-    await supabase
-      .from("customer_gallery_photos")
-      .delete()
-      .eq("gallery_id", gallery.id)
-      .like("drive_file_id", "mock-%");
+    try {
+      const [rawPhotos, editedPhotos] = await Promise.all([
+        listPublicDriveImages(gallery.raw_drive_folder_id),
+        listPublicDriveImages(gallery.edited_drive_folder_id),
+      ]);
 
-    return NextResponse.json(
-      { error: "Google Drive chưa được kết nối cho studio này nên không thể đồng bộ ảnh thật." },
-      { status: 400 },
-    );
+      await upsertSyncedPhotos(supabase, gallery.id, rawPhotos, editedPhotos);
+      return NextResponse.json({ rawCount: rawPhotos.length, editedCount: editedPhotos.length });
+    } catch (error) {
+      return NextResponse.json(
+        { error: error instanceof Error ? error.message : "Không đồng bộ được ảnh từ Google Drive public folder" },
+        { status: 400 },
+      );
+    }
   }
 
   const drive = getStudioDriveClient(connection);
@@ -61,34 +65,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ slu
       listDriveImages(gallery.edited_drive_folder_id, drive),
     ]);
 
-    const rows = [
-      ...rawPhotos.map((photo) => ({
-        gallery_id: gallery.id,
-        drive_file_id: photo.id,
-        file_name: photo.name,
-        thumbnail_url: photo.thumbnailLink,
-        preview_url: photo.largeThumbnailLink,
-        download_url: photo.webContentLink,
-        kind: "raw",
-      })),
-      ...editedPhotos.map((photo) => ({
-        gallery_id: gallery.id,
-        drive_file_id: photo.id,
-        file_name: photo.name,
-        thumbnail_url: photo.thumbnailLink,
-        preview_url: photo.largeThumbnailLink,
-        download_url: photo.webContentLink,
-        kind: "edited",
-      })),
-    ];
-
-    if (rows.length > 0) {
-      const { error } = await supabase
-        .from("customer_gallery_photos")
-        .upsert(rows, { onConflict: "gallery_id,drive_file_id" });
-
-      if (error) throw error;
-    }
+    await upsertSyncedPhotos(supabase, gallery.id, rawPhotos, editedPhotos);
 
     return NextResponse.json({ rawCount: rawPhotos.length, editedCount: editedPhotos.length });
   } catch (error) {
@@ -97,4 +74,40 @@ export async function POST(request: Request, { params }: { params: Promise<{ slu
       { status: 500 },
     );
   }
+}
+
+async function upsertSyncedPhotos(
+  supabase: ReturnType<typeof createAdminClient>,
+  galleryId: string,
+  rawPhotos: Awaited<ReturnType<typeof listDriveImages>>,
+  editedPhotos: Awaited<ReturnType<typeof listDriveImages>>,
+) {
+  const rows = [
+    ...rawPhotos.map((photo) => ({
+      gallery_id: galleryId,
+      drive_file_id: photo.id,
+      file_name: photo.name,
+      thumbnail_url: photo.thumbnailLink,
+      preview_url: photo.largeThumbnailLink,
+      download_url: photo.webContentLink,
+      kind: "raw",
+    })),
+    ...editedPhotos.map((photo) => ({
+      gallery_id: galleryId,
+      drive_file_id: photo.id,
+      file_name: photo.name,
+      thumbnail_url: photo.thumbnailLink,
+      preview_url: photo.largeThumbnailLink,
+      download_url: photo.webContentLink,
+      kind: "edited",
+    })),
+  ];
+
+  if (rows.length === 0) return;
+
+  const { error } = await supabase
+    .from("customer_gallery_photos")
+    .upsert(rows, { onConflict: "gallery_id,drive_file_id" });
+
+  if (error) throw error;
 }
