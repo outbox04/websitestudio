@@ -1,7 +1,7 @@
 "use client";
 
 import { ImagePlus, Plus, Save, Trash2 } from "lucide-react";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { ReactNode } from "react";
 
 type Item = { title: string; subtitle: string; description: string; image: string; price: string; features: string };
@@ -293,17 +293,23 @@ function EditableText({
   onChange: (value: string) => void;
   className: string;
 }) {
+  const ref = useRef<HTMLElement>(null);
+
+  useEffect(() => {
+    if (document.activeElement === ref.current) return;
+    if (ref.current && ref.current.textContent !== value) ref.current.textContent = value;
+  }, [value]);
+
   return (
     <Tag
+      ref={ref as never}
       contentEditable
       suppressContentEditableWarning
       spellCheck={false}
       onClick={(event) => event.stopPropagation()}
       onInput={(event) => onChange(event.currentTarget.textContent || "")}
       className={`${className} cursor-text rounded-sm outline-none transition focus:ring-2 focus:ring-sky-400 focus:ring-offset-2 focus:ring-offset-transparent`}
-    >
-      {value}
-    </Tag>
+    />
   );
 }
 

@@ -14,7 +14,8 @@ import {
   Trash2,
   Type,
 } from "lucide-react";
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import type { CSSProperties } from "react";
 
 type BlockType = "section" | "columns" | "text" | "button" | "image" | "spacer";
 type Device = "desktop" | "tablet" | "mobile";
@@ -389,10 +390,18 @@ function EditableCanvasText({
   value: string;
   onChange: (value: string) => void;
   className?: string;
-  style?: React.CSSProperties;
+  style?: CSSProperties;
 }) {
+  const ref = useRef<HTMLElement>(null);
+
+  useEffect(() => {
+    if (document.activeElement === ref.current) return;
+    if (ref.current && ref.current.textContent !== value) ref.current.textContent = value;
+  }, [value]);
+
   return (
     <Tag
+      ref={ref as never}
       contentEditable
       suppressContentEditableWarning
       spellCheck={false}
@@ -400,9 +409,7 @@ function EditableCanvasText({
       onInput={(event) => onChange(event.currentTarget.textContent || "")}
       className={`${className || ""} cursor-text rounded-sm outline-none transition focus:ring-2 focus:ring-sky-400 focus:ring-offset-2`}
       style={style}
-    >
-      {value}
-    </Tag>
+    />
   );
 }
 
