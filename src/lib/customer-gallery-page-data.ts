@@ -1,18 +1,16 @@
 import { notFound } from "next/navigation";
+import { scopedGalleryQuery } from "@/lib/customer-gallery-scope";
 import { createAdminClient } from "@/lib/supabase/admin";
 
-export async function getCustomerGalleryPageData(customerSlug: string) {
+export async function getCustomerGalleryPageData(customerSlug: string, headers: Headers) {
   let gallery;
   let photos;
 
   try {
     const supabase = createAdminClient();
 
-    const { data: galleryData } = await supabase
-      .from("customer_galleries")
-      .select("*")
-      .eq("customer_name_slug", customerSlug)
-      .maybeSingle();
+    const { query } = await scopedGalleryQuery(headers, customerSlug);
+    const { data: galleryData } = await query.maybeSingle();
 
     if (!galleryData) {
       notFound();

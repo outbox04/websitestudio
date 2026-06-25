@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { scopedGalleryQuery } from "@/lib/customer-gallery-scope";
 import { listDriveImages, listPublicDriveImages } from "@/lib/google-drive";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { checkAuthContext } from "@/lib/studio-admin";
@@ -15,12 +16,10 @@ export async function POST(request: Request, { params }: { params: Promise<{ slu
 
   const supabase = createAdminClient();
 
-  let query = supabase
-    .from("customer_galleries")
-    .select("*")
-    .eq("customer_name_slug", slug);
+  const scoped = await scopedGalleryQuery(request.headers, slug);
+  let query = scoped.query;
 
-  if (context) {
+  if (context && scoped.studioId === context.studioId) {
     query = query.eq("studio_id", context.studioId);
   } else if (canUseStudioConnection && !isPlatformAdmin) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });

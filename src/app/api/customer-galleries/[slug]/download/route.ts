@@ -1,8 +1,8 @@
 import { ZipArchive } from "archiver";
 import { NextRequest, NextResponse } from "next/server";
 import { Readable } from "node:stream";
+import { scopedGalleryQuery } from "@/lib/customer-gallery-scope";
 import { getDriveClient, listDriveImages } from "@/lib/google-drive";
-import { createAdminClient } from "@/lib/supabase/admin";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -36,11 +36,9 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
   }
 
   const { slug } = await params;
-  const supabase = createAdminClient();
-  const { data: gallery, error } = await supabase
-    .from("customer_galleries")
+  const { query } = await scopedGalleryQuery(request.headers, slug);
+  const { data: gallery, error } = await query
     .select("customer_name,raw_drive_folder_id,edited_drive_folder_id,raw_download_enabled,edited_download_enabled")
-    .eq("customer_name_slug", slug)
     .maybeSingle();
 
   if (error) {

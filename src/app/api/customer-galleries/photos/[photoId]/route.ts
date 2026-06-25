@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { studioIdForHeaders } from "@/lib/customer-gallery-scope";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 export async function PATCH(request: Request, { params }: { params: Promise<{ photoId: string }> }) {
@@ -23,6 +24,19 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ ph
   }
 
   const supabase = createAdminClient();
+  const { studioId } = await studioIdForHeaders(request.headers);
+  let photoQuery = supabase
+    .from("customer_gallery_photos")
+    .select("id,customer_galleries!inner(studio_id)")
+    .eq("id", photoId);
+
+  photoQuery = studioId ? photoQuery.eq("customer_galleries.studio_id", studioId) : photoQuery.is("customer_galleries.studio_id", null);
+
+  const { data: allowedPhoto, error: allowedError } = await photoQuery.maybeSingle();
+  if (allowedError || !allowedPhoto) {
+    return NextResponse.json({ error: "Không tìm thấy ảnh." }, { status: 404 });
+  }
+
   const { data, error } = await supabase
     .from("customer_gallery_photos")
     .update(patch)

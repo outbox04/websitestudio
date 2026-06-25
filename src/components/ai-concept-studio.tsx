@@ -60,19 +60,19 @@ const toolCategories = [
 const readyConcepts = [
   {
     title: "Wedding white",
-    image: "https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=500&q=82",
+    image: "/brand/tlora-logo.png",
   },
   {
     title: "Clean beauty",
-    image: "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=500&q=82",
+    image: "/brand/tlora-logo.png",
   },
   {
     title: "Business",
-    image: "https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&w=500&q=82",
+    image: "/brand/tlora-logo.png",
   },
   {
     title: "Editorial",
-    image: "https://images.unsplash.com/photo-1509967419530-da38b4704bc6?auto=format&fit=crop&w=500&q=82",
+    image: "/brand/tlora-logo.png",
   },
 ];
 
@@ -533,7 +533,7 @@ function WalletPanel({
       </div>
       <button onClick={onTopUp} disabled={topUpLoading} className="mt-3 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-md border border-white/10 bg-white/10 px-4 text-sm font-semibold text-white hover:bg-white/15">
         {topUpLoading ? <Loader2 className="animate-spin" size={16} /> : <Coins size={16} />}
-        Nạp tiền demo
+        N?p ti?n
       </button>
     </section>
   );

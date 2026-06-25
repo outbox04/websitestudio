@@ -20,6 +20,8 @@ type CreatedGallery = {
 export function CustomerGalleryCreator() {
   const [name, setName] = useState("");
   const [shootDate, setShootDate] = useState("");
+  const [rawDriveFolderUrl, setRawDriveFolderUrl] = useState("");
+  const [editedDriveFolderUrl, setEditedDriveFolderUrl] = useState("");
   const [result, setResult] = useState<CreatedGallery | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -36,7 +38,7 @@ export function CustomerGalleryCreator() {
       const response = await fetch("/api/admin/customer-galleries", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, shootDate }),
+        body: JSON.stringify({ name, shootDate, rawDriveFolderUrl, editedDriveFolderUrl }),
       });
       const data = (await response.json()) as CreatedGallery & { error?: string };
 
@@ -45,6 +47,7 @@ export function CustomerGalleryCreator() {
       }
 
       setResult(data);
+      void syncPhotos(data.gallery.customer_name_slug);
       window.dispatchEvent(new Event("customer-gallery:changed"));
       if (data.reused) {
         setNotice("Thư mục này đã tồn tại trong database, hệ thống đang hiển thị lại các đường link đã lưu.");
@@ -62,9 +65,16 @@ export function CustomerGalleryCreator() {
     window.setTimeout(() => setCopied(""), 1200);
   }
 
-  async function syncPhotos() {
-    if (!result) return;
-    await fetch(`/api/customer-galleries/${result.gallery.customer_name_slug}/sync`, { method: "POST" });
+  async function syncPhotos(slug = result?.gallery.customer_name_slug) {
+    if (!slug) return;
+    const response = await fetch(`/api/customer-galleries/${slug}/sync`, { method: "POST" });
+    const payload = await response.json().catch(() => ({})) as { rawCount?: number; editedCount?: number; error?: string };
+    if (response.ok) {
+      setNotice(`Đã đồng bộ ${payload.rawCount || 0} file gốc và ${payload.editedCount || 0} file đã chỉnh.`);
+      window.dispatchEvent(new Event("customer-gallery:changed"));
+    } else {
+      setError(payload.error || "Không đồng bộ được ảnh từ Google Drive.");
+    }
   }
 
   async function toggleRawDownload() {
@@ -115,6 +125,29 @@ export function CustomerGalleryCreator() {
           />
         </label>
       </div>
+      <div className="mt-4 grid gap-4 md:grid-cols-2">
+        <label className="block text-sm font-semibold text-zinc-700">
+          Link folder FILE GỐC
+          <input
+            value={rawDriveFolderUrl}
+            onChange={(event) => setRawDriveFolderUrl(event.target.value)}
+            className="mt-2 h-11 w-full rounded-md border border-zinc-200 bg-white px-3 text-zinc-950 outline-none placeholder:text-zinc-400 focus:border-zinc-900"
+            placeholder="https://drive.google.com/drive/folders/..."
+          />
+        </label>
+        <label className="block text-sm font-semibold text-zinc-700">
+          Link folder FILE CHỈNH
+          <input
+            value={editedDriveFolderUrl}
+            onChange={(event) => setEditedDriveFolderUrl(event.target.value)}
+            className="mt-2 h-11 w-full rounded-md border border-zinc-200 bg-white px-3 text-zinc-950 outline-none placeholder:text-zinc-400 focus:border-zinc-900"
+            placeholder="https://drive.google.com/drive/folders/..."
+          />
+        </label>
+      </div>
+      <p className="mt-2 text-xs leading-5 text-zinc-500">
+        Nếu studio đã kết nối Google Drive, hệ thống có thể tự tạo folder. Nếu folder đã có sẵn, dán link thật để album đồng bộ ngay.
+      </p>
       {error && <div className="mt-4 rounded-md border border-red-200 bg-red-50 p-3 text-sm font-medium text-red-700">{error}</div>}
       {notice && <div className="mt-4 rounded-md border border-amber-200 bg-amber-50 p-3 text-sm font-medium text-amber-800">{notice}</div>}
       <button
@@ -132,7 +165,7 @@ export function CustomerGalleryCreator() {
           <LinkRow label="Link chọn FILE GỐC" value={result.customerUrl} copied={copied === "customer"} onCopy={() => copy(result.customerUrl, "customer")} />
           <LinkRow label="Link hoàn thiện" value={result.customerDoneUrl} copied={copied === "customer-done"} onCopy={() => copy(result.customerDoneUrl, "customer-done")} />
           <div className="flex flex-wrap gap-3">
-            <button onClick={syncPhotos} className="inline-flex min-h-10 items-center gap-2 rounded-md border border-zinc-200 bg-white px-4 text-sm font-semibold text-zinc-800 hover:bg-zinc-50">
+            <button onClick={() => syncPhotos()} className="inline-flex min-h-10 items-center gap-2 rounded-md border border-zinc-200 bg-white px-4 text-sm font-semibold text-zinc-800 hover:bg-zinc-50">
               <RefreshCw size={16} /> Đồng bộ ảnh sau khi upload
             </button>
             <button onClick={toggleRawDownload} className="inline-flex min-h-10 items-center gap-2 rounded-md bg-emerald-600 px-4 text-sm font-semibold text-white hover:bg-emerald-700">

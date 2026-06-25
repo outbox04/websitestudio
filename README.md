@@ -36,7 +36,7 @@ Brand tagline: `Nơi cá tính trở thành nghệ thuật`.
 5. Create the first admin in Supabase Auth, then run `supabase/admin-auth.sql` after replacing `admin@example.com`.
 6. Configure Google Drive service account credentials and `TLORA_DRIVE_ROOT_FOLDER_ID`.
 7. Add `OPENAI_API_KEY` for `/api/ai/generate`; optionally change `OPENAI_IMAGE_MODEL`.
-8. Connect a real payment gateway before production; the current AI Concept top-up endpoint is a demo balance increment.
+8. Connect a real payment gateway before enabling AI Concept wallet top-up; direct balance increments are disabled.
 
 ## TLORA Studio Gallery Flow
 
@@ -67,7 +67,7 @@ Push the repository to GitHub, import it in Vercel, add the same environment var
 ```text
 src/app              App Router pages, route groups and API routes
 src/components       Shared UI, shell, album gallery and AI wizard
-src/lib              Supabase, Google Drive and seed UI data helpers
+src/lib              Supabase, Google Drive, tenant scoping and shared data helpers
 supabase             Database schema
 workflows            Prompt, rule, preset and workflow assets for AI generation
 ```

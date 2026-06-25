@@ -18,7 +18,7 @@ const services = [
       "TLORA dựng concept theo đúng tính cách và cột mốc tuổi của bạn. Màu sắc, set trang trí và trang phục đều kể một câu chuyện, không phải đứng cạnh phông nền có sẵn.",
     who: "Dành cho ai đang đánh dấu một tuổi mới, một mốc quan trọng, muốn lưu lại bằng ảnh thay vì chỉ video ngắn.",
     mood: "MOOD - Pop màu, tuổi mới",
-    image: "https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=1000&q=82",
+    image: "/brand/tlora-logo.png",
     accent: "#E8704F",
     soft: "rgba(232,112,79,0.14)",
     chips: ["18 / 22 / 30 tuổi", "Cá nhân hoặc gia đình"],
@@ -48,7 +48,7 @@ const services = [
       "Ánh sáng beauty chuẩn editorial, da được giữ nguyên chất nhưng sáng và mịn hơn dưới hậu kỳ tay nghề. Ảnh đẹp hơn, nhưng vẫn là bạn.",
     who: "Dành cho ai cần ảnh profile, ảnh cá nhân chỉn chu, hoặc đơn giản là muốn một lần được chụp đúng nghĩa đẹp thật.",
     mood: "MOOD - Beauty editorial",
-    image: "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=1000&q=82",
+    image: "/brand/tlora-logo.png",
     accent: "#C99A5E",
     soft: "rgba(201,154,94,0.16)",
     chips: ["Profile cá nhân", "Da sáng, tự nhiên"],
@@ -78,7 +78,7 @@ const services = [
       "Từ business, editorial, vintage đến color-pop, mỗi mood là một bối cảnh ánh sáng riêng, không phải đổi áo rồi chụp lại cùng một góc.",
     who: "Dành cho ai cần ảnh lookbook, ảnh cá nhân để làm nội dung, hoặc muốn thử một phiên bản phong cách khác của mình.",
     mood: "MOOD - Lookbook tối giản",
-    image: "https://images.unsplash.com/photo-1509631179647-0177331693ae?auto=format&fit=crop&w=1000&q=82",
+    image: "/brand/tlora-logo.png",
     accent: "#3E6B5E",
     soft: "rgba(62,107,94,0.18)",
     chips: ["Content / cá nhân", "2-3 set bối cảnh"],
@@ -116,12 +116,12 @@ const whyCards = [
 ];
 
 const moodCards = [
-  ["Pop Sinh Nhật", "Sinh nhật", "#E8704F", "https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=800&q=82"],
-  ["Vintage Tuổi Mới", "Sinh nhật", "#E8704F", "https://images.unsplash.com/photo-1512316609839-ce289d3eba0a?auto=format&fit=crop&w=800&q=82"],
-  ["Clean Beauty", "Beauty", "#C99A5E", "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=800&q=82"],
-  ["Editorial Beauty", "Beauty", "#C99A5E", "https://images.unsplash.com/photo-1496440737103-cd596325d314?auto=format&fit=crop&w=800&q=82"],
-  ["Lookbook Tối Giản", "Concept", "#3E6B5E", "https://images.unsplash.com/photo-1509631179647-0177331693ae?auto=format&fit=crop&w=800&q=82"],
-  ["Color Block", "Concept", "#3E6B5E", "https://images.unsplash.com/photo-1509967419530-da38b4704bc6?auto=format&fit=crop&w=800&q=82"],
+  ["Pop Sinh Nhật", "Sinh nhật", "#E8704F", "/brand/tlora-logo.png"],
+  ["Vintage Tuổi Mới", "Sinh nhật", "#E8704F", "/brand/tlora-logo.png"],
+  ["Clean Beauty", "Beauty", "#C99A5E", "/brand/tlora-logo.png"],
+  ["Editorial Beauty", "Beauty", "#C99A5E", "/brand/tlora-logo.png"],
+  ["Lookbook Tối Giản", "Concept", "#3E6B5E", "/brand/tlora-logo.png"],
+  ["Color Block", "Concept", "#3E6B5E", "/brand/tlora-logo.png"],
 ];
 
 const faqs = [
@@ -148,7 +148,7 @@ export default function HomePage() {
       <div className="bg-[#14110f] text-[#f4ece0]">
       <section className="relative min-h-[calc(100svh-73px)] overflow-hidden px-4 py-16 sm:px-6 sm:py-20 lg:px-8 lg:py-28">
         <Image
-          src="https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=1800&q=85"
+          src="/brand/tlora-logo.png"
           alt="Ảnh nền concept studio TLORA"
           fill
           priority

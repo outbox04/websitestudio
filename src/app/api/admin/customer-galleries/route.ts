@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { driveFolderIdFromUrl, driveFolderUrl } from "@/lib/customer-gallery-scope";
 import { createCustomerDriveFoldersInStudioDrive } from "@/lib/google-drive";
 import { getGalleryUrls, publicOriginFromHeaders } from "@/lib/public-origin";
 import { createSlug } from "@/lib/slug";
@@ -109,9 +110,11 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
-    const { name, shootDate } = (await request.json()) as {
+    const { name, shootDate, rawDriveFolderUrl, editedDriveFolderUrl } = (await request.json()) as {
       name?: string;
       shootDate?: string;
+      rawDriveFolderUrl?: string;
+      editedDriveFolderUrl?: string;
     };
 
     if (!name?.trim() || !shootDate) {
@@ -167,17 +170,25 @@ export async function POST(request: Request) {
       } catch (err) {}
     }
 
-    if (!process.env.GOOGLE_OAUTH_CLIENT_ID || !connection || connection.root_folder_id.startsWith("mock-")) {
+    const rawFolderId = driveFolderIdFromUrl(rawDriveFolderUrl || "");
+    const editedFolderId = driveFolderIdFromUrl(editedDriveFolderUrl || "");
+
+    if (rawFolderId && editedFolderId) {
       folders = {
-        rootFolderId: `mock-root-${slug}`,
-        rawFolderId: `mock-raw-${slug}`,
-        editedFolderId: `mock-edited-${slug}`,
-        rootFolderUrl: `https://drive.google.com/drive/folders/mock-root-${slug}`,
-        rawFolderUrl: `https://drive.google.com/drive/folders/mock-raw-${slug}`,
-        editedFolderUrl: `https://drive.google.com/drive/folders/mock-edited-${slug}`,
+        rootFolderId: rawFolderId,
+        rawFolderId,
+        editedFolderId,
+        rootFolderUrl: driveFolderUrl(rawFolderId),
+        rawFolderUrl: driveFolderUrl(rawFolderId),
+        editedFolderUrl: driveFolderUrl(editedFolderId),
       };
-    } else {
+    } else if (process.env.GOOGLE_OAUTH_CLIENT_ID && connection && !connection.root_folder_id.startsWith("mock-")) {
       folders = await createCustomerDriveFoldersInStudioDrive(getStudioDriveClient(connection!), connection.root_folder_id, name.trim());
+    } else {
+      return NextResponse.json(
+        { error: "Hãy kết nối Google Drive cho studio hoặc dán link folder FILE GỐC và FILE CHỈNH thật." },
+        { status: 400 },
+      );
     }
 
     const insertData: any = {

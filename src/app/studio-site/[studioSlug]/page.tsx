@@ -100,38 +100,16 @@ export default async function StudioHomePage({ params }: { params: Promise<{ stu
   const galleries = galleriesData || [];
   const posts = postsData || [];
 
-  const contactEmail = studio.settings?.email || `contact@${studioSlug}.tlgroup.site`;
-  const contactPhone = studio.settings?.phone || "0901 234 567";
-  const contactAddress = studio.settings?.address || "123 Đường Ba Tháng Hai, Quận 10, TP. Hồ Chí Minh";
+  const contactEmail = studio.settings?.email || "";
+  const contactPhone = studio.settings?.phone || "";
+  const contactAddress = studio.settings?.address || "";
   const primaryColor = studio.settings?.primary_color || "#0d0a08";
   const accentColor = studio.settings?.accent_color || "#c99a5e";
-  const heroTitle = studio.settings?.hero_title || "Lưu giữ cá tính qua từng khung hình nghệ thuật";
-  const heroDescription = studio.settings?.hero_description || `Chào mừng bạn đến với không gian sáng tạo của ${studio.display_name}. Chúng tôi mang tới giải pháp nhiếp ảnh cá nhân hóa từ lên ý tưởng concept, hướng dẫn tạo dáng chuyên nghiệp đến chọn ảnh online tiện lợi.`;
-  const heroImage = studio.settings?.hero_image_url || "https://images.unsplash.com/photo-1492691527719-9d1e07e534b4?auto=format&fit=crop&w=1800&q=80";
+  const heroTitle = studio.settings?.hero_title || studio.settings?.site_content?.hero?.title || studio.display_name;
+  const heroDescription = studio.settings?.hero_description || studio.settings?.site_content?.hero?.description || "";
+  const heroImage = studio.settings?.hero_image_url || studio.settings?.site_content?.hero?.image || "";
 
-  const services = [
-    {
-      title: "Chân Dung Nghệ Thuật",
-      description: "Tập trung khai thác thần thái và vẻ đẹp nguyên bản của bạn dưới ánh sáng studio tiêu chuẩn chuyên nghiệp.",
-      features: ["Tư vấn style & makeup", "45-60 phút chụp tại set", "10 file retouch hoàn thiện", "Hỗ trợ trang phục cơ bản"],
-      price: "1.290.000đ",
-      bgUrl: "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=600&q=80",
-    },
-    {
-      title: "Concept Sinh Nhật",
-      description: "Dựng set decor và chuẩn bị moodboard riêng theo tính cách & chủ đề kỷ niệm cột mốc tuổi của bạn.",
-      features: ["Set bối cảnh hoa/pastel/bóng", "60-90 phút chụp", "15 file retouch hoàn thiện", "Cho mượn phụ kiện concept"],
-      price: "1.490.000đ",
-      bgUrl: "https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=600&q=80",
-    },
-    {
-      title: "Lookbook & Thời Trang",
-      description: "Đáp ứng đầy đủ yêu cầu chụp sản phẩm, lookbook quảng bá hoặc xây dựng hình ảnh cá nhân chỉn chu.",
-      features: ["2-3 set ánh sáng khác nhau", "90-120 phút chụp", "20 file retouch cao cấp", "Đạo diễn tạo dáng chuyên sâu"],
-      price: "1.990.000đ",
-      bgUrl: "https://images.unsplash.com/photo-1509631179647-0177331693ae?auto=format&fit=crop&w=600&q=80",
-    },
-  ];
+  const services = Array.isArray(studio.settings?.site_content?.services) ? studio.settings.site_content.services.filter((service: any) => service?.title) : [];
 
   return (
     <div className="min-h-screen text-[#f4ece0] selection:text-[#f4ece0]" style={{ backgroundColor: primaryColor, ["--studio-accent" as string]: accentColor } as CSSProperties}>
@@ -191,7 +169,7 @@ export default async function StudioHomePage({ params }: { params: Promise<{ stu
         </div>
 
         <div className="mt-12 grid gap-8 md:grid-cols-3">
-          {services.map((service, index) => (
+          {services.map((service: any) => (
             <article
               key={service.title}
               className="group relative flex flex-col justify-between overflow-hidden rounded-2xl border border-white/10 bg-[#161210] p-6 transition-all hover:border-[#c99a5e]/40 hover:-translate-y-1 shadow-xl"
@@ -200,7 +178,7 @@ export default async function StudioHomePage({ params }: { params: Promise<{ stu
               <div className="space-y-6">
                 <div className="relative h-48 w-full overflow-hidden rounded-xl border border-white/5">
                   <Image
-                    src={service.bgUrl}
+                    src={service.image || "/brand/tlora-logo.png"}
                     alt={service.title}
                     fill
                     sizes="(max-width: 768px) 100vw, 33vw"
@@ -210,7 +188,7 @@ export default async function StudioHomePage({ params }: { params: Promise<{ stu
                 <h3 className="text-xl font-bold text-[#f4ece0] group-hover:text-[#e6c193] transition-colors">{service.title}</h3>
                 <p className="text-xs leading-relaxed text-[#cbc0b0]">{service.description}</p>
                 <ul className="space-y-2 text-xs text-[#8c8174]">
-                  {service.features.map((feature) => (
+                  {(Array.isArray(service.features) ? service.features : String(service.features || "").split("\n").filter(Boolean)).map((feature: string) => (
                     <li key={feature} className="flex items-center gap-2">
                       <span className="size-1 rounded-full bg-[#c99a5e]" />
                       {feature}
@@ -260,7 +238,7 @@ export default async function StudioHomePage({ params }: { params: Promise<{ stu
                 >
                   <div className="relative aspect-4/5 w-full overflow-hidden">
                     <Image
-                      src={gallery.cover_url || "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=600&q=80"}
+                      src={gallery.cover_url || "/brand/tlora-logo.png"}
                       alt={gallery.customer_name}
                       fill
                       sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"

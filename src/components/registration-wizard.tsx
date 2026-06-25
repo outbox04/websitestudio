@@ -333,7 +333,7 @@ export function RegistrationWizard() {
             </div>
           </div>
 
-          {/* Right: Dashboard Mockup */}
+          {/* Right: Dashboard Preview */}
           <div style={{ position: "relative", animation: "tlFadeUp 1s ease .45s both" }}>
             <div style={{ position: "absolute", inset: -40, zIndex: -1, borderRadius: "50%", background: "radial-gradient(ellipse at center, rgba(201,154,94,0.18) 0%, transparent 70%)", filter: "blur(30px)", pointerEvents: "none" }} />
             <div style={{ background: "#1c1813", border: "1px solid rgba(244,236,224,0.1)", borderRadius: "1.75rem", padding: ".875rem", boxShadow: "0 0 0 1px rgba(201,154,94,0.12), 0 40px 80px rgba(0,0,0,.6), inset 0 1px 0 rgba(244,236,224,0.06)" }}>

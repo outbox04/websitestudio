@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { headers } from "next/headers";
 import { CustomerGalleryView } from "@/components/customer/customer-gallery-view";
 import { getCustomerGalleryPageData } from "@/lib/customer-gallery-page-data";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -45,7 +46,7 @@ export async function generateMetadata({ params }: { params: Promise<{ customerS
 
 export default async function CustomerGalleryPage({ params }: { params: Promise<{ customerSlug: string }> }) {
   const { customerSlug } = await params;
-  const { gallery, rawPhotos, editedPhotos } = await getCustomerGalleryPageData(customerSlug);
+  const { gallery, rawPhotos, editedPhotos } = await getCustomerGalleryPageData(customerSlug, await headers());
 
   return <CustomerGalleryView gallery={gallery} rawPhotos={rawPhotos} editedPhotos={editedPhotos} />;
 }

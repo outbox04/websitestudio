@@ -79,25 +79,25 @@ export const albumPhotos = [
   {
     id: "drv_001",
     name: "Portrait 01",
-    src: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=900&q=80",
+    src: "/brand/tlora-logo.png",
     status: "Chờ chọn",
   },
   {
     id: "drv_002",
     name: "Portrait 02",
-    src: "https://images.unsplash.com/photo-1512316609839-ce289d3eba0a?auto=format&fit=crop&w=900&q=80",
+    src: "/brand/tlora-logo.png",
     status: "Đã chọn",
   },
   {
     id: "drv_003",
     name: "Portrait 03",
-    src: "https://images.unsplash.com/photo-1509967419530-da38b4704bc6?auto=format&fit=crop&w=900&q=80",
+    src: "/brand/tlora-logo.png",
     status: "Đang chỉnh",
   },
   {
     id: "drv_004",
     name: "Portrait 04",
-    src: "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=900&q=80",
+    src: "/brand/tlora-logo.png",
     status: "Đã hoàn thành",
   },
 ];

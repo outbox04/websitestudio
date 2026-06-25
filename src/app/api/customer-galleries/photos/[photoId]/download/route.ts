@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { Readable } from "node:stream";
+import { studioIdForHeaders } from "@/lib/customer-gallery-scope";
 import { getDriveClient } from "@/lib/google-drive";
 import { createAdminClient } from "@/lib/supabase/admin";
 
@@ -10,14 +11,17 @@ function safeFileName(name: string) {
   return name.replace(/[<>:"/\\|?*\x00-\x1F]/g, "_").replace(/\s+/g, " ").trim() || "image";
 }
 
-export async function GET(_request: Request, { params }: { params: Promise<{ photoId: string }> }) {
+export async function GET(request: Request, { params }: { params: Promise<{ photoId: string }> }) {
   const { photoId } = await params;
   const supabase = createAdminClient();
-  const { data: photo, error } = await supabase
+  const { studioId } = await studioIdForHeaders(request.headers);
+  let query = supabase
     .from("customer_gallery_photos")
-    .select("drive_file_id,file_name,kind,customer_galleries(raw_download_enabled,edited_download_enabled)")
-    .eq("id", photoId)
-    .maybeSingle();
+    .select("drive_file_id,file_name,kind,customer_galleries!inner(raw_download_enabled,edited_download_enabled,studio_id)")
+    .eq("id", photoId);
+
+  query = studioId ? query.eq("customer_galleries.studio_id", studioId) : query.is("customer_galleries.studio_id", null);
+  const { data: photo, error } = await query.maybeSingle();
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
