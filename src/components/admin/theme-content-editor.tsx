@@ -1,6 +1,6 @@
 "use client";
 
-import { ImagePlus, Plus, Save, Trash2 } from "lucide-react";
+import { ImagePlus, Save } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import type { ReactNode } from "react";
 
@@ -70,19 +70,6 @@ export function ThemeContentEditor({ saved }: { saved?: Partial<Content> }) {
 
   const update = (key: string, value: string) => updateAt(selected, key, value);
 
-  function add(type: "services" | "pricing" | "gallery") {
-    setContent((current) => ({ ...current, [type]: [...current[type], emptyItem()] }));
-    setSelected({ type, index: content[type].length });
-  }
-
-  function remove() {
-    if (selected.type === "hero" || selected.type === "about") return;
-    const type = selected.type;
-    const index = selected.index || 0;
-    setContent((current) => ({ ...current, [type]: current[type].filter((_, itemIndex) => itemIndex !== index) }));
-    setSelected({ type, index: 0 });
-  }
-
   function chooseImage(target: Selection) {
     uploadTarget.current = target;
     setSelected(target);
@@ -131,10 +118,6 @@ export function ThemeContentEditor({ saved }: { saved?: Partial<Content> }) {
       {chosen(item) && <span className="pointer-events-none absolute right-2 top-2 rounded bg-sky-600 px-2 py-1 text-[10px] font-bold text-white">Đang chọn</span>}
     </div>
   );
-  const addSelected = () => {
-    if (selected.type === "services" || selected.type === "pricing" || selected.type === "gallery") add(selected.type);
-  };
-
   return (
     <div className="mt-5 rounded-xl border border-zinc-200 bg-zinc-100 shadow-sm">
       <input
@@ -256,19 +239,7 @@ export function ThemeContentEditor({ saved }: { saved?: Partial<Content> }) {
               </button>
               <p className="mt-1 text-xs text-zinc-500">Khuyến nghị: Hero 1920x1080; thẻ/album 1200x900.</p>
             </div>
-            {selected.type !== "hero" && selected.type !== "about" && (
-              <button type="button" onClick={remove} className="inline-flex min-h-10 items-center gap-2 rounded-md border border-red-200 px-3 text-sm font-bold text-red-700">
-                <Trash2 size={16} />
-                Xóa mục này
-              </button>
-            )}
           </div>
-          {selected.type !== "hero" && selected.type !== "about" && (
-            <button type="button" onClick={addSelected} className="mt-5 inline-flex min-h-10 items-center gap-2 rounded-md border border-zinc-300 px-3 text-sm font-bold">
-              <Plus size={16} />
-              Thêm mục mới
-            </button>
-          )}
           <div className="mt-7 border-t border-zinc-200 pt-5">
             <button type="button" disabled={saving} onClick={save} className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-md bg-zinc-950 px-4 text-sm font-bold text-white disabled:opacity-60">
               <Save size={16} />

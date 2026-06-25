@@ -16,107 +16,10 @@ function safeJson(value: unknown) {
 }
 function escapeHtml(value: string) { return value.replace(/[&<>"']/g, character => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[character] || character); }
 
-type UxBlock = {
-  id?: string;
-  type?: "section" | "columns" | "text" | "button" | "image" | "spacer";
-  title?: string;
-  text?: string;
-  href?: string;
-  image?: string;
-  columns?: string[];
-  style?: {
-    background?: string;
-    color?: string;
-    align?: "left" | "center" | "right";
-    padding?: number;
-    gap?: number;
-    radius?: number;
-    fontSize?: number;
-    height?: number;
-  };
-};
-
-function pageKeyForTheme(page: string) {
-  return page === "home" ? "trang-chu" : page;
-}
-
-function cleanCss(value: unknown) {
-  return typeof value === "string" ? value.replace(/[;"<>]/g, "").slice(0, 80) : "";
-}
-
-function px(value: unknown, fallback = 0) {
-  return typeof value === "number" && Number.isFinite(value) ? Math.max(0, Math.min(value, 240)) : fallback;
-}
-
-function renderStyle(style: UxBlock["style"] = {}, extra: Record<string, string | number> = {}) {
-  const align = ["left", "center", "right"].includes(String(style.align)) ? style.align : undefined;
-  const items: Record<string, string | number | undefined> = {
-    background: cleanCss(style.background),
-    color: cleanCss(style.color),
-    "text-align": align,
-    padding: style.padding === undefined ? undefined : `${px(style.padding)}px`,
-    gap: style.gap === undefined ? undefined : `${px(style.gap)}px`,
-    "border-radius": style.radius === undefined ? undefined : `${px(style.radius)}px`,
-    "font-size": style.fontSize === undefined ? undefined : `${px(style.fontSize, 18)}px`,
-    height: style.height === undefined ? undefined : `${px(style.height, 48)}px`,
-    ...extra,
-  };
-  return Object.entries(items).filter(([, value]) => value !== undefined && value !== "").map(([key, value]) => `${key}:${escapeHtml(String(value))}`).join(";");
-}
-
-function renderUxBlock(block: UxBlock) {
-  const style = block.style || {};
-  if (block.type === "spacer") return `<div class="ux-spacer" style="${renderStyle(style)}"></div>`;
-  if (block.type === "button") {
-    return `<section class="ux-button-wrap" style="${renderStyle(style, { background: "transparent" })}"><a class="ux-button" href="${escapeHtml(block.href || "#")}" style="${renderStyle(style)}">${escapeHtml(block.text || "Button")}</a></section>`;
-  }
-  if (block.type === "image") {
-    return `<section class="ux-image" style="${renderStyle(style)}"><img src="${escapeHtml(block.image || "/brand/tlora-logo.png")}" alt="${escapeHtml(block.title || "")}"></section>`;
-  }
-  if (block.type === "columns") {
-    const columns = Array.isArray(block.columns) && block.columns.length ? block.columns : ["Column 1", "Column 2", "Column 3"];
-    return `<section class="ux-columns" style="${renderStyle(style)}">${columns.map((column) => `<div class="ux-column">${escapeHtml(String(column))}</div>`).join("")}</section>`;
-  }
-  return `<section class="ux-section ux-${escapeHtml(block.type || "section")}" style="${renderStyle(style)}"><div class="ux-inner">${block.title ? `<h1>${escapeHtml(block.title)}</h1>` : ""}${block.text ? `<p>${escapeHtml(block.text)}</p>` : ""}</div></section>`;
-}
-
-function renderUxPage(studioSlug: string, studio: { display_name: string; settings?: Record<string, unknown> | null }, page: string, blocks: UxBlock[]) {
-  const settings = studio.settings || {};
-  const primary = cleanCss(settings.primary_color) || "#111111";
-  const accent = cleanCss(settings.accent_color) || "#d8b766";
-  const logo = typeof settings.logo_url === "string" ? settings.logo_url : "";
-  const title = `${studio.display_name} - ${page === "home" ? "Trang chu" : page}`;
-  const nav = [
-    ["Trang chu", "/"],
-    ["Gioi thieu", "/gioi-thieu"],
-    ["Dich vu", "/dich-vu"],
-    ["Album", "/album"],
-    ["Bang gia", "/bang-gia"],
-    ["Lien he", "/lien-he"],
-  ];
-  const customHead = String(settings.custom_head_code || "");
-  const customBody = String(settings.custom_body_code || "");
-  return `<!doctype html><html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${escapeHtml(title)}</title><link rel="icon" href="/studio-site/${studioSlug}/favicon"><style>
-    :root{--primary:${escapeHtml(primary)};--accent:${escapeHtml(accent)};--text:#141414;--muted:#696969;--line:#e6e6e6}
-    *{box-sizing:border-box}body{margin:0;background:#fff;color:var(--text);font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}a{color:inherit;text-decoration:none}
-    .site-header{position:sticky;top:0;z-index:30;display:flex;align-items:center;justify-content:space-between;gap:24px;border-bottom:1px solid var(--line);background:rgba(255,255,255,.94);padding:16px clamp(18px,4vw,60px);backdrop-filter:blur(14px)}
-    .brand{display:flex;align-items:center;gap:12px;font-weight:900}.brand img{max-height:42px;max-width:170px;object-fit:contain}.brand-mark{display:grid;place-items:center;width:38px;height:38px;border-radius:8px;background:var(--primary);color:#fff}
-    nav{display:flex;flex-wrap:wrap;gap:16px;font-size:14px;font-weight:700;color:#444}main{min-height:70vh}.ux-section{padding:72px clamp(20px,5vw,86px)}.ux-inner{max-width:1080px;margin:0 auto}.ux-section h1,.ux-section h2{margin:0;font-size:clamp(34px,5vw,72px);line-height:1.02;letter-spacing:0;font-weight:900}.ux-section p{max-width:760px;margin:18px auto 0;line-height:1.75;font-size:18px}
-    .ux-text h1{font-size:clamp(28px,3vw,46px)}.ux-columns{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));padding:44px clamp(20px,5vw,86px)}.ux-column{min-height:120px;border:1px solid currentColor;border-color:color-mix(in srgb,currentColor 14%,transparent);border-radius:8px;padding:24px;line-height:1.65;background:rgba(255,255,255,.08)}
-    .ux-button-wrap{padding:24px clamp(20px,5vw,86px)}.ux-button{display:inline-flex;min-height:46px;align-items:center;justify-content:center;padding:0 24px;font-weight:800}.ux-image{padding:36px clamp(20px,5vw,86px);text-align:center}.ux-image img{display:inline-block;max-width:100%;max-height:680px;object-fit:contain}.ux-spacer{display:block}
-    footer{border-top:1px solid var(--line);padding:28px clamp(18px,4vw,60px);color:var(--muted);font-size:14px}@media(max-width:720px){.site-header{align-items:flex-start;flex-direction:column}nav{gap:10px}.ux-section{padding:48px 18px}.ux-section h1,.ux-section h2{font-size:36px}.ux-section p{font-size:16px}}
-  </style>${customHead}</head><body><header class="site-header"><a class="brand" href="/">${logo ? `<img src="${escapeHtml(logo)}" alt="${escapeHtml(studio.display_name)}">` : `<span class="brand-mark">T</span>`}<span>${escapeHtml(studio.display_name)}</span></a><nav>${nav.map(([label, href]) => `<a href="${href}">${label}</a>`).join("")}</nav></header><main>${blocks.map(renderUxBlock).join("")}</main><footer>© ${new Date().getFullYear()} ${escapeHtml(studio.display_name)}. Powered by TLORA Studio.</footer>${customBody}</body></html>`;
-}
-
 export async function themeResponse(studioSlug: string, page = "home", builder = false) {
   const admin = createAdminClient();
   const { data: studio } = await admin.from("studios").select("display_name,status,settings").eq("slug", studioSlug).eq("status", "active").maybeSingle();
   if (!studio) return new NextResponse("Not found", { status: 404 });
-
-  const uxBlocks = studio.settings?.ux_pages?.[pageKeyForTheme(page)];
-  if (Array.isArray(uxBlocks) && uxBlocks.length) {
-    return new NextResponse(renderUxPage(studioSlug, studio, page, uxBlocks), { headers: { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store", "X-Frame-Options": "SAMEORIGIN" } });
-  }
 
   const theme = studio.settings?.theme === "wedding" ? "wedding" : "concept";
   const [folder, file] = themeFiles[theme];
