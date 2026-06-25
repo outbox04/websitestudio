@@ -3,6 +3,7 @@
 import {
   Columns3,
   Image as ImageIcon,
+  ImagePlus,
   Laptop,
   MousePointer2,
   Rows3,
@@ -13,7 +14,7 @@ import {
   Trash2,
   Type,
 } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 
 type BlockType = "section" | "columns" | "text" | "button" | "image" | "spacer";
 type Device = "desktop" | "tablet" | "mobile";
@@ -92,6 +93,8 @@ export function LiveThemeBuilder({
   const [device, setDevice] = useState<Device>("desktop");
   const [saving, setSaving] = useState(false);
   const [notice, setNotice] = useState("");
+  const uploadInput = useRef<HTMLInputElement>(null);
+  const uploadTarget = useRef("");
   const selected = useMemo(() => blocks.find((block) => block.id === selectedId) || blocks[0], [blocks, selectedId]);
 
   function add(type: BlockType, at = blocks.length) {
@@ -110,6 +113,19 @@ export function LiveThemeBuilder({
       setSelectedId(next[0]?.id || "");
       return next;
     });
+  }
+
+  function chooseImage(idValue: string) {
+    uploadTarget.current = idValue;
+    setSelectedId(idValue);
+    uploadInput.current?.click();
+  }
+
+  function uploadImage(file: File) {
+    const target = uploadTarget.current;
+    const reader = new FileReader();
+    reader.onload = () => update(target, { image: String(reader.result) });
+    reader.readAsDataURL(file);
   }
 
   async function save() {
@@ -133,6 +149,17 @@ export function LiveThemeBuilder({
 
   return (
     <section className="overflow-hidden rounded-lg border border-zinc-200 bg-white shadow-sm">
+      <input
+        ref={uploadInput}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={(event) => {
+          const file = event.target.files?.[0];
+          if (file) uploadImage(file);
+          event.currentTarget.value = "";
+        }}
+      />
       <div className="grid min-h-[calc(100vh-180px)] lg:grid-cols-[260px_minmax(0,1fr)_340px]">
         <aside className="border-b border-zinc-200 bg-zinc-950 p-4 text-white lg:border-b-0 lg:border-r">
           <p className="text-xs font-bold uppercase tracking-[.16em] text-[#d8b766]">Elements</p>
@@ -185,6 +212,8 @@ export function LiveThemeBuilder({
                   block={block}
                   selected={selectedId === block.id}
                   onSelect={() => setSelectedId(block.id)}
+                  onChange={(patch) => update(block.id, patch)}
+                  onImagePick={() => chooseImage(block.id)}
                   onDropBefore={(type) => add(type, index)}
                 />
               ))}
@@ -202,7 +231,7 @@ export function LiveThemeBuilder({
             {selected && <button onClick={() => remove(selected.id)} className="grid size-9 place-items-center rounded-md border border-red-200 text-red-700"><Trash2 size={16} /></button>}
           </div>
 
-          {selected && <Inspector block={selected} onChange={(patch) => update(selected.id, patch)} />}
+          {selected && <Inspector block={selected} onChange={(patch) => update(selected.id, patch)} onImagePick={() => chooseImage(selected.id)} />}
 
           <button onClick={save} disabled={saving} className="mt-5 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-md bg-zinc-950 px-4 text-sm font-bold text-white disabled:opacity-60">
             <Save size={17} />
@@ -215,7 +244,21 @@ export function LiveThemeBuilder({
   );
 }
 
-function CanvasBlock({ block, selected, onSelect, onDropBefore }: { block: UxBlock; selected: boolean; onSelect: () => void; onDropBefore: (type: BlockType) => void }) {
+function CanvasBlock({
+  block,
+  selected,
+  onSelect,
+  onChange,
+  onImagePick,
+  onDropBefore,
+}: {
+  block: UxBlock;
+  selected: boolean;
+  onSelect: () => void;
+  onChange: (patch: Partial<UxBlock>) => void;
+  onImagePick: () => void;
+  onDropBefore: (type: BlockType) => void;
+}) {
   return (
     <div
       onClick={(event) => { event.stopPropagation(); onSelect(); }}
@@ -227,27 +270,100 @@ function CanvasBlock({ block, selected, onSelect, onDropBefore }: { block: UxBlo
       }}
       className={`relative cursor-pointer border-2 border-transparent ${selected ? "border-sky-500" : "hover:border-sky-300"}`}
     >
-      <RenderBlock block={block} />
+      <RenderBlock block={block} onChange={onChange} onImagePick={onImagePick} />
     </div>
   );
 }
 
-function RenderBlock({ block }: { block: UxBlock }) {
+function RenderBlock({ block, onChange, onImagePick }: { block: UxBlock; onChange: (patch: Partial<UxBlock>) => void; onImagePick: () => void }) {
   const style = block.style;
   if (block.type === "spacer") return <div style={{ height: style.height || 48 }} />;
-  if (block.type === "button") return <div className="px-6 py-4" style={{ textAlign: style.align }}><a href={block.href || "#"} className="inline-flex min-h-11 items-center rounded-md px-5 text-sm font-bold" style={{ background: style.background, color: style.color, borderRadius: style.radius }}>{block.text}</a></div>;
-  if (block.type === "image") return <section className="px-6 py-6" style={{ textAlign: style.align, background: style.background }}><img src={block.image || "/brand/tlora-logo.png"} alt="" className="inline-block max-h-96 max-w-full object-contain" style={{ borderRadius: style.radius }} /></section>;
-  if (block.type === "columns") return <section className="grid gap-4 p-8 md:grid-cols-3" style={{ background: style.background, color: style.color, padding: style.padding, gap: style.gap }}>{(block.columns || []).map((column, index) => <div key={index} className="rounded-md border border-current/10 p-5">{column}</div>)}</section>;
-  return <section className="px-6" style={{ background: style.background, color: style.color, padding: style.padding, textAlign: style.align }}><h2 style={{ fontSize: style.fontSize || 42 }} className="font-extrabold leading-tight">{block.title}</h2>{block.text && <p className="mx-auto mt-4 max-w-2xl leading-7 opacity-75">{block.text}</p>}</section>;
+  if (block.type === "button") {
+    return (
+      <div className="px-6 py-4" style={{ textAlign: style.align }}>
+        <EditableCanvasText
+          as="span"
+          value={block.text || ""}
+          onChange={(text) => onChange({ text })}
+          className="inline-flex min-h-11 items-center rounded-md px-5 text-sm font-bold"
+          style={{ background: style.background, color: style.color, borderRadius: style.radius }}
+        />
+      </div>
+    );
+  }
+  if (block.type === "image") {
+    return (
+      <section className="group relative px-6 py-6" style={{ textAlign: style.align, background: style.background }}>
+        <img src={block.image || "/brand/tlora-logo.png"} alt="" className="inline-block max-h-96 max-w-full object-contain" style={{ borderRadius: style.radius }} />
+        <button
+          type="button"
+          onClick={(event) => {
+            event.stopPropagation();
+            onImagePick();
+          }}
+          className="absolute bottom-4 left-1/2 inline-flex min-h-9 -translate-x-1/2 items-center gap-2 rounded-md bg-black/75 px-3 text-xs font-bold text-white opacity-0 shadow transition group-hover:opacity-100 group-focus-within:opacity-100"
+        >
+          <ImagePlus size={15} />
+          Đổi ảnh
+        </button>
+      </section>
+    );
+  }
+  if (block.type === "columns") {
+    return (
+      <section className="grid gap-4 p-8 md:grid-cols-3" style={{ background: style.background, color: style.color, padding: style.padding, gap: style.gap }}>
+        {(block.columns || []).map((column, index) => (
+          <EditableCanvasText
+            key={index}
+            as="div"
+            value={column}
+            onChange={(value) => {
+              const columns = [...(block.columns || [])];
+              columns[index] = value;
+              onChange({ columns });
+            }}
+            className="rounded-md border border-current/10 p-5"
+          />
+        ))}
+      </section>
+    );
+  }
+  return (
+    <section className="px-6" style={{ background: style.background, color: style.color, padding: style.padding, textAlign: style.align }}>
+      <EditableCanvasText
+        as="h2"
+        value={block.title || ""}
+        onChange={(title) => onChange({ title })}
+        style={{ fontSize: style.fontSize || 42 }}
+        className="font-extrabold leading-tight"
+      />
+      {block.text !== undefined && (
+        <EditableCanvasText
+          as="p"
+          value={block.text || ""}
+          onChange={(text) => onChange({ text })}
+          className="mx-auto mt-4 max-w-2xl leading-7 opacity-75"
+        />
+      )}
+    </section>
+  );
 }
 
-function Inspector({ block, onChange }: { block: UxBlock; onChange: (patch: Partial<UxBlock>) => void }) {
+function Inspector({ block, onChange, onImagePick }: { block: UxBlock; onChange: (patch: Partial<UxBlock>) => void; onImagePick: () => void }) {
   return (
     <div className="mt-5 space-y-4">
       {block.type !== "spacer" && block.type !== "button" && <Field label="Tiêu đề" value={block.title || ""} onChange={(title) => onChange({ title })} />}
       {["section", "text"].includes(block.type) && <Field label="Nội dung" value={block.text || ""} onChange={(text) => onChange({ text })} multiline />}
       {block.type === "button" && <><Field label="Nhãn nút" value={block.text || ""} onChange={(text) => onChange({ text })} /><Field label="Link" value={block.href || ""} onChange={(href) => onChange({ href })} /></>}
-      {block.type === "image" && <Field label="Link ảnh" value={block.image || ""} onChange={(image) => onChange({ image })} />}
+      {block.type === "image" && (
+        <div>
+          <Field label="Link ảnh" value={block.image || ""} onChange={(image) => onChange({ image })} />
+          <button type="button" onClick={onImagePick} className="mt-2 inline-flex min-h-10 items-center gap-2 rounded-md border border-zinc-300 px-3 text-sm font-bold">
+            <ImagePlus size={16} />
+            Tải ảnh thay thế
+          </button>
+        </div>
+      )}
       {block.type === "columns" && <Field label="Nội dung cột, mỗi dòng một cột" value={(block.columns || []).join("\n")} onChange={(value) => onChange({ columns: value.split("\n") })} multiline />}
       <div className="grid grid-cols-2 gap-3">
         <Field label="Màu nền" value={block.style.background || ""} onChange={(background) => onChange({ style: { background } })} />
@@ -259,6 +375,34 @@ function Inspector({ block, onChange }: { block: UxBlock; onChange: (patch: Part
       </div>
       <label className="block text-sm font-bold text-zinc-800">Canh lề<select value={block.style.align || "left"} onChange={(event) => onChange({ style: { align: event.target.value as UxBlock["style"]["align"] } })} className="mt-2 min-h-10 w-full rounded-md border border-zinc-300 px-3 font-normal"><option value="left">Trái</option><option value="center">Giữa</option><option value="right">Phải</option></select></label>
     </div>
+  );
+}
+
+function EditableCanvasText({
+  as: Tag,
+  value,
+  onChange,
+  className,
+  style,
+}: {
+  as: "h2" | "p" | "span" | "div";
+  value: string;
+  onChange: (value: string) => void;
+  className?: string;
+  style?: React.CSSProperties;
+}) {
+  return (
+    <Tag
+      contentEditable
+      suppressContentEditableWarning
+      spellCheck={false}
+      onClick={(event) => event.stopPropagation()}
+      onInput={(event) => onChange(event.currentTarget.textContent || "")}
+      className={`${className || ""} cursor-text rounded-sm outline-none transition focus:ring-2 focus:ring-sky-400 focus:ring-offset-2`}
+      style={style}
+    >
+      {value}
+    </Tag>
   );
 }
 
