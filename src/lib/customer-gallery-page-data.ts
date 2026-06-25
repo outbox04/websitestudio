@@ -22,6 +22,7 @@ export async function getCustomerGalleryPageData(customerSlug: string) {
       .from("customer_gallery_photos")
       .select("*")
       .eq("gallery_id", galleryData.id)
+      .not("drive_file_id", "like", "mock-%")
       .order("file_name", { ascending: true });
 
     gallery = galleryData;
