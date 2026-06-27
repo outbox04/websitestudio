@@ -18,7 +18,7 @@ const services = [
       "TLORA dựng concept theo đúng tính cách và cột mốc tuổi của bạn. Màu sắc, set trang trí và trang phục đều kể một câu chuyện, không phải đứng cạnh phông nền có sẵn.",
     who: "Dành cho ai đang đánh dấu một tuổi mới, một mốc quan trọng, muốn lưu lại bằng ảnh thay vì chỉ video ngắn.",
     mood: "MOOD - Pop màu, tuổi mới",
-    image: "/brand/tlora-logo.png",
+    image: "/concept/concept-01.webp",
     accent: "#E8704F",
     soft: "rgba(232,112,79,0.14)",
     chips: ["18 / 22 / 30 tuổi", "Cá nhân hoặc gia đình"],
@@ -48,7 +48,7 @@ const services = [
       "Ánh sáng beauty chuẩn editorial, da được giữ nguyên chất nhưng sáng và mịn hơn dưới hậu kỳ tay nghề. Ảnh đẹp hơn, nhưng vẫn là bạn.",
     who: "Dành cho ai cần ảnh profile, ảnh cá nhân chỉn chu, hoặc đơn giản là muốn một lần được chụp đúng nghĩa đẹp thật.",
     mood: "MOOD - Beauty editorial",
-    image: "/brand/tlora-logo.png",
+    image: "/concept/concept-05.webp",
     accent: "#C99A5E",
     soft: "rgba(201,154,94,0.16)",
     chips: ["Profile cá nhân", "Da sáng, tự nhiên"],
@@ -78,7 +78,7 @@ const services = [
       "Từ business, editorial, vintage đến color-pop, mỗi mood là một bối cảnh ánh sáng riêng, không phải đổi áo rồi chụp lại cùng một góc.",
     who: "Dành cho ai cần ảnh lookbook, ảnh cá nhân để làm nội dung, hoặc muốn thử một phiên bản phong cách khác của mình.",
     mood: "MOOD - Lookbook tối giản",
-    image: "/brand/tlora-logo.png",
+    image: "/concept/concept-09.webp",
     accent: "#3E6B5E",
     soft: "rgba(62,107,94,0.18)",
     chips: ["Content / cá nhân", "2-3 set bối cảnh"],
@@ -116,12 +116,12 @@ const whyCards = [
 ];
 
 const moodCards = [
-  ["Pop Sinh Nhật", "Sinh nhật", "#E8704F", "/brand/tlora-logo.png"],
-  ["Vintage Tuổi Mới", "Sinh nhật", "#E8704F", "/brand/tlora-logo.png"],
-  ["Clean Beauty", "Beauty", "#C99A5E", "/brand/tlora-logo.png"],
-  ["Editorial Beauty", "Beauty", "#C99A5E", "/brand/tlora-logo.png"],
-  ["Lookbook Tối Giản", "Concept", "#3E6B5E", "/brand/tlora-logo.png"],
-  ["Color Block", "Concept", "#3E6B5E", "/brand/tlora-logo.png"],
+  ["Pop Sinh Nhật", "Sinh nhật", "#E8704F", "/concept/concept-02.webp"],
+  ["Vintage Tuổi Mới", "Sinh nhật", "#E8704F", "/concept/concept-03.webp"],
+  ["Clean Beauty", "Beauty", "#C99A5E", "/concept/concept-06.webp"],
+  ["Editorial Beauty", "Beauty", "#C99A5E", "/concept/concept-07.webp"],
+  ["Lookbook Tối Giản", "Concept", "#3E6B5E", "/concept/concept-10.webp"],
+  ["Color Block", "Concept", "#3E6B5E", "/concept/concept-11.webp"],
 ];
 
 const faqs = [
@@ -148,7 +148,7 @@ export default function HomePage() {
       <div className="bg-[#14110f] text-[#f4ece0]">
       <section className="relative min-h-[calc(100svh-73px)] overflow-hidden px-4 py-16 sm:px-6 sm:py-20 lg:px-8 lg:py-28">
         <Image
-          src="/brand/tlora-logo.png"
+          src="/concept/concept-14.webp"
           alt="Ảnh nền concept studio TLORA"
           fill
           priority
