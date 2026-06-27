@@ -1,11 +1,9 @@
-"use client";
+﻿"use client";
 
-import { ImagePlus, Save } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
-import type { ReactNode } from "react";
+import { ImagePlus, Laptop, Loader2, MonitorSmartphone, RefreshCw, Save, Smartphone, Tablet } from "lucide-react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 type Item = { title: string; subtitle: string; description: string; image: string; price: string; features: string };
-type SectionType = "hero" | "about" | "services" | "pricing" | "gallery";
 type Content = {
   hero: { title: string; description: string; image: string; cta: string };
   about: { title: string; description: string; image: string };
@@ -13,74 +11,180 @@ type Content = {
   pricing: Item[];
   gallery: Item[];
 };
-type Selection = { type: SectionType; index?: number };
+type Contact = { logo_url: string; phone: string; email: string; address: string; facebook_url: string; zalo_phone: string };
+type SelectionType = "brand" | "hero" | "about" | "services" | "pricing" | "gallery" | "contact";
+type Selection = { type: SelectionType; index?: number };
+type Device = "desktop" | "tablet" | "mobile";
+type PanelKey = "title" | "description" | "image" | "cta";
 
-const emptyItem = (): Item => ({
-  title: "Dịch vụ mới",
-  subtitle: "Danh mục",
-  description: "Mô tả dịch vụ của studio.",
+const deviceWidths: Record<Device, string> = { desktop: "100%", tablet: "820px", mobile: "390px" };
+const pageDefaults: Record<string, Selection> = {
+  "trang-chu": { type: "hero" },
+  "gioi-thieu": { type: "about" },
+  "dich-vu": { type: "services", index: 0 },
+  album: { type: "gallery", index: 0 },
+  "bang-gia": { type: "pricing", index: 0 },
+  "lien-he": { type: "contact" },
+};
+
+const emptyItem = (title = "Má»¥c má»›i"): Item => ({
+  title,
+  subtitle: "Danh má»¥c",
+  description: "Nháº­p mÃ´ táº£ ngáº¯n cho má»¥c nÃ y.",
   image: "",
-  price: "Liên hệ",
+  price: "LiÃªn há»‡",
   features: "",
 });
 
-const initial: Content = {
+const initialContent: Content = {
   hero: {
-    title: "Câu chuyện của studio bắt đầu từ đây",
-    description: "Thay đổi câu chữ và hình ảnh bằng thanh công cụ bên phải.",
+    title: "CÃ¢u chuyá»‡n cá»§a studio báº¯t Ä‘áº§u tá»« Ä‘Ã¢y",
+    description: "Thay cÃ¢u chá»¯ vÃ  hÃ¬nh áº£nh Ä‘á»ƒ website thá»ƒ hiá»‡n Ä‘Ãºng phong cÃ¡ch studio cá»§a báº¡n.",
     image: "",
-    cta: "Đặt lịch tư vấn",
+    cta: "Äáº·t lá»‹ch tÆ° váº¥n",
   },
-  about: { title: "Về studio", description: "Giới thiệu ngắn về phong cách và đội ngũ của bạn.", image: "" },
-  services: [emptyItem(), emptyItem(), emptyItem()],
-  pricing: [emptyItem(), emptyItem(), emptyItem()],
-  gallery: [emptyItem(), emptyItem(), emptyItem()],
+  about: { title: "Vá» studio", description: "Giá»›i thiá»‡u ngáº¯n vá» phong cÃ¡ch, Ä‘á»™i ngÅ© vÃ  tráº£i nghiá»‡m khÃ¡ch hÃ ng.", image: "" },
+  services: [emptyItem("Dá»‹ch vá»¥ 1"), emptyItem("Dá»‹ch vá»¥ 2"), emptyItem("Dá»‹ch vá»¥ 3")],
+  pricing: [emptyItem("GÃ³i cÆ¡ báº£n"), emptyItem("GÃ³i phá»• biáº¿n"), emptyItem("GÃ³i cao cáº¥p")],
+  gallery: [emptyItem("Album 1"), emptyItem("Album 2"), emptyItem("Album 3")],
 };
 
-export function ThemeContentEditor({ saved }: { saved?: Partial<Content> }) {
-  const [content, setContent] = useState<Content>({
-    ...initial,
+function normalizeContent(saved?: Partial<Content>): Content {
+  return {
+    ...initialContent,
     ...saved,
-    hero: { ...initial.hero, ...saved?.hero },
-    about: { ...initial.about, ...saved?.about },
-    services: saved?.services?.length ? saved.services : initial.services,
-    pricing: saved?.pricing?.length ? saved.pricing : initial.pricing,
-    gallery: saved?.gallery?.length ? saved.gallery : initial.gallery,
-  });
-  const [selected, setSelected] = useState<Selection>({ type: "hero" });
+    hero: { ...initialContent.hero, ...saved?.hero },
+    about: { ...initialContent.about, ...saved?.about },
+    services: saved?.services?.length ? saved.services : initialContent.services,
+    pricing: saved?.pricing?.length ? saved.pricing : initialContent.pricing,
+    gallery: saved?.gallery?.length ? saved.gallery : initialContent.gallery,
+  };
+}
+
+function normalizeContact(settings?: Record<string, unknown>): Contact {
+  return {
+    logo_url: String(settings?.logo_url || ""),
+    phone: String(settings?.phone || ""),
+    email: String(settings?.email || ""),
+    address: String(settings?.address || ""),
+    facebook_url: String(settings?.facebook_url || ""),
+    zalo_phone: String(settings?.zalo_phone || ""),
+  };
+}
+
+function parseSelection(value: string): Selection | null {
+  const [type, rawIndex] = value.split(":");
+  if (!["brand", "hero", "about", "services", "pricing", "gallery", "contact"].includes(type)) return null;
+  const index = rawIndex ? Number(rawIndex) : undefined;
+  return { type: type as SelectionType, index: Number.isFinite(index) ? index : undefined };
+}
+
+function selectionKey(selection: Selection) {
+  return `${selection.type}:${selection.index || 0}`;
+}
+
+export function ThemeContentEditor({
+  saved,
+  settings,
+  studioSlug,
+  pageKey,
+  pageLabel,
+}: {
+  saved?: Partial<Content>;
+  settings?: Record<string, unknown>;
+  studioSlug?: string;
+  pageKey?: string;
+  pageLabel?: string;
+}) {
+  const [content, setContent] = useState<Content>(() => normalizeContent(saved));
+  const [contact, setContact] = useState<Contact>(() => normalizeContact(settings));
+  const [selected, setSelected] = useState<Selection>(() => pageDefaults[pageKey || "trang-chu"] || { type: "hero" });
+  const [device, setDevice] = useState<Device>("desktop");
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
-  const upload = useRef<HTMLInputElement>(null);
+  const [frameReady, setFrameReady] = useState(false);
+  const [frameNonce, setFrameNonce] = useState(0);
+  const iframeRef = useRef<HTMLIFrameElement>(null);
+  const uploadRef = useRef<HTMLInputElement>(null);
   const uploadTarget = useRef<Selection>({ type: "hero" });
 
-  const active = selected.type === "hero" || selected.type === "about" ? content[selected.type] : content[selected.type][selected.index || 0];
+  const activePageKey = pageKey || "trang-chu";
+  const activePageLabel = pageLabel || "Trang chá»§";
+  const previewPath = activePageKey === "trang-chu" ? "" : `/${activePageKey}`;
+  const previewSrc = `/studio-site/${studioSlug}/theme${previewPath}?builder=1&v=${frameNonce}`;
 
-  function updateAt(target: Selection, key: string, value: string) {
-    setContent((current) => {
-      if (target.type === "hero" || target.type === "about") {
-        return { ...current, [target.type]: { ...current[target.type], [key]: value } };
+  const activeItem = selected.type === "services" || selected.type === "pricing" || selected.type === "gallery"
+    ? content[selected.type][selected.index || 0]
+    : null;
+
+
+  const pushPreview = useCallback((nextContent: Content, nextContact: Contact) => {
+    iframeRef.current?.contentWindow?.postMessage(
+      { type: "tlora-builder-preview", content: nextContent, studio: nextContact, selected: selectionKey(selected) },
+      window.location.origin
+    );
+  }, [selected]);
+
+  useEffect(() => {
+    function onMessage(event: MessageEvent) {
+      if (event.origin !== window.location.origin || !event.data) return;
+      if (event.data.type === "tlora-builder-ready") {
+        setFrameReady(true);
+        pushPreview(content, contact);
       }
-      const index = target.index || 0;
-      return {
-        ...current,
-        [target.type]: current[target.type].map((item, itemIndex) => (itemIndex === index ? { ...item, [key]: value } : item)),
-      };
+      if (event.data.type === "tlora-builder-select" && typeof event.data.key === "string") {
+        const next = parseSelection(event.data.key);
+        if (next) setSelected(next);
+      }
+    }
+    window.addEventListener("message", onMessage);
+    return () => window.removeEventListener("message", onMessage);
+  }, [content, contact, pushPreview]);
+
+  useEffect(() => {
+    pushPreview(content, contact);
+  }, [content, contact, frameReady, pushPreview]);
+
+  function updateContent(target: Selection, key: keyof Item | keyof Content["hero"] | keyof Content["about"], value: string) {
+    setContent((current) => {
+      if (target.type === "hero" || target.type === "about") return { ...current, [target.type]: { ...current[target.type], [key]: value } };
+      if (target.type === "services" || target.type === "pricing" || target.type === "gallery") {
+        const index = target.index || 0;
+        return { ...current, [target.type]: current[target.type].map((item, itemIndex) => itemIndex === index ? { ...item, [key]: value } : item) };
+      }
+      return current;
     });
   }
 
-  const update = (key: string, value: string) => updateAt(selected, key, value);
+  function updateContact(key: keyof Contact, value: string) {
+    setContact((current) => ({ ...current, [key]: value }));
+  }
 
   function chooseImage(target: Selection) {
     uploadTarget.current = target;
     setSelected(target);
-    upload.current?.click();
+    uploadRef.current?.click();
   }
 
   function uploadImage(file: File) {
     const target = uploadTarget.current;
     const reader = new FileReader();
-    reader.onload = () => updateAt(target, "image", String(reader.result));
+    reader.onload = () => {
+      const value = String(reader.result);
+      if (target.type === "brand") updateContact("logo_url", value);
+      else updateContent(target, "image", value);
+    };
     reader.readAsDataURL(file);
+  }
+
+  function addItem(type: "services" | "pricing" | "gallery") {
+    setContent((current) => ({ ...current, [type]: [...current[type], emptyItem(type === "pricing" ? "GÃ³i má»›i" : type === "gallery" ? "Album má»›i" : "Dá»‹ch vá»¥ má»›i")] }));
+    setSelected({ type, index: content[type].length });
+  }
+
+  function removeItem(type: "services" | "pricing" | "gallery", index: number) {
+    setContent((current) => ({ ...current, [type]: current[type].filter((_, itemIndex) => itemIndex !== index) }));
+    setSelected({ type, index: Math.max(0, index - 1) });
   }
 
   async function save() {
@@ -90,40 +194,43 @@ export function ThemeContentEditor({ saved }: { saved?: Partial<Content> }) {
       const response = await fetch("/api/admin/studio-settings", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ settings: { site_content: content } }),
+        body: JSON.stringify({ studioSlug, settings: { ...contact, site_content: content } }),
       });
       const data = (await response.json()) as { error?: string };
-      if (!response.ok) throw new Error(data.error || "Không thể lưu nội dung.");
-      setMessage("Đã đồng bộ website.");
+      if (!response.ok) throw new Error(data.error || "KhÃ´ng thá»ƒ lÆ°u website.");
+      setMessage("ÄÃ£ lÆ°u vÃ  Ä‘á»“ng bá»™ website.");
+      setFrameNonce((value) => value + 1);
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : "Không thể lưu nội dung.");
+      setMessage(error instanceof Error ? error.message : "KhÃ´ng thá»ƒ lÆ°u website.");
     } finally {
       setSaving(false);
     }
   }
 
-  const chosen = (item: Selection) => selected.type === item.type && selected.index === item.index;
-  const select = (item: Selection) => setSelected(item);
-  const pick = (item: Selection, children: ReactNode, className = "") => (
-    <div
-      role="button"
-      tabIndex={0}
-      onClick={() => select(item)}
-      onKeyDown={(event) => {
-        if (event.key === "Enter" || event.key === " ") select(item);
-      }}
-      className={`group relative text-left outline-none transition ${chosen(item) ? "ring-2 ring-sky-500 ring-offset-2" : "hover:ring-2 hover:ring-zinc-300 hover:ring-offset-2"} ${className}`}
-    >
-      {children}
-      {chosen(item) && <span className="pointer-events-none absolute right-2 top-2 rounded bg-sky-600 px-2 py-1 text-[10px] font-bold text-white">Đang chọn</span>}
-    </div>
-  );
+  const title = useMemo(() => {
+    if (selected.type === "brand") return "Logo & nháº­n diá»‡n";
+    if (selected.type === "hero") return "Hero trang chá»§";
+    if (selected.type === "about") return "Giá»›i thiá»‡u";
+    if (selected.type === "services") return `Dá»‹ch vá»¥ ${(selected.index || 0) + 1}`;
+    if (selected.type === "pricing") return `Báº£ng giÃ¡ ${(selected.index || 0) + 1}`;
+    if (selected.type === "gallery") return `Album ${(selected.index || 0) + 1}`;
+    return "LiÃªn há»‡";
+  }, [selected]);
+
+  if (!studioSlug) {
+    return (
+      <section className="rounded-lg border border-amber-200 bg-amber-50 p-5 text-sm leading-6 text-amber-900">
+        Mở trình sửa từ trang quản trị subdomain để xem live preview đúng website studio.
+      </section>
+    );
+  }
+
   return (
-    <div className="mt-5 rounded-xl border border-zinc-200 bg-zinc-100 shadow-sm">
+    <section className="overflow-hidden rounded-lg border border-zinc-200 bg-white shadow-sm">
       <input
-        ref={upload}
+        ref={uploadRef}
         type="file"
-        accept="image/*"
+        accept="image/png,image/jpeg,image/webp,image/svg+xml"
         className="hidden"
         onChange={(event) => {
           const file = event.target.files?.[0];
@@ -131,228 +238,206 @@ export function ThemeContentEditor({ saved }: { saved?: Partial<Content> }) {
           event.currentTarget.value = "";
         }}
       />
-      <div className="border-b border-zinc-200 bg-white p-5">
-        <h2 className="text-xl font-extrabold text-zinc-950">Trình chỉnh sửa nội dung website</h2>
-        <p className="mt-1 text-sm text-zinc-600">Bấm trực tiếp vào chữ để sửa, hoặc bấm nút đổi ảnh ngay trên bản xem trước.</p>
-      </div>
-      <div className="grid lg:grid-cols-[minmax(0,1fr)_340px]">
-        <main className="min-w-0 p-5">
-          <div className="mx-auto max-w-4xl overflow-hidden rounded-xl bg-[#151515] shadow-2xl">
-            <div className="flex h-9 items-center gap-2 border-b border-white/10 bg-zinc-950 px-4 text-[11px] text-zinc-400">
-              <span className="size-2 rounded-full bg-red-400" />
-              <span className="size-2 rounded-full bg-amber-400" />
-              <span className="size-2 rounded-full bg-emerald-400" />
-              <span className="ml-3 rounded bg-white/5 px-3 py-1">Bản xem trước website</span>
-            </div>
-            <div className="text-white">
-              <section
-                className="relative min-h-105 overflow-hidden bg-zinc-900 p-8 sm:p-14"
-                style={
-                  content.hero.image
-                    ? {
-                        backgroundImage: `linear-gradient(90deg, rgba(0,0,0,.82), rgba(0,0,0,.28)), url(${content.hero.image})`,
-                        backgroundPosition: "center",
-                        backgroundSize: "cover",
-                      }
-                    : undefined
-                }
-              >
-                {pick(
-                  { type: "hero" },
-                  <div className="max-w-xl">
-                    <p className="text-xs font-bold uppercase tracking-[.2em] text-[#d4af37]">Trang chủ</p>
-                    <EditableText
-                      as="h3"
-                      value={content.hero.title}
-                      onChange={(value) => updateAt({ type: "hero" }, "title", value)}
-                      className="mt-5 font-serif text-4xl font-bold leading-tight sm:text-5xl"
-                    />
-                    <EditableText
-                      as="p"
-                      value={content.hero.description}
-                      onChange={(value) => updateAt({ type: "hero" }, "description", value)}
-                      className="mt-5 max-w-lg leading-7 text-zinc-300"
-                    />
-                    <EditableText
-                      as="span"
-                      value={content.hero.cta}
-                      onChange={(value) => updateAt({ type: "hero" }, "cta", value)}
-                      className="mt-7 inline-block bg-[#d4af37] px-5 py-3 text-sm font-bold text-zinc-950"
-                    />
-                    <button
-                      type="button"
-                      onClick={(event) => {
-                        event.stopPropagation();
-                        chooseImage({ type: "hero" });
-                      }}
-                      className="mt-4 inline-flex min-h-9 items-center gap-2 rounded-md bg-white/90 px-3 text-xs font-bold text-zinc-950 shadow"
-                    >
-                      <ImagePlus size={15} />
-                      Đổi ảnh hero
-                    </button>
-                  </div>,
-                  "block w-full"
-                )}
-              </section>
-              <section className="grid gap-6 bg-white p-7 text-zinc-900 md:grid-cols-2">
-                {pick(
-                  { type: "about" },
-                  <>
-                    <ImageSlot image={content.about.image} label="Đổi ảnh giới thiệu" onClick={() => chooseImage({ type: "about" })} />
-                    <div className="mt-4">
-                      <p className="text-xs font-bold uppercase tracking-widest text-[#b88951]">Giới thiệu</p>
-                      <EditableText as="h3" value={content.about.title} onChange={(value) => updateAt({ type: "about" }, "title", value)} className="mt-3 text-3xl font-bold" />
-                      <EditableText as="p" value={content.about.description} onChange={(value) => updateAt({ type: "about" }, "description", value)} className="mt-3 leading-7 text-zinc-600" />
-                    </div>
-                  </>,
-                  "block rounded"
-                )}
-              </section>
-              <PreviewCollection label="Dịch vụ" items={content.services} type="services" pick={pick} updateAt={updateAt} chooseImage={chooseImage} />
-              <PreviewCollection label="Bảng giá" items={content.pricing} type="pricing" pick={pick} updateAt={updateAt} chooseImage={chooseImage} pricing />
-              <PreviewCollection label="Portfolio" items={content.gallery} type="gallery" pick={pick} updateAt={updateAt} chooseImage={chooseImage} />
-            </div>
-          </div>
-        </main>
-        <aside className="border-t border-zinc-200 bg-white p-5 lg:sticky lg:top-0 lg:h-screen lg:overflow-y-auto lg:border-l lg:border-t-0">
-          <p className="text-xs font-bold uppercase tracking-[.16em] text-sky-700">Thanh công cụ</p>
-          <h3 className="mt-2 text-lg font-extrabold text-zinc-950">
-            {selected.type === "hero" ? "Hero trang chủ" : selected.type === "about" ? "Giới thiệu" : selected.type === "services" ? "Dịch vụ" : selected.type === "pricing" ? "Gói giá" : "Album Portfolio"}
-          </h3>
-          <p className="mt-1 text-xs leading-5 text-zinc-500">Bạn vẫn có thể chỉnh bằng thanh công cụ nếu muốn nhập nội dung dài.</p>
-          <div className="mt-5 space-y-4">
-            <EditorField label="Tiêu đề" value={(active as Item).title || ""} onChange={(value) => update("title", value)} />
-            <EditorField label="Nhãn phụ / danh mục" value={(active as Item).subtitle || ""} onChange={(value) => update("subtitle", value)} />
-            <EditorField label="Mô tả" value={(active as Item).description || ""} onChange={(value) => update("description", value)} textarea />
-            <EditorField label="Nhãn nút" value={(active as Content["hero"]).cta || ""} onChange={(value) => update("cta", value)} />
-            <EditorField label="Giá" value={(active as Item).price || ""} onChange={(value) => update("price", value)} />
-            <EditorField label="Điểm nổi bật" value={(active as Item).features || ""} onChange={(value) => update("features", value)} />
+
+      <div className="grid min-h-[calc(100vh-210px)] lg:grid-cols-[340px_minmax(0,1fr)]">
+        <aside className="border-b border-zinc-200 bg-white p-4 lg:border-b-0 lg:border-r">
+          <div className="flex items-start justify-between gap-3">
             <div>
-              <p className="text-sm font-semibold text-zinc-800">Hình ảnh</p>
-              <div
-                className="mt-2 aspect-video overflow-hidden rounded-md bg-zinc-100"
-                style={(active as Item).image ? { backgroundImage: `url(${(active as Item).image})`, backgroundSize: "cover", backgroundPosition: "center" } : undefined}
-              />
-              <button type="button" onClick={() => chooseImage(selected)} className="mt-2 inline-flex min-h-10 items-center gap-2 rounded-md border border-zinc-300 px-3 text-sm font-bold">
-                <ImagePlus size={16} />
-                Tải ảnh thay thế
-              </button>
-              <p className="mt-1 text-xs text-zinc-500">Khuyến nghị: Hero 1920x1080; thẻ/album 1200x900.</p>
+              <p className="text-xs font-bold uppercase tracking-[.16em] text-[#c99a5e]">Äang sá»­a</p>
+              <h2 className="mt-1 text-xl font-extrabold text-zinc-950">{title}</h2>
+              <p className="mt-1 text-xs leading-5 text-zinc-500">Báº¥m trá»±c tiáº¿p vÃ o website bÃªn pháº£i Ä‘á»ƒ chá»n khu vá»±c cáº§n sá»­a.</p>
             </div>
-          </div>
-          <div className="mt-7 border-t border-zinc-200 pt-5">
-            <button type="button" disabled={saving} onClick={save} className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-md bg-zinc-950 px-4 text-sm font-bold text-white disabled:opacity-60">
-              <Save size={16} />
-              {saving ? "Đang lưu..." : "Lưu & đồng bộ website"}
+            <button type="button" onClick={() => setFrameNonce((value) => value + 1)} className="grid size-9 shrink-0 place-items-center rounded-md border border-zinc-300 text-zinc-700" title="Táº£i láº¡i preview">
+              <RefreshCw size={16} />
             </button>
-            {message && <p className="mt-2 text-center text-xs font-bold text-emerald-700">{message}</p>}
+          </div>
+
+          <QuickNav selected={selected} onSelect={setSelected} content={content} />
+
+          <div className="mt-5 space-y-4">
+            {selected.type === "brand" && (
+              <BrandFields contact={contact} update={updateContact} chooseLogo={() => chooseImage({ type: "brand" })} />
+            )}
+            {selected.type === "hero" && (
+              <PanelFields
+                values={content.hero}
+                onChange={(key, value) => updateContent({ type: "hero" }, key, value)}
+                onImage={() => chooseImage({ type: "hero" })}
+                showCta
+              />
+            )}
+            {selected.type === "about" && (
+              <PanelFields values={content.about} onChange={(key, value) => updateContent({ type: "about" }, key, value)} onImage={() => chooseImage({ type: "about" })} />
+            )}
+            {activeItem && (selected.type === "services" || selected.type === "pricing" || selected.type === "gallery") && (
+              <ItemFields
+                item={activeItem}
+                type={selected.type}
+                onChange={(key, value) => updateContent(selected, key, value)}
+                onImage={() => chooseImage(selected)}
+                onAdd={() => addItem(selected.type as "services" | "pricing" | "gallery")}
+                onRemove={() => removeItem(selected.type as "services" | "pricing" | "gallery", selected.index || 0)}
+              />
+            )}
+            {selected.type === "contact" && <ContactFields contact={contact} update={updateContact} />}
+          </div>
+
+          <div className="mt-6 border-t border-zinc-200 pt-4">
+            <button type="button" onClick={save} disabled={saving} className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-md bg-zinc-950 px-4 text-sm font-bold text-white disabled:opacity-60">
+              {saving ? <Loader2 className="animate-spin" size={17} /> : <Save size={17} />}
+              {saving ? "Äang lÆ°u..." : "LÆ°u website"}
+            </button>
+            {message && <p className={`mt-3 text-center text-xs font-bold ${message.startsWith("ÄÃ£") ? "text-emerald-700" : "text-red-700"}`}>{message}</p>}
           </div>
         </aside>
+
+        <main className="min-w-0 bg-zinc-100 p-4">
+          <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+            <div className="flex items-center gap-2 text-sm font-bold text-zinc-700">
+              <MonitorSmartphone size={17} />
+              Live preview tháº­t: {activePageLabel}
+            </div>
+            <div className="flex rounded-md border border-zinc-300 bg-white p-1">
+              {(["desktop", "tablet", "mobile"] as Device[]).map((item) => {
+                const Icon = item === "desktop" ? Laptop : item === "tablet" ? Tablet : Smartphone;
+                return (
+                  <button key={item} type="button" onClick={() => setDevice(item)} className={`grid size-9 place-items-center rounded ${device === item ? "bg-zinc-950 text-white" : "text-zinc-600"}`} title={item}>
+                    <Icon size={17} />
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          <div className="mx-auto h-[calc(100vh-270px)] min-h-[620px] overflow-hidden rounded-lg border border-zinc-300 bg-white shadow-xl transition-all" style={{ width: deviceWidths[device] }}>
+            <iframe
+              ref={iframeRef}
+              key={previewSrc}
+              src={previewSrc}
+              title={`Live preview ${activePageLabel}`}
+              className="h-full w-full border-0"
+              onLoad={() => {
+                setFrameReady(true);
+                pushPreview(content, contact);
+              }}
+            />
+          </div>
+        </main>
+      </div>
+    </section>
+  );
+}
+
+function QuickNav({ selected, onSelect, content }: { selected: Selection; onSelect: (value: Selection) => void; content: Content }) {
+  const groups: Array<{ label: string; value: Selection }> = [
+    { label: "Logo", value: { type: "brand" } },
+    { label: "Hero", value: { type: "hero" } },
+    { label: "Giá»›i thiá»‡u", value: { type: "about" } },
+    { label: "LiÃªn há»‡", value: { type: "contact" } },
+  ];
+  return (
+    <div className="mt-5 space-y-3">
+      <div className="grid grid-cols-2 gap-2">
+        {groups.map((group) => <NavButton key={group.label} label={group.label} active={selectionKey(selected) === selectionKey(group.value)} onClick={() => onSelect(group.value)} />)}
+      </div>
+      <MiniList label="Dá»‹ch vá»¥" type="services" items={content.services} selected={selected} onSelect={onSelect} />
+      <MiniList label="Báº£ng giÃ¡" type="pricing" items={content.pricing} selected={selected} onSelect={onSelect} />
+      <MiniList label="Album" type="gallery" items={content.gallery} selected={selected} onSelect={onSelect} />
+    </div>
+  );
+}
+
+function NavButton({ label, active, onClick }: { label: string; active: boolean; onClick: () => void }) {
+  return <button type="button" onClick={onClick} className={`min-h-10 rounded-md px-3 text-left text-sm font-bold ${active ? "bg-zinc-950 text-white" : "bg-zinc-100 text-zinc-700 hover:bg-zinc-200"}`}>{label}</button>;
+}
+
+function MiniList({ label, type, items, selected, onSelect }: { label: string; type: "services" | "pricing" | "gallery"; items: Item[]; selected: Selection; onSelect: (value: Selection) => void }) {
+  return (
+    <div>
+      <p className="mb-2 text-xs font-bold uppercase tracking-[.12em] text-zinc-500">{label}</p>
+      <div className="grid gap-1">
+        {items.map((item, index) => (
+          <button key={`${type}-${index}`} type="button" onClick={() => onSelect({ type, index })} className={`truncate rounded-md px-3 py-2 text-left text-xs font-semibold ${selected.type === type && selected.index === index ? "bg-sky-600 text-white" : "bg-zinc-50 text-zinc-700 hover:bg-zinc-100"}`}>
+            {index + 1}. {item.title || label}
+          </button>
+        ))}
       </div>
     </div>
   );
 }
 
-function EditableText({
-  as: Tag,
-  value,
-  onChange,
-  className,
-}: {
-  as: "h3" | "p" | "span";
-  value: string;
-  onChange: (value: string) => void;
-  className: string;
-}) {
-  const ref = useRef<HTMLElement>(null);
-
-  useEffect(() => {
-    if (document.activeElement === ref.current) return;
-    if (ref.current && ref.current.textContent !== value) ref.current.textContent = value;
-  }, [value]);
-
+function BrandFields({ contact, update, chooseLogo }: { contact: Contact; update: (key: keyof Contact, value: string) => void; chooseLogo: () => void }) {
   return (
-    <Tag
-      ref={ref as never}
-      contentEditable
-      suppressContentEditableWarning
-      spellCheck={false}
-      onClick={(event) => event.stopPropagation()}
-      onInput={(event) => onChange(event.currentTarget.textContent || "")}
-      className={`${className} cursor-text rounded-sm outline-none transition focus:ring-2 focus:ring-sky-400 focus:ring-offset-2 focus:ring-offset-transparent`}
-    />
+    <>
+      <ImageField label="Logo studio" value={contact.logo_url} onChange={(value) => update("logo_url", value)} onImage={chooseLogo} />
+      <Field label="Facebook" value={contact.facebook_url} onChange={(value) => update("facebook_url", value)} />
+      <Field label="Zalo" value={contact.zalo_phone} onChange={(value) => update("zalo_phone", value.replace(/[^0-9+]/g, ""))} />
+    </>
   );
 }
 
-function ImageSlot({ image, label, onClick }: { image: string; label: string; onClick: () => void }) {
+function ContactFields({ contact, update }: { contact: Contact; update: (key: keyof Contact, value: string) => void }) {
   return (
-    <div
-      className="group relative aspect-4/3 bg-zinc-200"
-      style={image ? { backgroundImage: `url(${image})`, backgroundSize: "cover", backgroundPosition: "center" } : undefined}
-      onClick={(event) => {
-        event.stopPropagation();
-        onClick();
-      }}
-    >
-      <button type="button" className="absolute inset-x-3 bottom-3 inline-flex min-h-9 items-center justify-center gap-2 rounded-md bg-black/75 px-3 text-xs font-bold text-white opacity-0 transition group-hover:opacity-100 group-focus-within:opacity-100">
-        <ImagePlus size={15} />
-        {label}
+    <>
+      <Field label="Sá»‘ Ä‘iá»‡n thoáº¡i" value={contact.phone} onChange={(value) => update("phone", value)} />
+      <Field label="Email" value={contact.email} onChange={(value) => update("email", value)} />
+      <Field label="Äá»‹a chá»‰" value={contact.address} onChange={(value) => update("address", value)} textarea />
+      <Field label="Facebook" value={contact.facebook_url} onChange={(value) => update("facebook_url", value)} />
+      <Field label="Zalo" value={contact.zalo_phone} onChange={(value) => update("zalo_phone", value.replace(/[^0-9+]/g, ""))} />
+    </>
+  );
+}
+
+function PanelFields({ values, onChange, onImage, showCta = false }: { values: { title: string; description: string; image: string; cta?: string }; onChange: (key: PanelKey, value: string) => void; onImage: () => void; showCta?: boolean }) {
+  return (
+    <>
+      <Field label="TiÃªu Ä‘á»" value={values.title} onChange={(value) => onChange("title", value)} />
+      <Field label="MÃ´ táº£" value={values.description} onChange={(value) => onChange("description", value)} textarea />
+      {showCta && <Field label="NÃºt kÃªu gá»i" value={values.cta || ""} onChange={(value) => onChange("cta", value)} />}
+      <ImageField label="HÃ¬nh áº£nh" value={values.image} onChange={(value) => onChange("image", value)} onImage={onImage} />
+    </>
+  );
+}
+
+function ItemFields({ item, type, onChange, onImage, onAdd, onRemove }: { item: Item; type: "services" | "pricing" | "gallery"; onChange: (key: keyof Item, value: string) => void; onImage: () => void; onAdd: () => void; onRemove: () => void }) {
+  return (
+    <>
+      <Field label="TiÃªu Ä‘á»" value={item.title} onChange={(value) => onChange("title", value)} />
+      <Field label="NhÃ£n phá»¥" value={item.subtitle} onChange={(value) => onChange("subtitle", value)} />
+      <Field label="MÃ´ táº£" value={item.description} onChange={(value) => onChange("description", value)} textarea />
+      {type === "pricing" && <Field label="GiÃ¡" value={item.price} onChange={(value) => onChange("price", value)} />}
+      {type !== "gallery" && <Field label="Äiá»ƒm ná»•i báº­t" value={item.features} onChange={(value) => onChange("features", value)} textarea />}
+      <ImageField label="HÃ¬nh áº£nh" value={item.image} onChange={(value) => onChange("image", value)} onImage={onImage} />
+      <div className="grid grid-cols-2 gap-2 pt-2">
+        <button type="button" onClick={onAdd} className="min-h-10 rounded-md border border-zinc-300 text-sm font-bold text-zinc-700">ThÃªm má»¥c</button>
+        <button type="button" onClick={onRemove} className="min-h-10 rounded-md border border-red-200 text-sm font-bold text-red-700">XÃ³a má»¥c</button>
+      </div>
+    </>
+  );
+}
+
+function ImageField({ label, value, onChange, onImage }: { label: string; value: string; onChange: (value: string) => void; onImage: () => void }) {
+  return (
+    <div>
+      <Field label={label} value={value} onChange={onChange} />
+      <div className="mt-2 aspect-video overflow-hidden rounded-md bg-zinc-100" style={value ? { backgroundImage: `url(${value})`, backgroundPosition: "center", backgroundSize: "cover" } : undefined} />
+      <button type="button" onClick={onImage} className="mt-2 inline-flex min-h-10 items-center gap-2 rounded-md border border-zinc-300 px-3 text-sm font-bold text-zinc-700">
+        <ImagePlus size={16} />
+        Táº£i áº£nh lÃªn
       </button>
     </div>
   );
 }
 
-function EditorField({ label, value, onChange, textarea = false }: { label: string; value: string; onChange: (value: string) => void; textarea?: boolean }) {
-  if (!value && ["Nhãn phụ / danh mục", "Nhãn nút", "Giá", "Điểm nổi bật"].includes(label)) return null;
+function Field({ label, value, onChange, textarea = false }: { label: string; value: string; onChange: (value: string) => void; textarea?: boolean }) {
   return (
     <label className="block text-sm font-semibold text-zinc-800">
       {label}
       {textarea ? (
-        <textarea value={value} onChange={(event) => onChange(event.target.value)} className="mt-2 min-h-20 w-full rounded-md border border-zinc-300 p-3 font-normal" />
+        <textarea value={value} onChange={(event) => onChange(event.target.value)} className="mt-2 min-h-24 w-full rounded-md border border-zinc-300 p-3 font-normal outline-none focus:border-sky-500" />
       ) : (
-        <input value={value} onChange={(event) => onChange(event.target.value)} className="mt-2 min-h-10 w-full rounded-md border border-zinc-300 px-3 font-normal" />
+        <input value={value} onChange={(event) => onChange(event.target.value)} className="mt-2 min-h-10 w-full rounded-md border border-zinc-300 px-3 font-normal outline-none focus:border-sky-500" />
       )}
     </label>
-  );
-}
-
-function PreviewCollection({
-  label,
-  items,
-  type,
-  pick,
-  updateAt,
-  chooseImage,
-  pricing = false,
-}: {
-  label: string;
-  items: Item[];
-  type: "services" | "pricing" | "gallery";
-  pick: (item: Selection, children: ReactNode, className?: string) => ReactNode;
-  updateAt: (target: Selection, key: string, value: string) => void;
-  chooseImage: (target: Selection) => void;
-  pricing?: boolean;
-}) {
-  return (
-    <section className="border-t border-zinc-800 bg-[#191919] p-7">
-      <p className="text-xs font-bold uppercase tracking-[.18em] text-[#d4af37]">{label}</p>
-      <div className="mt-5 grid gap-4 md:grid-cols-3">
-        {items.map((item, index) =>
-          pick(
-            { type, index },
-            <div className="overflow-hidden border border-white/10 bg-white/[.04]">
-              <ImageSlot image={item.image} label="Đổi ảnh" onClick={() => chooseImage({ type, index })} />
-              <div className="p-4">
-                <EditableText as="p" value={item.subtitle || label} onChange={(value) => updateAt({ type, index }, "subtitle", value)} className="text-xs text-[#d4af37]" />
-                <EditableText as="h3" value={item.title} onChange={(value) => updateAt({ type, index }, "title", value)} className="mt-2 text-lg font-bold" />
-                <EditableText as="p" value={item.description} onChange={(value) => updateAt({ type, index }, "description", value)} className="mt-2 line-clamp-3 text-sm leading-6 text-zinc-400" />
-                {pricing && <EditableText as="p" value={item.price} onChange={(value) => updateAt({ type, index }, "price", value)} className="mt-4 text-lg font-bold text-[#d4af37]" />}
-              </div>
-            </div>,
-            "block"
-          )
-        )}
-      </div>
-    </section>
   );
 }

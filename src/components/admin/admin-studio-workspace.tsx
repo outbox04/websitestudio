@@ -144,7 +144,7 @@ export function AdminStudioWorkspace({
           {activeView === "payment-settings" && (tenantMode ? <StudioSiteBuilder mode="settings" studioSettings={studioSettings} /> : <PaymentSettingsView />)}
 
           {activeView === "news" && <StudioNewsManager />}
-          {activeView === "site-builder" && <StudioSiteBuilder mode="builder" studioSettings={studioSettings} />}
+          {activeView === "site-builder" && <StudioSiteBuilder mode="builder" studioSettings={studioSettings} studioSlug={studioSlug} />}
 
           {activeView === "placeholder" && (
             <PlaceholderView />
