@@ -1,25 +1,19 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import Image from "next/image";
-import Link from "next/link";
-import { ArrowUpRight, Calendar, Clock, Mail, MapPin, Phone, Sparkles } from "lucide-react";
 import { createAdminClient } from "@/lib/supabase/admin";
-import type { CSSProperties } from "react";
 
 type Studio = {
-  id: string;
   display_name: string;
   primary_domain: string | null;
-  plan: string;
   status: string;
-  settings: any;
+  settings: Record<string, unknown> | null;
 };
 
 async function getStudio(studioSlug: string): Promise<Studio | null> {
   const supabase = createAdminClient();
   const { data, error } = await supabase
     .from("studios")
-    .select("id, display_name, primary_domain, plan, status, settings")
+    .select("display_name, primary_domain, status, settings")
     .eq("slug", studioSlug)
     .maybeSingle();
 
@@ -36,7 +30,16 @@ export async function generateMetadata({ params }: { params: Promise<{ studioSlu
     if (!studio) return { title: "Studio" };
     const description = studio.settings?.site_description || `Website chính thức của ${studio.display_name}.`;
     const ogImage = studio.settings?.og_image_url;
-    return { title: studio.display_name, description, keywords: studio.settings?.seo_keywords?.split(",").map((item: string) => item.trim()).filter(Boolean), alternates: studio.settings?.canonical_url ? { canonical: studio.settings.canonical_url } : undefined, icons: { icon: `/studio-site/${studioSlug}/favicon` }, openGraph: ogImage ? { images: [{ url: ogImage, width: 1200, height: 630 }] } : undefined };
+    const seoKeywords = typeof studio.settings?.seo_keywords === "string" ? studio.settings.seo_keywords : "";
+    const canonicalUrl = typeof studio.settings?.canonical_url === "string" ? studio.settings.canonical_url : "";
+    return {
+      title: studio.display_name,
+      description: String(description),
+      keywords: seoKeywords.split(",").map((item) => item.trim()).filter(Boolean),
+      alternates: canonicalUrl ? { canonical: canonicalUrl } : undefined,
+      icons: { icon: `/studio-site/${studioSlug}/favicon` },
+      openGraph: typeof ogImage === "string" && ogImage ? { images: [{ url: ogImage, width: 1200, height: 630 }] } : undefined,
+    };
   } catch {
     return { title: "Studio" };
   }
@@ -53,10 +56,7 @@ export default async function StudioHomePage({ params }: { params: Promise<{ stu
 
   if (!studio || studio.status !== "active") notFound();
 
-  const setupCompleted = Boolean(studio.settings?.setup_completed);
-  const activeTheme = studio.settings?.theme === "wedding" || studio.settings?.theme === "concept" ? studio.settings.theme : null;
-
-  if (!setupCompleted) {
+  if (!studio.settings?.setup_completed) {
     return (
       <main className="grid min-h-screen place-items-center bg-[#14110f] px-6 py-16 text-[#f4ece0]">
         <section className="w-full max-w-2xl rounded-[2rem] border border-[#c99a5e]/25 bg-[#1c1813] p-8 text-center shadow-2xl shadow-black/30 sm:p-12">
@@ -73,277 +73,12 @@ export default async function StudioHomePage({ params }: { params: Promise<{ stu
     );
   }
 
-  // Each supplied theme remains an independent HTML source, including its own responsive CSS and interactions.
-  // The /theme route picks it from the studio's registration setting and injects studio branding server-side.
-  if (activeTheme) {
-    return <iframe title={`${studio.display_name} website`} src={`/studio-site/${studioSlug}/theme`} className="block min-h-screen w-full border-0" style={{ height: "100svh" }} />;
-  }
-
-  // Fetch studio specific data
-  const admin = createAdminClient();
-  const [{ data: galleriesData }, { data: postsData }] = await Promise.all([
-    admin
-      .from("customer_galleries")
-      .select("id, customer_name, customer_name_slug, shoot_date, cover_url")
-      .eq("studio_id", studio.id)
-      .order("shoot_date", { ascending: false })
-      .limit(6),
-    admin
-      .from("posts")
-      .select("id, title, slug, excerpt, created_at")
-      .eq("studio_id", studio.id)
-      .eq("published", true)
-      .order("created_at", { ascending: false })
-      .limit(3),
-  ]);
-
-  const galleries = galleriesData || [];
-  const posts = postsData || [];
-
-  const contactEmail = studio.settings?.email || "";
-  const contactPhone = studio.settings?.phone || "";
-  const contactAddress = studio.settings?.address || "";
-  const primaryColor = studio.settings?.primary_color || "#0d0a08";
-  const accentColor = studio.settings?.accent_color || "#c99a5e";
-  const heroTitle = studio.settings?.hero_title || studio.settings?.site_content?.hero?.title || studio.display_name;
-  const heroDescription = studio.settings?.hero_description || studio.settings?.site_content?.hero?.description || "";
-  const heroImage = studio.settings?.hero_image_url || studio.settings?.site_content?.hero?.image || "";
-
-  const services = Array.isArray(studio.settings?.site_content?.services) ? studio.settings.site_content.services.filter((service: any) => service?.title) : [];
-
   return (
-    <div className="min-h-screen text-[#f4ece0] selection:text-[#f4ece0]" style={{ backgroundColor: primaryColor, ["--studio-accent" as string]: accentColor } as CSSProperties}>
-      {/* Hero Section */}
-      <section className="relative flex min-h-[90vh] items-center justify-center overflow-hidden px-6 py-24 text-center sm:px-12">
-        <Image
-          src={heroImage}
-          alt="Studio background"
-          fill
-          priority
-          unoptimized
-          sizes="100vw"
-          className="object-cover opacity-30 blur-2xs"
-        />
-        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[#0d0a08]/80 to-[#0d0a08]" />
-        
-        <div className="relative z-10 max-w-4xl space-y-8">
-          {studio.settings?.logo_url && <Image src={studio.settings.logo_url} alt={`${studio.display_name} logo`} width={200} height={80} unoptimized className="mx-auto h-12 w-auto object-contain" />}
-          <div className="inline-flex items-center gap-2 rounded-full border px-4 py-1.5 text-xs font-semibold tracking-widest uppercase" style={{ borderColor: `${accentColor}55`, backgroundColor: `${accentColor}1a`, color: accentColor }}>
-            <Sparkles size={14} className="animate-pulse" /> {studio.display_name}
-          </div>
-          
-          <h1 className="font-heading text-5xl font-extrabold tracking-tight sm:text-7xl">
-            {heroTitle}
-          </h1>
-          
-          <p className="mx-auto max-w-2xl text-base leading-8 text-[#cbc0b0] sm:text-lg">
-            {heroDescription}
-          </p>
-          
-          <div className="flex flex-col justify-center gap-4 sm:flex-row">
-            <a
-              href="#services"
-              className="inline-flex min-h-12 items-center justify-center rounded-full px-8 text-sm font-bold text-[#0d0a08] transition-all hover:scale-105 shadow-lg"
-              style={{ backgroundColor: accentColor }}
-            >
-              Xem dịch vụ & Bảng giá
-            </a>
-            <a
-              href="#portfolio"
-              className="inline-flex min-h-12 items-center justify-center rounded-full border border-[#f4ece0]/20 bg-white/[0.03] hover:bg-white/[0.08] px-8 text-sm font-bold text-[#f4ece0] transition-all hover:scale-105"
-            >
-              Khám phá portfolio
-            </a>
-          </div>
-        </div>
-      </section>
-
-      {/* Services Section */}
-      <section id="services" className="mx-auto max-w-7xl px-6 py-20 sm:px-8">
-        <div className="text-center max-w-3xl mx-auto space-y-4">
-          <span className="font-mono text-xs uppercase tracking-widest text-[#c99a5e]">Our Services</span>
-          <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">Dịch vụ nhiếp ảnh chuyên nghiệp</h2>
-          <p className="text-sm leading-6 text-[#cbc0b0]">
-            Ba concept cốt lõi của studio được thiết kế tỉ mỉ, đáp ứng trọn vẹn mong muốn sở hữu những bức ảnh chất lượng đỉnh cao của bạn.
-          </p>
-        </div>
-
-        <div className="mt-12 grid gap-8 md:grid-cols-3">
-          {services.map((service: any) => (
-            <article
-              key={service.title}
-              className="group relative flex flex-col justify-between overflow-hidden rounded-2xl border border-white/10 bg-[#161210] p-6 transition-all hover:border-[#c99a5e]/40 hover:-translate-y-1 shadow-xl"
-            >
-              <div className="absolute inset-0 -z-10 bg-gradient-to-t from-[#161210] via-[#161210]/90 to-transparent" />
-              <div className="space-y-6">
-                <div className="relative h-48 w-full overflow-hidden rounded-xl border border-white/5">
-                  <Image
-                    src={service.image || "/brand/tlora-logo.png"}
-                    alt={service.title}
-                    fill
-                    sizes="(max-width: 768px) 100vw, 33vw"
-                    className="object-cover transition-transform duration-500 group-hover:scale-110"
-                  />
-                </div>
-                <h3 className="text-xl font-bold text-[#f4ece0] group-hover:text-[#e6c193] transition-colors">{service.title}</h3>
-                <p className="text-xs leading-relaxed text-[#cbc0b0]">{service.description}</p>
-                <ul className="space-y-2 text-xs text-[#8c8174]">
-                  {(Array.isArray(service.features) ? service.features : String(service.features || "").split("\n").filter(Boolean)).map((feature: string) => (
-                    <li key={feature} className="flex items-center gap-2">
-                      <span className="size-1 rounded-full bg-[#c99a5e]" />
-                      {feature}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-              <div className="mt-8 pt-4 border-t border-white/5 flex items-baseline justify-between">
-                <span className="text-xs text-[#8c8174]">Chi phí trọn gói</span>
-                <span className="font-mono text-lg font-bold text-[#c99a5e]">{service.price}</span>
-              </div>
-            </article>
-          ))}
-        </div>
-      </section>
-
-      {/* Portfolio Section */}
-      <section id="portfolio" className="border-t border-white/5 bg-[#120f0d] py-20">
-        <div className="mx-auto max-w-7xl px-6 sm:px-8">
-          <div className="flex flex-col justify-between gap-4 md:flex-row md:items-end">
-            <div className="space-y-2">
-              <span className="font-mono text-xs uppercase tracking-widest text-[#c99a5e]">Portfolio</span>
-              <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">Album khách hàng thực tế</h2>
-              <p className="max-w-xl text-xs text-[#cbc0b0]">
-                Hãy ghé thăm các sản phẩm thực tế được chụp cho khách hàng tại studio. Click để trải nghiệm tính năng chọn ảnh và xem thành phẩm online.
-              </p>
-            </div>
-            {galleries.length > 0 && (
-              <span className="rounded-full border border-[#c99a5e]/30 bg-[#c99a5e]/5 px-4 py-1.5 text-xs font-medium text-[#c99a5e]">
-                {galleries.length} album hoạt động
-              </span>
-            )}
-          </div>
-
-          {galleries.length === 0 ? (
-            <div className="mt-12 rounded-xl border border-dashed border-white/10 p-12 text-center text-[#8c8174]">
-              Chưa có album khách hàng công khai.
-            </div>
-          ) : (
-            <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-              {galleries.map((gallery) => (
-                <Link
-                  key={gallery.id}
-                  href={`/${gallery.customer_name_slug}`}
-                  target="_blank"
-                  className="group block relative overflow-hidden rounded-2xl border border-white/5 bg-[#161210] transition-all hover:border-[#c99a5e]/30"
-                >
-                  <div className="relative aspect-4/5 w-full overflow-hidden">
-                    <Image
-                      src={gallery.cover_url || "/brand/tlora-logo.png"}
-                      alt={gallery.customer_name}
-                      fill
-                      sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                      className="object-cover transition-transform duration-500 group-hover:scale-105"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-[#0d0a08] via-transparent to-transparent opacity-90" />
-                  </div>
-                  
-                  <div className="absolute bottom-0 inset-x-0 p-5 space-y-2">
-                    <span className="inline-flex items-center gap-1.5 text-[10px] font-bold text-[#c99a5e] uppercase tracking-wider">
-                      <Calendar size={11} /> {new Date(gallery.shoot_date).toLocaleDateString("vi-VN")}
-                    </span>
-                    <h3 className="text-lg font-bold text-white flex items-center justify-between">
-                      {gallery.customer_name}
-                      <ArrowUpRight size={16} className="text-[#8c8174] group-hover:text-white transition-colors" />
-                    </h3>
-                  </div>
-                </Link>
-              ))}
-            </div>
-          )}
-        </div>
-      </section>
-
-      {/* News Section */}
-      {posts.length > 0 && (
-        <section id="news" className="mx-auto max-w-7xl px-6 py-20 sm:px-8 border-t border-white/5">
-          <div className="text-center max-w-3xl mx-auto space-y-3">
-            <span className="font-mono text-xs uppercase tracking-widest text-[#c99a5e]">Studio News</span>
-            <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">Tin tức mới nhất</h2>
-          </div>
-
-          <div className="mt-12 grid gap-6 md:grid-cols-3">
-            {posts.map((post) => (
-              <Link
-                key={post.slug}
-                href={`/tin-tuc/${post.slug}`}
-                className="group flex flex-col justify-between rounded-xl border border-white/5 bg-[#120f0d] p-6 hover:border-[#c99a5e]/30 transition-all"
-              >
-                <div className="space-y-4">
-                  <div className="flex items-center gap-2 text-[10px] text-[#8c8174] uppercase tracking-wider font-mono">
-                    <Clock size={12} /> {new Date(post.created_at).toLocaleDateString("vi-VN")}
-                  </div>
-                  <h3 className="text-base font-bold text-[#f4ece0] group-hover:text-[#e6c193] transition-colors leading-snug">
-                    {post.title}
-                  </h3>
-                  {post.excerpt && (
-                    <p className="text-xs leading-relaxed text-[#8c8174] line-clamp-3">
-                      {post.excerpt}
-                    </p>
-                  )}
-                </div>
-                <div className="mt-6 inline-flex items-center gap-1 text-xs font-bold text-[#c99a5e] group-hover:text-[#e6c193]">
-                  Đọc thêm <ArrowUpRight size={14} />
-                </div>
-              </Link>
-            ))}
-          </div>
-        </section>
-      )}
-
-      {/* Contact Section */}
-      <section id="contact" className="border-t border-white/5 bg-[#0b0807] py-20 text-center">
-        <div className="mx-auto max-w-4xl px-6 space-y-12 sm:px-8">
-          <div className="space-y-4 max-w-2xl mx-auto">
-            <span className="font-mono text-xs uppercase tracking-widest text-[#c99a5e]">Contact Us</span>
-            <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">Hãy bắt đầu buổi chụp của bạn</h2>
-            <p className="text-sm text-[#cbc0b0]">
-              Bạn đã chọn được concept yêu thích? Hãy liên hệ với chúng tôi để lên lịch tư vấn trực tiếp và chuẩn bị buổi chụp chỉn chu nhất.
-            </p>
-          </div>
-
-          <div className="grid gap-6 sm:grid-cols-3 text-left">
-            <div className="rounded-xl border border-white/5 bg-[#120f0d] p-5 flex items-start gap-4">
-              <div className="rounded-lg bg-[#c99a5e]/10 p-3 text-[#c99a5e]">
-                <Phone size={18} />
-              </div>
-              <div>
-                <p className="text-xs font-semibold text-[#8c8174] uppercase tracking-wider">Điện thoại</p>
-                <p className="mt-1 text-sm font-bold text-white">{contactPhone}</p>
-              </div>
-            </div>
-
-            <div className="rounded-xl border border-white/5 bg-[#120f0d] p-5 flex items-start gap-4">
-              <div className="rounded-lg bg-[#c99a5e]/10 p-3 text-[#c99a5e]">
-                <Mail size={18} />
-              </div>
-              <div>
-                <p className="text-xs font-semibold text-[#8c8174] uppercase tracking-wider">Email</p>
-                <p className="mt-1 text-sm font-bold text-white truncate max-w-[180px]">{contactEmail}</p>
-              </div>
-            </div>
-
-            <div className="rounded-xl border border-white/5 bg-[#120f0d] p-5 flex items-start gap-4">
-              <div className="rounded-lg bg-[#c99a5e]/10 p-3 text-[#c99a5e]">
-                <MapPin size={18} />
-              </div>
-              <div>
-                <p className="text-xs font-semibold text-[#8c8174] uppercase tracking-wider">Địa chỉ</p>
-                <p className="mt-1 text-xs leading-relaxed font-bold text-white">{contactAddress}</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-    </div>
+    <iframe
+      title={`${studio.display_name} website`}
+      src={`/studio-site/${studioSlug}/theme`}
+      className="block min-h-screen w-full border-0"
+      style={{ height: "100svh" }}
+    />
   );
 }
