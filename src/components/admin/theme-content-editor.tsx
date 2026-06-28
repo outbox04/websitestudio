@@ -28,16 +28,30 @@ const pageDefaults: Record<string, Selection> = {
 };
 
 const mojibakePattern = /(?:Ã|Â|Ä|Å|Æ|áº|á»|â€|Â|à¸|à¹)/;
+const windows1252Bytes: Record<string, number> = {
+  "€": 0x80, "‚": 0x82, "ƒ": 0x83, "„": 0x84, "…": 0x85, "†": 0x86, "‡": 0x87, "ˆ": 0x88, "‰": 0x89, "Š": 0x8a, "‹": 0x8b, "Œ": 0x8c, "Ž": 0x8e,
+  "‘": 0x91, "’": 0x92, "“": 0x93, "”": 0x94, "•": 0x95, "–": 0x96, "—": 0x97, "˜": 0x98, "™": 0x99, "š": 0x9a, "›": 0x9b, "œ": 0x9c, "ž": 0x9e, "Ÿ": 0x9f,
+};
+
+function windows1252Byte(character: string) {
+  return windows1252Bytes[character] ?? (character.charCodeAt(0) <= 0xff ? character.charCodeAt(0) : undefined);
+}
 
 function fixMojibake(value: string) {
-  if (!mojibakePattern.test(value)) return value;
-  try {
-    const bytes = Uint8Array.from(Array.from(value), (character) => character.charCodeAt(0) & 0xff);
-    const decoded = new TextDecoder("utf-8", { fatal: false }).decode(bytes);
-    return decoded.includes("�") ? value : decoded;
-  } catch {
-    return value;
+  let current = value;
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    if (!mojibakePattern.test(current)) return current;
+    const bytes = Array.from(current, windows1252Byte);
+    if (bytes.some((byte) => byte === undefined)) return current;
+    try {
+      const decoded = new TextDecoder("utf-8", { fatal: false }).decode(Uint8Array.from(bytes as number[]));
+      if (decoded.includes("�") || decoded === current) return current;
+      current = decoded;
+    } catch {
+      return current;
+    }
   }
+  return current;
 }
 
 function fixItem(item: Item): Item {
@@ -170,6 +184,17 @@ export function ThemeContentEditor({
       if (event.data.type === "tlora-builder-select" && typeof event.data.key === "string") {
         const next = parseSelection(event.data.key);
         if (next) setSelected(next);
+      }
+      if (event.data.type === "tlora-builder-edit" && typeof event.data.key === "string" && typeof event.data.field === "string" && typeof event.data.value === "string") {
+        const next = parseSelection(event.data.key);
+        if (!next) return;
+        setSelected(next);
+        if (next.type === "contact") updateContact(event.data.field as keyof Contact, event.data.value);
+        else updateContent(next, event.data.field as keyof Item | keyof Content["hero"] | keyof Content["about"], event.data.value);
+      }
+      if (event.data.type === "tlora-builder-image" && typeof event.data.key === "string") {
+        const next = parseSelection(event.data.key);
+        if (next) chooseImage(next);
       }
     }
     window.addEventListener("message", onMessage);

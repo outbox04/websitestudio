@@ -20,16 +20,30 @@ function escapeHtml(value: string) {
 }
 
 const mojibakePattern = /(?:Ã|Â|Ä|Å|Æ|áº|á»|â€|à¸|à¹)/;
+const windows1252Bytes: Record<string, number> = {
+  "€": 0x80, "‚": 0x82, "ƒ": 0x83, "„": 0x84, "…": 0x85, "†": 0x86, "‡": 0x87, "ˆ": 0x88, "‰": 0x89, "Š": 0x8a, "‹": 0x8b, "Œ": 0x8c, "Ž": 0x8e,
+  "‘": 0x91, "’": 0x92, "“": 0x93, "”": 0x94, "•": 0x95, "–": 0x96, "—": 0x97, "˜": 0x98, "™": 0x99, "š": 0x9a, "›": 0x9b, "œ": 0x9c, "ž": 0x9e, "Ÿ": 0x9f,
+};
+
+function windows1252Byte(character: string) {
+  return windows1252Bytes[character] ?? (character.charCodeAt(0) <= 0xff ? character.charCodeAt(0) : undefined);
+}
 
 function fixMojibake(value: string) {
-  if (!mojibakePattern.test(value)) return value;
-  try {
-    const bytes = Uint8Array.from(Array.from(value), (character) => character.charCodeAt(0) & 0xff);
-    const decoded = new TextDecoder("utf-8", { fatal: false }).decode(bytes);
-    return decoded.includes("�") ? value : decoded;
-  } catch {
-    return value;
+  let current = value;
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    if (!mojibakePattern.test(current)) return current;
+    const bytes = Array.from(current, windows1252Byte);
+    if (bytes.some((byte) => byte === undefined)) return current;
+    try {
+      const decoded = new TextDecoder("utf-8", { fatal: false }).decode(Uint8Array.from(bytes as number[]));
+      if (decoded.includes("�") || decoded === current) return current;
+      current = decoded;
+    } catch {
+      return current;
+    }
   }
+  return current;
 }
 
 function fixMojibakeDeep(value: unknown): unknown {
@@ -74,9 +88,9 @@ function contentBridge(contentValue: string) {
   return `<script>
 window.__applyTloraContent=function(c){
   c=c||{};
-  function set(selector,value){if(!value)return;document.querySelectorAll(selector).forEach(function(e){e.textContent=value})}
+  function set(selector,value){if(!value)return;document.querySelectorAll(selector).forEach(function(e){if(document.activeElement!==e)e.textContent=value})}
   function pic(selector,value){if(!value)return;document.querySelectorAll(selector).forEach(function(e){if(e.tagName==='IMG')e.src=value;else e.style.backgroundImage='url('+value+')'})}
-  function setCard(card,selector,value){if(!value)return;var e=card.querySelector(selector);if(e)e.textContent=value}
+  function setCard(card,selector,value){if(!value)return;var e=card.querySelector(selector);if(e&&document.activeElement!==e)e.textContent=value}
   if(c.hero){set('.hero-title,.hero-h1',c.hero.title);set('.hero-desc,.hero-sub,.hero-subtitle',c.hero.description);set('.btn-primary,.nav-cta,.mobile-menu-cta',c.hero.cta);pic('.hero-bg-image,.hero-bg img,.hero',c.hero.image)}
   if(c.about){set('.about .section-title,.about-title',c.about.title);set('.about .section-body,.about-text,.about-desc,.about-quote',c.about.description);pic('.about-image img,.about-image,.about-image-frame',c.about.image)}
   function cards(items,selector){if(!Array.isArray(items))return;document.querySelectorAll(selector).forEach(function(card,i){var x=items[i];if(!x)return;setCard(card,'.service-name,.concept-name,.pricing-tier,.pricing-name,.portfolio-title',x.title);setCard(card,'.service-cat,.concept-cat,.service-subtitle',x.subtitle);setCard(card,'.pricing-price,.pricing-amount,.bento-price',x.price);setCard(card,'.pricing-body p,.pricing-desc,.service-desc,.portfolio-desc,.masonry-hover span',x.description);var im=card.querySelector('img');if(im&&x.image)im.src=x.image;var bg=card.querySelector('.service-card-bg,.gallery-image,.portfolio-image');if(bg&&x.image)bg.style.backgroundImage='url('+x.image+')'})}
@@ -94,10 +108,22 @@ function builderBridge(builder: boolean) {
 [data-tlora-editable]{cursor:pointer!important;outline:2px solid transparent!important;outline-offset:4px!important;transition:outline-color .15s ease,box-shadow .15s ease!important}
 [data-tlora-editable]:hover,[data-tlora-editable].tlora-selected{outline-color:#25a9e8!important}
 [data-tlora-editable].tlora-selected{box-shadow:0 0 0 5px rgba(37,169,232,.22)!important}
+[data-tlora-text]{cursor:text!important}
+[data-tlora-text]:focus{outline-color:#25a9e8!important}
+.tlora-image-wrap{position:relative!important}
+.tlora-image-button{position:absolute!important;left:12px!important;bottom:12px!important;z-index:9999!important;display:inline-flex!important;min-height:36px!important;align-items:center!important;justify-content:center!important;border:1px solid rgba(255,255,255,.4)!important;border-radius:8px!important;background:rgba(0,0,0,.78)!important;color:#fff!important;padding:0 12px!important;font:700 12px/1 Inter,Arial,sans-serif!important;box-shadow:0 8px 24px rgba(0,0,0,.28)!important;opacity:0!important;transform:translateY(4px)!important;transition:opacity .15s ease,transform .15s ease!important}
+.tlora-image-wrap:hover .tlora-image-button,.tlora-image-wrap.tlora-selected .tlora-image-button{opacity:1!important;transform:translateY(0)!important}
 </style><script>
 document.addEventListener('DOMContentLoaded',function(){
   function select(el,key){document.querySelectorAll('.tlora-selected').forEach(function(x){x.classList.remove('tlora-selected')});el.classList.add('tlora-selected');window.parent.postMessage({type:'tlora-builder-select',key:key},window.location.origin)}
   function mark(selector,type){document.querySelectorAll(selector).forEach(function(el,index){var key=type+':'+index;el.dataset.tloraEditable=key;el.addEventListener('click',function(event){event.preventDefault();event.stopPropagation();select(el,key)})})}
+  function wireText(el,key,field){if(!el)return;el.dataset.tloraEditable=key;el.dataset.tloraText=field;el.contentEditable='true';el.spellcheck=false;el.addEventListener('click',function(event){event.stopPropagation();select(el,key)});el.addEventListener('input',function(){window.parent.postMessage({type:'tlora-builder-edit',key:key,field:field,value:el.textContent||''},window.location.origin)});el.addEventListener('keydown',function(event){if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();el.blur()}})}
+  function wireAll(selector,key,field){document.querySelectorAll(selector).forEach(function(el){wireText(el,key,field)})}
+  function wireCards(selector,type){document.querySelectorAll(selector).forEach(function(card,index){var key=type+':'+index;wireText(card.querySelector('.service-name,.concept-name,.pricing-tier,.pricing-name,.portfolio-title'),key,'title');wireText(card.querySelector('.service-cat,.concept-cat,.service-subtitle'),key,'subtitle');wireText(card.querySelector('.pricing-price,.pricing-amount,.bento-price'),key,'price');wireText(card.querySelector('.pricing-body p,.pricing-desc,.service-desc,.portfolio-desc,.masonry-hover span'),key,'description')})}
+  function imageButton(key){var button=document.createElement('button');button.type='button';button.className='tlora-image-button';button.textContent='Thêm / thay ảnh';button.addEventListener('click',function(event){event.preventDefault();event.stopPropagation();window.parent.postMessage({type:'tlora-builder-image',key:key},window.location.origin)});return button}
+  function wireImage(el,key){if(!el)return;var wrap=el;if(el.tagName==='IMG'&&el.parentElement)wrap=el.parentElement;wrap.classList.add('tlora-image-wrap');wrap.dataset.tloraEditable=key;if(!wrap.querySelector(':scope > .tlora-image-button'))wrap.appendChild(imageButton(key));wrap.addEventListener('click',function(event){event.stopPropagation();select(wrap,key)})}
+  function wireImages(selector,key){document.querySelectorAll(selector).forEach(function(el){wireImage(el,key)})}
+  function wireCardImages(selector,type){document.querySelectorAll(selector).forEach(function(card,index){var key=type+':'+index;wireImage(card.querySelector('img,.service-card-bg,.gallery-image,.portfolio-image'),key)})}
   mark('.logo,.footer-logo','brand');
   mark('.hero,#hero','hero');
   mark('.about','about');
@@ -105,6 +131,20 @@ document.addEventListener('DOMContentLoaded',function(){
   mark('.pricing-card','pricing');
   mark('.gallery-item,.masonry-item,.portfolio-item','gallery');
   mark('footer,.cta-banner,#cta-final','contact');
+  wireAll('.hero-title,.hero-h1','hero:0','title');
+  wireAll('.hero-desc,.hero-sub,.hero-subtitle','hero:0','description');
+  wireAll('.btn-primary,.nav-cta,.mobile-menu-cta','hero:0','cta');
+  wireAll('.about .section-title,.about-title','about:0','title');
+  wireAll('.about .section-body,.about-text,.about-desc,.about-quote','about:0','description');
+  wireCards('.service-card,.concept-card','services');
+  wireCards('.pricing-card','pricing');
+  wireCards('.gallery-item,.masonry-item,.portfolio-item','gallery');
+  wireImages('.logo,.footer-logo','brand:0');
+  wireImages('.hero-bg-image,.hero-bg img,.hero,#hero','hero:0');
+  wireImages('.about-image img,.about-image,.about-image-frame','about:0');
+  wireCardImages('.service-card,.concept-card','services');
+  wireCardImages('.pricing-card','pricing');
+  wireCardImages('.gallery-item,.masonry-item,.portfolio-item','gallery');
   window.parent.postMessage({type:'tlora-builder-ready'},window.location.origin);
 });
 window.addEventListener('message',function(event){
