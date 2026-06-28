@@ -19,6 +19,26 @@ function escapeHtml(value: string) {
   return value.replace(/[&<>"']/g, character => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[character] || character);
 }
 
+const mojibakePattern = /(?:Ã|Â|Ä|Å|Æ|áº|á»|â€|à¸|à¹)/;
+
+function fixMojibake(value: string) {
+  if (!mojibakePattern.test(value)) return value;
+  try {
+    const bytes = Uint8Array.from(Array.from(value), (character) => character.charCodeAt(0) & 0xff);
+    const decoded = new TextDecoder("utf-8", { fatal: false }).decode(bytes);
+    return decoded.includes("�") ? value : decoded;
+  } catch {
+    return value;
+  }
+}
+
+function fixMojibakeDeep(value: unknown): unknown {
+  if (typeof value === "string") return fixMojibake(value);
+  if (Array.isArray(value)) return value.map(fixMojibakeDeep);
+  if (value && typeof value === "object") return Object.fromEntries(Object.entries(value).map(([key, item]) => [key, fixMojibakeDeep(item)]));
+  return value;
+}
+
 function themeOverrideStyle(settings: Record<string, unknown>) {
   return `<style id="tlora-theme-overrides">:root{--tlora-primary:var(--gold);}${settings.primary_color ? `body{--bg:${String(settings.primary_color)};}` : ""}${settings.accent_color ? `:root{--gold:${String(settings.accent_color)};}` : ""}.logo img,.footer-logo img{display:block;max-height:46px;max-width:190px;width:auto;object-fit:contain}.footer-logo img{max-height:36px}</style>`;
 }
@@ -119,9 +139,9 @@ export async function themeResponse(studioSlug: string, page = "home", builder =
   const source = await readFile(path.join(process.cwd(), "src", "studio-themes", folder, file), "utf8");
   const branding = safeJson({
     name: studio.display_name,
-    phone: settings.phone || "",
+    phone: fixMojibake(String(settings.phone || "")),
     email: settings.email || "",
-    address: settings.address || "",
+    address: fixMojibake(String(settings.address || "")),
     facebook: settings.facebook_url || "",
     zalo: settings.zalo_phone || "",
     logo: settings.logo_url || "",
@@ -135,7 +155,7 @@ export async function themeResponse(studioSlug: string, page = "home", builder =
     headCode(settings),
     themeOverrideStyle(settings),
     studioBridge(branding, safeJson(page)),
-    contentBridge(safeJson(settings.site_content || {})),
+    contentBridge(safeJson(fixMojibakeDeep(settings.site_content || {}))),
     builderBridge(builder),
   ].join("");
   const html = source.replace("</head>", `${injectedHead}</head>`).replace("</body>", `${body}</body>`);

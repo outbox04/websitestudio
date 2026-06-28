@@ -27,25 +27,49 @@ const pageDefaults: Record<string, Selection> = {
   "lien-he": { type: "contact" },
 };
 
-const emptyItem = (title = "Má»¥c má»›i"): Item => ({
+const mojibakePattern = /(?:Ã|Â|Ä|Å|Æ|áº|á»|â€|Â|à¸|à¹)/;
+
+function fixMojibake(value: string) {
+  if (!mojibakePattern.test(value)) return value;
+  try {
+    const bytes = Uint8Array.from(Array.from(value), (character) => character.charCodeAt(0) & 0xff);
+    const decoded = new TextDecoder("utf-8", { fatal: false }).decode(bytes);
+    return decoded.includes("�") ? value : decoded;
+  } catch {
+    return value;
+  }
+}
+
+function fixItem(item: Item): Item {
+  return {
+    title: fixMojibake(item.title || ""),
+    subtitle: fixMojibake(item.subtitle || ""),
+    description: fixMojibake(item.description || ""),
+    image: item.image || "",
+    price: fixMojibake(item.price || ""),
+    features: fixMojibake(item.features || ""),
+  };
+}
+
+const emptyItem = (title = "Mục mới"): Item => ({
   title,
-  subtitle: "Danh má»¥c",
-  description: "Nháº­p mÃ´ táº£ ngáº¯n cho má»¥c nÃ y.",
+  subtitle: "Danh mục",
+  description: "Nhập mô tả ngắn cho mục này.",
   image: "",
-  price: "LiÃªn há»‡",
+  price: "Liên hệ",
   features: "",
 });
 
 const initialContent: Content = {
   hero: {
-    title: "CÃ¢u chuyá»‡n cá»§a studio báº¯t Ä‘áº§u tá»« Ä‘Ã¢y",
-    description: "Thay cÃ¢u chá»¯ vÃ  hÃ¬nh áº£nh Ä‘á»ƒ website thá»ƒ hiá»‡n Ä‘Ãºng phong cÃ¡ch studio cá»§a báº¡n.",
+    title: "Câu chuyện của studio bắt đầu từ đây",
+    description: "Thay câu chữ và hình ảnh để website thể hiện đúng phong cách studio của bạn.",
     image: "",
-    cta: "Äáº·t lá»‹ch tÆ° váº¥n",
+    cta: "Đặt lịch tư vấn",
   },
-  about: { title: "Vá» studio", description: "Giá»›i thiá»‡u ngáº¯n vá» phong cÃ¡ch, Ä‘á»™i ngÅ© vÃ  tráº£i nghiá»‡m khÃ¡ch hÃ ng.", image: "" },
-  services: [emptyItem("Dá»‹ch vá»¥ 1"), emptyItem("Dá»‹ch vá»¥ 2"), emptyItem("Dá»‹ch vá»¥ 3")],
-  pricing: [emptyItem("GÃ³i cÆ¡ báº£n"), emptyItem("GÃ³i phá»• biáº¿n"), emptyItem("GÃ³i cao cáº¥p")],
+  about: { title: "Về studio", description: "Giới thiệu ngắn về phong cách, đội ngũ và trải nghiệm khách hàng.", image: "" },
+  services: [emptyItem("Dịch vụ 1"), emptyItem("Dịch vụ 2"), emptyItem("Dịch vụ 3")],
+  pricing: [emptyItem("Gói cơ bản"), emptyItem("Gói phổ biến"), emptyItem("Gói cao cấp")],
   gallery: [emptyItem("Album 1"), emptyItem("Album 2"), emptyItem("Album 3")],
 };
 
@@ -53,20 +77,31 @@ function normalizeContent(saved?: Partial<Content>): Content {
   return {
     ...initialContent,
     ...saved,
-    hero: { ...initialContent.hero, ...saved?.hero },
-    about: { ...initialContent.about, ...saved?.about },
-    services: saved?.services?.length ? saved.services : initialContent.services,
-    pricing: saved?.pricing?.length ? saved.pricing : initialContent.pricing,
-    gallery: saved?.gallery?.length ? saved.gallery : initialContent.gallery,
+    hero: {
+      ...initialContent.hero,
+      ...saved?.hero,
+      title: fixMojibake(saved?.hero?.title || initialContent.hero.title),
+      description: fixMojibake(saved?.hero?.description || initialContent.hero.description),
+      cta: fixMojibake(saved?.hero?.cta || initialContent.hero.cta),
+    },
+    about: {
+      ...initialContent.about,
+      ...saved?.about,
+      title: fixMojibake(saved?.about?.title || initialContent.about.title),
+      description: fixMojibake(saved?.about?.description || initialContent.about.description),
+    },
+    services: saved?.services?.length ? saved.services.map(fixItem) : initialContent.services,
+    pricing: saved?.pricing?.length ? saved.pricing.map(fixItem) : initialContent.pricing,
+    gallery: saved?.gallery?.length ? saved.gallery.map(fixItem) : initialContent.gallery,
   };
 }
 
 function normalizeContact(settings?: Record<string, unknown>): Contact {
   return {
     logo_url: String(settings?.logo_url || ""),
-    phone: String(settings?.phone || ""),
+    phone: fixMojibake(String(settings?.phone || "")),
     email: String(settings?.email || ""),
-    address: String(settings?.address || ""),
+    address: fixMojibake(String(settings?.address || "")),
     facebook_url: String(settings?.facebook_url || ""),
     zalo_phone: String(settings?.zalo_phone || ""),
   };
@@ -109,7 +144,7 @@ export function ThemeContentEditor({
   const uploadTarget = useRef<Selection>({ type: "hero" });
 
   const activePageKey = pageKey || "trang-chu";
-  const activePageLabel = pageLabel || "Trang chá»§";
+  const activePageLabel = pageLabel || "Trang chủ";
   const previewPath = activePageKey === "trang-chu" ? "" : `/${activePageKey}`;
   const previewSrc = `/studio-site/${studioSlug}/theme${previewPath}?builder=1&v=${frameNonce}`;
 
@@ -177,16 +212,6 @@ export function ThemeContentEditor({
     reader.readAsDataURL(file);
   }
 
-  function addItem(type: "services" | "pricing" | "gallery") {
-    setContent((current) => ({ ...current, [type]: [...current[type], emptyItem(type === "pricing" ? "GÃ³i má»›i" : type === "gallery" ? "Album má»›i" : "Dá»‹ch vá»¥ má»›i")] }));
-    setSelected({ type, index: content[type].length });
-  }
-
-  function removeItem(type: "services" | "pricing" | "gallery", index: number) {
-    setContent((current) => ({ ...current, [type]: current[type].filter((_, itemIndex) => itemIndex !== index) }));
-    setSelected({ type, index: Math.max(0, index - 1) });
-  }
-
   async function save() {
     setSaving(true);
     setMessage("");
@@ -197,24 +222,24 @@ export function ThemeContentEditor({
         body: JSON.stringify({ studioSlug, settings: { ...contact, site_content: content } }),
       });
       const data = (await response.json()) as { error?: string };
-      if (!response.ok) throw new Error(data.error || "KhÃ´ng thá»ƒ lÆ°u website.");
-      setMessage("ÄÃ£ lÆ°u vÃ  Ä‘á»“ng bá»™ website.");
+      if (!response.ok) throw new Error(data.error || "Không thể lưu website.");
+      setMessage("Đã lưu và đồng bộ website.");
       setFrameNonce((value) => value + 1);
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : "KhÃ´ng thá»ƒ lÆ°u website.");
+      setMessage(error instanceof Error ? error.message : "Không thể lưu website.");
     } finally {
       setSaving(false);
     }
   }
 
   const title = useMemo(() => {
-    if (selected.type === "brand") return "Logo & nháº­n diá»‡n";
-    if (selected.type === "hero") return "Hero trang chá»§";
-    if (selected.type === "about") return "Giá»›i thiá»‡u";
-    if (selected.type === "services") return `Dá»‹ch vá»¥ ${(selected.index || 0) + 1}`;
-    if (selected.type === "pricing") return `Báº£ng giÃ¡ ${(selected.index || 0) + 1}`;
+    if (selected.type === "brand") return "Logo & nhận diện";
+    if (selected.type === "hero") return "Hero trang chủ";
+    if (selected.type === "about") return "Giới thiệu";
+    if (selected.type === "services") return `Dịch vụ ${(selected.index || 0) + 1}`;
+    if (selected.type === "pricing") return `Bảng giá ${(selected.index || 0) + 1}`;
     if (selected.type === "gallery") return `Album ${(selected.index || 0) + 1}`;
-    return "LiÃªn há»‡";
+    return "Liên hệ";
   }, [selected]);
 
   if (!studioSlug) {
@@ -243,11 +268,11 @@ export function ThemeContentEditor({
         <aside className="border-b border-zinc-200 bg-white p-4 lg:border-b-0 lg:border-r">
           <div className="flex items-start justify-between gap-3">
             <div>
-              <p className="text-xs font-bold uppercase tracking-[.16em] text-[#c99a5e]">Äang sá»­a</p>
+              <p className="text-xs font-bold uppercase tracking-[.16em] text-[#c99a5e]">Đang sửa</p>
               <h2 className="mt-1 text-xl font-extrabold text-zinc-950">{title}</h2>
-              <p className="mt-1 text-xs leading-5 text-zinc-500">Báº¥m trá»±c tiáº¿p vÃ o website bÃªn pháº£i Ä‘á»ƒ chá»n khu vá»±c cáº§n sá»­a.</p>
+              <p className="mt-1 text-xs leading-5 text-zinc-500">Bấm trực tiếp vào website bên phải để chọn khu vực cần sửa.</p>
             </div>
-            <button type="button" onClick={() => setFrameNonce((value) => value + 1)} className="grid size-9 shrink-0 place-items-center rounded-md border border-zinc-300 text-zinc-700" title="Táº£i láº¡i preview">
+            <button type="button" onClick={() => setFrameNonce((value) => value + 1)} className="grid size-9 shrink-0 place-items-center rounded-md border border-zinc-300 text-zinc-700" title="Tải lại preview">
               <RefreshCw size={16} />
             </button>
           </div>
@@ -275,8 +300,6 @@ export function ThemeContentEditor({
                 type={selected.type}
                 onChange={(key, value) => updateContent(selected, key, value)}
                 onImage={() => chooseImage(selected)}
-                onAdd={() => addItem(selected.type as "services" | "pricing" | "gallery")}
-                onRemove={() => removeItem(selected.type as "services" | "pricing" | "gallery", selected.index || 0)}
               />
             )}
             {selected.type === "contact" && <ContactFields contact={contact} update={updateContact} />}
@@ -285,9 +308,9 @@ export function ThemeContentEditor({
           <div className="mt-6 border-t border-zinc-200 pt-4">
             <button type="button" onClick={save} disabled={saving} className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-md bg-zinc-950 px-4 text-sm font-bold text-white disabled:opacity-60">
               {saving ? <Loader2 className="animate-spin" size={17} /> : <Save size={17} />}
-              {saving ? "Äang lÆ°u..." : "LÆ°u website"}
+              {saving ? "Đang lưu..." : "Lưu website"}
             </button>
-            {message && <p className={`mt-3 text-center text-xs font-bold ${message.startsWith("ÄÃ£") ? "text-emerald-700" : "text-red-700"}`}>{message}</p>}
+            {message && <p className={`mt-3 text-center text-xs font-bold ${message.startsWith("Đã") ? "text-emerald-700" : "text-red-700"}`}>{message}</p>}
           </div>
         </aside>
 
@@ -295,7 +318,7 @@ export function ThemeContentEditor({
           <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
             <div className="flex items-center gap-2 text-sm font-bold text-zinc-700">
               <MonitorSmartphone size={17} />
-              Live preview tháº­t: {activePageLabel}
+              Live preview thật: {activePageLabel}
             </div>
             <div className="flex rounded-md border border-zinc-300 bg-white p-1">
               {(["desktop", "tablet", "mobile"] as Device[]).map((item) => {
@@ -332,16 +355,16 @@ function QuickNav({ selected, onSelect, content }: { selected: Selection; onSele
   const groups: Array<{ label: string; value: Selection }> = [
     { label: "Logo", value: { type: "brand" } },
     { label: "Hero", value: { type: "hero" } },
-    { label: "Giá»›i thiá»‡u", value: { type: "about" } },
-    { label: "LiÃªn há»‡", value: { type: "contact" } },
+    { label: "Giới thiệu", value: { type: "about" } },
+    { label: "Liên hệ", value: { type: "contact" } },
   ];
   return (
     <div className="mt-5 space-y-3">
       <div className="grid grid-cols-2 gap-2">
         {groups.map((group) => <NavButton key={group.label} label={group.label} active={selectionKey(selected) === selectionKey(group.value)} onClick={() => onSelect(group.value)} />)}
       </div>
-      <MiniList label="Dá»‹ch vá»¥" type="services" items={content.services} selected={selected} onSelect={onSelect} />
-      <MiniList label="Báº£ng giÃ¡" type="pricing" items={content.pricing} selected={selected} onSelect={onSelect} />
+      <MiniList label="Dịch vụ" type="services" items={content.services} selected={selected} onSelect={onSelect} />
+      <MiniList label="Bảng giá" type="pricing" items={content.pricing} selected={selected} onSelect={onSelect} />
       <MiniList label="Album" type="gallery" items={content.gallery} selected={selected} onSelect={onSelect} />
     </div>
   );
@@ -379,9 +402,9 @@ function BrandFields({ contact, update, chooseLogo }: { contact: Contact; update
 function ContactFields({ contact, update }: { contact: Contact; update: (key: keyof Contact, value: string) => void }) {
   return (
     <>
-      <Field label="Sá»‘ Ä‘iá»‡n thoáº¡i" value={contact.phone} onChange={(value) => update("phone", value)} />
+      <Field label="Số điện thoại" value={contact.phone} onChange={(value) => update("phone", value)} />
       <Field label="Email" value={contact.email} onChange={(value) => update("email", value)} />
-      <Field label="Äá»‹a chá»‰" value={contact.address} onChange={(value) => update("address", value)} textarea />
+      <Field label="Địa chỉ" value={contact.address} onChange={(value) => update("address", value)} textarea />
       <Field label="Facebook" value={contact.facebook_url} onChange={(value) => update("facebook_url", value)} />
       <Field label="Zalo" value={contact.zalo_phone} onChange={(value) => update("zalo_phone", value.replace(/[^0-9+]/g, ""))} />
     </>
@@ -391,27 +414,23 @@ function ContactFields({ contact, update }: { contact: Contact; update: (key: ke
 function PanelFields({ values, onChange, onImage, showCta = false }: { values: { title: string; description: string; image: string; cta?: string }; onChange: (key: PanelKey, value: string) => void; onImage: () => void; showCta?: boolean }) {
   return (
     <>
-      <Field label="TiÃªu Ä‘á»" value={values.title} onChange={(value) => onChange("title", value)} />
-      <Field label="MÃ´ táº£" value={values.description} onChange={(value) => onChange("description", value)} textarea />
-      {showCta && <Field label="NÃºt kÃªu gá»i" value={values.cta || ""} onChange={(value) => onChange("cta", value)} />}
-      <ImageField label="HÃ¬nh áº£nh" value={values.image} onChange={(value) => onChange("image", value)} onImage={onImage} />
+      <Field label="Tiêu đề" value={values.title} onChange={(value) => onChange("title", value)} />
+      <Field label="Mô tả" value={values.description} onChange={(value) => onChange("description", value)} textarea />
+      {showCta && <Field label="Nút kêu gọi" value={values.cta || ""} onChange={(value) => onChange("cta", value)} />}
+      <ImageField label="Hình ảnh" value={values.image} onChange={(value) => onChange("image", value)} onImage={onImage} />
     </>
   );
 }
 
-function ItemFields({ item, type, onChange, onImage, onAdd, onRemove }: { item: Item; type: "services" | "pricing" | "gallery"; onChange: (key: keyof Item, value: string) => void; onImage: () => void; onAdd: () => void; onRemove: () => void }) {
+function ItemFields({ item, type, onChange, onImage }: { item: Item; type: "services" | "pricing" | "gallery"; onChange: (key: keyof Item, value: string) => void; onImage: () => void }) {
   return (
     <>
-      <Field label="TiÃªu Ä‘á»" value={item.title} onChange={(value) => onChange("title", value)} />
-      <Field label="NhÃ£n phá»¥" value={item.subtitle} onChange={(value) => onChange("subtitle", value)} />
-      <Field label="MÃ´ táº£" value={item.description} onChange={(value) => onChange("description", value)} textarea />
-      {type === "pricing" && <Field label="GiÃ¡" value={item.price} onChange={(value) => onChange("price", value)} />}
-      {type !== "gallery" && <Field label="Äiá»ƒm ná»•i báº­t" value={item.features} onChange={(value) => onChange("features", value)} textarea />}
-      <ImageField label="HÃ¬nh áº£nh" value={item.image} onChange={(value) => onChange("image", value)} onImage={onImage} />
-      <div className="grid grid-cols-2 gap-2 pt-2">
-        <button type="button" onClick={onAdd} className="min-h-10 rounded-md border border-zinc-300 text-sm font-bold text-zinc-700">ThÃªm má»¥c</button>
-        <button type="button" onClick={onRemove} className="min-h-10 rounded-md border border-red-200 text-sm font-bold text-red-700">XÃ³a má»¥c</button>
-      </div>
+      <Field label="Tiêu đề" value={item.title} onChange={(value) => onChange("title", value)} />
+      <Field label="Nhãn phụ" value={item.subtitle} onChange={(value) => onChange("subtitle", value)} />
+      <Field label="Mô tả" value={item.description} onChange={(value) => onChange("description", value)} textarea />
+      {type === "pricing" && <Field label="Giá" value={item.price} onChange={(value) => onChange("price", value)} />}
+      {type !== "gallery" && <Field label="Điểm nổi bật" value={item.features} onChange={(value) => onChange("features", value)} textarea />}
+      <ImageField label="Hình ảnh" value={item.image} onChange={(value) => onChange("image", value)} onImage={onImage} />
     </>
   );
 }
@@ -423,7 +442,7 @@ function ImageField({ label, value, onChange, onImage }: { label: string; value:
       <div className="mt-2 aspect-video overflow-hidden rounded-md bg-zinc-100" style={value ? { backgroundImage: `url(${value})`, backgroundPosition: "center", backgroundSize: "cover" } : undefined} />
       <button type="button" onClick={onImage} className="mt-2 inline-flex min-h-10 items-center gap-2 rounded-md border border-zinc-300 px-3 text-sm font-bold text-zinc-700">
         <ImagePlus size={16} />
-        Táº£i áº£nh lÃªn
+        Tải ảnh lên
       </button>
     </div>
   );
