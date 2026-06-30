@@ -3,3 +3,5 @@
 
 This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` before writing any code. Heed deprecation notices.
 <!-- END:nextjs-agent-rules -->
+
+Before making UI, visual design, layout, branding, or component styling changes, read `DESIGN.md` and follow its tokens and guidance.

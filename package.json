@@ -6,9 +6,11 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "design:lint": "designmd lint DESIGN.md"
   },
   "dependencies": {
+    "@google/design.md": "^0.3.0",
     "@supabase/ssr": "^0.12.0",
     "@supabase/supabase-js": "^2.108.1",
     "@types/archiver": "^8.0.0",
