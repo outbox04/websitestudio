@@ -58,6 +58,11 @@ export type AdminEditRequest = {
 
 type AdminView = "dashboard" | "album-manager" | "edit-requests" | "payment-settings" | "news" | "site-builder" | "placeholder";
 
+type StudioSettings = {
+  setup_completed?: boolean;
+  [key: string]: unknown;
+};
+
 type AdminStudioWorkspaceProps = {
   galleries: AdminGallery[];
   editRequests: AdminEditRequest[];
@@ -65,7 +70,7 @@ type AdminStudioWorkspaceProps = {
   studioName?: string;
   tenantMode?: boolean;
   studioSlug?: string;
-  studioSettings?: any;
+  studioSettings?: StudioSettings;
 };
 
 export function AdminStudioWorkspace({
@@ -134,7 +139,7 @@ export function AdminStudioWorkspace({
           )}
 
           {activeView === "album-manager" && (
-            <AlbumManagerView initialGalleries={galleries} editRequests={editRequests} />
+            <AlbumManagerView initialGalleries={galleries} editRequests={editRequests} tenantMode={tenantMode} />
           )}
 
           {activeView === "edit-requests" && (
@@ -166,7 +171,7 @@ function DashboardView({
   editRequests: AdminEditRequest[];
   tenantMode: boolean;
   studioSlug: string;
-  studioSettings: any;
+  studioSettings: StudioSettings;
 }) {
   const [setupCompleted, setSetupCompleted] = useState(Boolean(studioSettings?.setup_completed));
   const [isSettingUp, setIsSettingUp] = useState(false);
@@ -189,12 +194,13 @@ function DashboardView({
         method: "POST",
         headers: { "Content-Type": "application/json" },
       });
-      const data = await response.json();
+      const data = (await response.json()) as { error?: string };
       if (!response.ok) {
         throw new Error(data.error || "Không thể setup website.");
       }
       setSetupCompleted(true);
       window.location.reload();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       setSetupError(err.message || "Đã xảy ra lỗi trong quá trình thiết lập.");
     } finally {
@@ -236,9 +242,11 @@ function DashboardView({
                     <Sparkles className="text-amber-600 animate-pulse" size={20} />
                     Website của bạn chưa được đưa vào vận hành
                   </h3>
+                  {/* eslint-disable react/no-unescaped-entities */}
                   <p className="mt-1 text-sm leading-6 text-amber-800">
                     Trang chủ subdomain hiện tại đang hiển thị thông báo "Website đang hoàn thiện". Nhấp nút bên dưới để tạo các dữ liệu mẫu (album, ảnh, tin tức, tài khoản ngân hàng) và đưa website vào hoạt động chính thức ngay lập tức!
                   </p>
+                  {/* eslint-enable react/no-unescaped-entities */}
                 </div>
                 <button
                   type="button"
@@ -311,9 +319,11 @@ function DashboardView({
 function AlbumManagerView({
   initialGalleries,
   editRequests,
+  tenantMode,
 }: {
   initialGalleries: AdminGallery[];
   editRequests: AdminEditRequest[];
+  tenantMode: boolean;
 }) {
   const [galleries, setGalleries] = useState(initialGalleries);
   const [expandedId, setExpandedId] = useState<string | null>(initialGalleries[0]?.id ?? null);
@@ -364,7 +374,7 @@ function AlbumManagerView({
       />
 
       <div className="grid gap-5 xl:grid-cols-[0.95fr_1.05fr]">
-        <CustomerGalleryCreator />
+        <CustomerGalleryCreator tenantMode={tenantMode} />
         <section className="rounded-lg border border-zinc-200 bg-white p-5 shadow-sm">
           <h2 className="text-xl font-bold text-zinc-950">Quy trình file</h2>
           <div className="mt-4 space-y-3 text-sm leading-6 text-zinc-600">

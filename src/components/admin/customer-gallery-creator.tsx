@@ -17,7 +17,7 @@ type CreatedGallery = {
   };
 };
 
-export function CustomerGalleryCreator() {
+export function CustomerGalleryCreator({ tenantMode = false }: { tenantMode?: boolean }) {
   const [name, setName] = useState("");
   const [shootDate, setShootDate] = useState("");
   const [rawDriveFolderUrl, setRawDriveFolderUrl] = useState("");
@@ -98,7 +98,9 @@ export function CustomerGalleryCreator() {
         <div>
           <h2 className="text-xl font-bold text-zinc-950">Tạo thư mục khách hàng TLORA</h2>
           <p className="mt-2 text-sm leading-6 text-zinc-600">
-            Tạo thư mục theo tên khách và 2 thư mục con FILE GỐC, FILE CHỈNH SỬA trong Google Drive.
+            {tenantMode
+              ? "Tạo thư mục theo tên khách và 2 thư mục con FILE GỐC, FILE CHỈNH SỬA trong Google Drive của studio."
+              : "Tạo thư mục theo tên khách và 2 thư mục con FILE GỐC, FILE CHỈNH SỬA bằng Drive API TLORA trên Vercel."}
           </p>
         </div>
         <span className="grid size-10 place-items-center rounded-md bg-zinc-950 text-white">
@@ -146,7 +148,9 @@ export function CustomerGalleryCreator() {
         </label>
       </div>
       <p className="mt-2 text-xs leading-5 text-zinc-500">
-        Nếu studio đã kết nối Google Drive, hệ thống có thể tự tạo folder. Nếu folder đã có sẵn, dán link thật để album đồng bộ ngay.
+        {tenantMode
+          ? "Nếu studio đã kết nối Google Drive, hệ thống có thể tự tạo folder. Nếu folder đã có sẵn, dán link thật để album đồng bộ ngay."
+          : "Admin gốc dùng Google Drive API đã cấu hình trên Vercel để tự tạo folder. Nếu folder đã có sẵn, dán link thật để album đồng bộ ngay."}
       </p>
       {error && <div className="mt-4 rounded-md border border-red-200 bg-red-50 p-3 text-sm font-medium text-red-700">{error}</div>}
       {notice && <div className="mt-4 rounded-md border border-amber-200 bg-amber-50 p-3 text-sm font-medium text-amber-800">{notice}</div>}
