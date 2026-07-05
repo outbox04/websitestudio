@@ -1,16 +1,50 @@
 import { NextResponse } from "next/server";
 import { driveFolderIdFromUrl, driveFolderUrl } from "@/lib/customer-gallery-scope";
-import { createCustomerDriveFoldersInStudioDrive } from "@/lib/google-drive";
+import { createCustomerDriveFolders, createCustomerDriveFoldersInStudioDrive } from "@/lib/google-drive";
+import type { CustomerDriveFolders } from "@/lib/google-drive";
 import { getGalleryUrls, publicOriginFromHeaders } from "@/lib/public-origin";
 import { createSlug } from "@/lib/slug";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { checkAuthContext, getStudioAdminContext, studioSlugFromHost } from "@/lib/studio-admin";
+import { checkAuthContext } from "@/lib/studio-admin";
 import { getStudioDriveClient, getStudioDriveConnection } from "@/lib/studio-google-drive";
 
 export const runtime = "nodejs";
 
 function publicOrigin(request: Request) {
   return publicOriginFromHeaders(request.headers) || new URL(request.url).origin;
+}
+
+type StudioJoin = { slug: string } | { slug: string }[] | null;
+
+type AdminCustomerGalleryRow = {
+  id: string;
+  customer_name: string;
+  customer_name_slug: string;
+  studios?: StudioJoin;
+};
+
+type SelectedPhotoRow = {
+  gallery_id: string;
+  file_name: string;
+};
+
+type CustomerGalleryInsert = {
+  customer_name: string;
+  customer_name_slug: string;
+  shoot_date: string;
+  root_drive_folder_id: string;
+  raw_drive_folder_id: string;
+  edited_drive_folder_id: string;
+  root_drive_folder_url: string;
+  raw_drive_folder_url: string;
+  edited_drive_folder_url: string;
+  edited_download_enabled: boolean;
+  studio_id?: string;
+};
+
+function joinedStudioSlug(studios: StudioJoin | undefined) {
+  if (!studios) return null;
+  return Array.isArray(studios) ? studios[0]?.slug || null : studios.slug;
 }
 
 
@@ -80,19 +114,16 @@ export async function GET(request: Request) {
 
     const selectedFilesByGalleryId = new Map<string, string[]>();
 
-    for (const photo of (selectedPhotosData || []) as any[]) {
+    for (const photo of (selectedPhotosData || []) as SelectedPhotoRow[]) {
       const existing = selectedFilesByGalleryId.get(photo.gallery_id) || [];
       existing.push(photo.file_name);
       selectedFilesByGalleryId.set(photo.gallery_id, existing);
     }
 
     return NextResponse.json({
-      galleries: (data || []).map((gallery) => {
+      galleries: ((data || []) as AdminCustomerGalleryRow[]).map((gallery) => {
         const origin = publicOrigin(request);
-        const studiosData = gallery.studios;
-        const galleryStudioSlug = studiosData
-          ? (Array.isArray(studiosData) ? studiosData[0]?.slug : (studiosData as any).slug)
-          : null;
+        const galleryStudioSlug = joinedStudioSlug(gallery.studios);
         const urls = getGalleryUrls(gallery.customer_name_slug, galleryStudioSlug, origin);
         return {
           ...gallery,
@@ -162,12 +193,12 @@ export async function POST(request: Request) {
       });
     }
 
-    let folders;
-    let connection = null;
+    let folders: CustomerDriveFolders | undefined;
+    let connection: Awaited<ReturnType<typeof getStudioDriveConnection>> = null;
     if (context) {
       try {
         connection = await getStudioDriveConnection(context.studioId);
-      } catch (err) {}
+      } catch {}
     }
 
     const rawFolderId = driveFolderIdFromUrl(rawDriveFolderUrl || "");
@@ -184,6 +215,8 @@ export async function POST(request: Request) {
       };
     } else if (process.env.GOOGLE_OAUTH_CLIENT_ID && connection && !connection.root_folder_id.startsWith("mock-")) {
       folders = await createCustomerDriveFoldersInStudioDrive(getStudioDriveClient(connection!), connection.root_folder_id, name.trim());
+    } else if (!context) {
+      folders = await createCustomerDriveFolders(name.trim());
     } else {
       return NextResponse.json(
         { error: "Hãy kết nối Google Drive cho studio hoặc dán link folder FILE GỐC và FILE CHỈNH thật." },
@@ -191,7 +224,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const insertData: any = {
+    const insertData: CustomerGalleryInsert = {
       customer_name: name.trim(),
       customer_name_slug: slug,
       shoot_date: shootDate,
