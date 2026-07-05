@@ -77,6 +77,7 @@ export function CustomerGalleryView({
   const [query, setQuery] = useState("");
   const saveTimers = useRef<Record<string, number>>({});
   const autoSyncStarted = useRef(false);
+  const syncInFlight = useRef(false);
 
   const selectedPhotos = useMemo(() => photos.filter((photo) => photo.selected), [photos]);
   const notedPhotos = useMemo(() => photos.filter((photo) => Boolean(photo.edit_note?.trim())), [photos]);
@@ -167,11 +168,19 @@ export function CustomerGalleryView({
   }, [gallery.customer_name_slug, gallery.payment_status]);
 
   useEffect(() => {
-    if (autoSyncStarted.current || rawPhotos.length > 0 || editedPhotos.length > 0) return;
+    if (autoSyncStarted.current) return;
     autoSyncStarted.current = true;
 
     void syncPhotos({ silent: true });
-  }, [editedPhotos.length, rawPhotos.length]);
+  }, []);
+
+  useEffect(() => {
+    const timer = window.setInterval(() => {
+      void syncPhotos({ silent: true });
+    }, 120000);
+
+    return () => window.clearInterval(timer);
+  }, []);
 
   async function patchPhoto(photoId: string, body: { selected?: boolean; editNote?: string }) {
     await fetch(`/api/customer-galleries/photos/${photoId}`, {
@@ -196,12 +205,15 @@ export function CustomerGalleryView({
   }
 
   async function syncPhotos(options?: { silent?: boolean }) {
+    if (syncInFlight.current) return;
+    syncInFlight.current = true;
     setSyncing(true);
     try {
       const response = await fetch(`/api/customer-galleries/${gallery.customer_name_slug}/sync`, { method: "POST" });
-      const payload = await response.json().catch(() => ({})) as { rawCount?: number; editedCount?: number; error?: string };
+      const payload = await response.json().catch(() => ({})) as { rawCount?: number; editedCount?: number; newRawCount?: number; newEditedCount?: number; error?: string };
       if (response.ok) {
-        if ((payload.rawCount || 0) > 0 || (payload.editedCount || 0) > 0 || !options?.silent) {
+        const hasNewPhotos = (payload.newRawCount || 0) > 0 || (payload.newEditedCount || 0) > 0;
+        if (hasNewPhotos || !options?.silent) {
           window.location.reload();
         }
         return;
@@ -211,6 +223,7 @@ export function CustomerGalleryView({
         alert(payload.error || "Không đồng bộ được ảnh mới.");
       }
     } finally {
+      syncInFlight.current = false;
       setSyncing(false);
     }
   }

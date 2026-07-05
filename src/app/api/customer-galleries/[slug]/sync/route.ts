@@ -46,8 +46,8 @@ export async function POST(request: Request, { params }: { params: Promise<{ slu
         listPublicDriveImages(gallery.edited_drive_folder_id),
       ]);
 
-      await upsertSyncedPhotos(supabase, gallery.id, rawPhotos, editedPhotos);
-      return NextResponse.json({ rawCount: rawPhotos.length, editedCount: editedPhotos.length });
+      const result = await upsertSyncedPhotos(supabase, gallery.id, rawPhotos, editedPhotos);
+      return NextResponse.json({ rawCount: rawPhotos.length, editedCount: editedPhotos.length, ...result });
     } catch (error) {
       return NextResponse.json(
         { error: error instanceof Error ? error.message : "Không đồng bộ được ảnh từ Google Drive public folder" },
@@ -64,9 +64,9 @@ export async function POST(request: Request, { params }: { params: Promise<{ slu
       listDriveImages(gallery.edited_drive_folder_id, drive),
     ]);
 
-    await upsertSyncedPhotos(supabase, gallery.id, rawPhotos, editedPhotos);
+    const result = await upsertSyncedPhotos(supabase, gallery.id, rawPhotos, editedPhotos);
 
-    return NextResponse.json({ rawCount: rawPhotos.length, editedCount: editedPhotos.length });
+    return NextResponse.json({ rawCount: rawPhotos.length, editedCount: editedPhotos.length, ...result });
   } catch (error) {
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Không đồng bộ được ảnh từ Google Drive" },
@@ -102,11 +102,24 @@ async function upsertSyncedPhotos(
     })),
   ];
 
-  if (rows.length === 0) return;
+  if (rows.length === 0) return { newRawCount: 0, newEditedCount: 0 };
+
+  const { data: existingRows, error: existingError } = await supabase
+    .from("customer_gallery_photos")
+    .select("drive_file_id")
+    .eq("gallery_id", galleryId);
+
+  if (existingError) throw existingError;
+
+  const existingIds = new Set((existingRows || []).map((photo) => photo.drive_file_id));
+  const newRawCount = rawPhotos.filter((photo) => !existingIds.has(photo.id)).length;
+  const newEditedCount = editedPhotos.filter((photo) => !existingIds.has(photo.id)).length;
 
   const { error } = await supabase
     .from("customer_gallery_photos")
     .upsert(rows, { onConflict: "gallery_id,drive_file_id" });
 
   if (error) throw error;
+
+  return { newRawCount, newEditedCount };
 }
