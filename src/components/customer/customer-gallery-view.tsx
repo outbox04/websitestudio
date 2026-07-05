@@ -11,6 +11,7 @@ import {
   ImageOff,
   Loader2,
   MessageSquare,
+  Pause,
   Play,
   RefreshCw,
   Search,
@@ -70,6 +71,8 @@ export function CustomerGalleryView({
   const [tab, setTab] = useState<Tab>(initialTab);
   const [photos, setPhotos] = useState(rawPhotos);
   const [preview, setPreview] = useState<GalleryPhoto | null>(null);
+  const [slideshowActive, setSlideshowActive] = useState(false);
+  const [slideshowPaused, setSlideshowPaused] = useState(false);
   const [syncing, setSyncing] = useState(false);
   const [query, setQuery] = useState("");
   const saveTimers = useRef<Record<string, number>>({});
@@ -84,7 +87,7 @@ export function CustomerGalleryView({
     if (!normalizedQuery) return source;
     return source.filter((photo) => photo.file_name.toLowerCase().includes(normalizedQuery));
   }, [editedPhotos, notedPhotos, photos, query, selectedPhotos, tab]);
-  const previewPhotos = visiblePhotos.length > 0 ? visiblePhotos : tab === "edited" ? editedPhotos : photos;
+  const previewPhotos = useMemo(() => (visiblePhotos.length > 0 ? visiblePhotos : tab === "edited" ? editedPhotos : photos), [editedPhotos, photos, tab, visiblePhotos]);
   const previewIndex = preview ? previewPhotos.findIndex((photo) => photo.id === preview.id) : -1;
   const cover = gallery.cover_url || photos[0]?.thumbnail_url || editedPhotos[0]?.thumbnail_url;
   const shootDate = new Date(gallery.shoot_date).toLocaleDateString("vi-VN");
@@ -97,6 +100,20 @@ export function CustomerGalleryView({
     const form = document.createElement("form"); form.method = "POST"; form.action = payload.checkoutUrl;
     Object.entries(payload.fields).forEach(([name, value]) => { const input = document.createElement("input"); input.type = "hidden"; input.name = name; input.value = String(value); form.appendChild(input); });
     document.body.appendChild(form); form.submit();
+  }
+
+  const closePreview = useCallback(() => {
+    setPreview(null);
+    setSlideshowActive(false);
+    setSlideshowPaused(false);
+  }, []);
+
+  function startSlideshow() {
+    const firstPhoto = visiblePhotos[0] || previewPhotos[0] || null;
+    if (!firstPhoto) return;
+    setPreview(firstPhoto);
+    setSlideshowActive(true);
+    setSlideshowPaused(false);
   }
 
   const showPreviousPhoto = useCallback(() => {
@@ -117,12 +134,27 @@ export function CustomerGalleryView({
     function handleKeyDown(event: KeyboardEvent) {
       if (event.key === "ArrowLeft") showPreviousPhoto();
       if (event.key === "ArrowRight") showNextPhoto();
-      if (event.key === "Escape") setPreview(null);
+      if (event.key === "Escape") closePreview();
     }
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [preview, showNextPhoto, showPreviousPhoto]);
+  }, [closePreview, preview, showNextPhoto, showPreviousPhoto]);
+
+  useEffect(() => {
+    if (!slideshowActive || slideshowPaused || !preview || previewPhotos.length <= 1) return;
+
+    const timer = window.setInterval(() => {
+      setPreview((currentPhoto) => {
+        if (!currentPhoto) return currentPhoto;
+        const currentIndex = previewPhotos.findIndex((photo) => photo.id === currentPhoto.id);
+        const nextIndex = currentIndex >= 0 ? (currentIndex + 1) % previewPhotos.length : 0;
+        return previewPhotos[nextIndex];
+      });
+    }, 3000);
+
+    return () => window.clearInterval(timer);
+  }, [preview, previewPhotos, slideshowActive, slideshowPaused]);
 
   useEffect(() => {
     if (gallery.payment_status !== "pending") return;
@@ -224,7 +256,7 @@ export function CustomerGalleryView({
                 Cảm ơn anh/chị đã tin tưởng TLORA Studio. Ghi chú chỉnh sửa được tự động lưu khi nhập trong phần xem ảnh.
               </p>
               <div className="mt-7 flex flex-wrap gap-3">
-                <button onClick={() => setPreview(visiblePhotos[0] || null)} className="inline-flex min-h-12 items-center gap-3 rounded-md bg-[#d8b766] px-5 text-sm font-semibold text-black shadow-lg shadow-[#d8b766]/20">
+                <button onClick={startSlideshow} className="inline-flex min-h-12 items-center gap-3 rounded-md bg-[#d8b766] px-5 text-sm font-semibold text-black shadow-lg shadow-[#d8b766]/20">
                   <Play size={17} fill="currentColor" />
                   Xem slideshow
                 </button>
@@ -295,7 +327,10 @@ export function CustomerGalleryView({
           photo={preview}
           photos={previewPhotos}
           index={previewIndex}
-          onClose={() => setPreview(null)}
+          slideshowActive={slideshowActive}
+          slideshowPaused={slideshowPaused}
+          onToggleSlideshowPause={() => setSlideshowPaused((paused) => !paused)}
+          onClose={closePreview}
           onPrevious={showPreviousPhoto}
           onNext={showNextPhoto}
           onToggle={toggleSelected}
@@ -434,6 +469,9 @@ function PreviewModal({
   photo,
   photos,
   index,
+  slideshowActive,
+  slideshowPaused,
+  onToggleSlideshowPause,
   onClose,
   onPrevious,
   onNext,
@@ -446,6 +484,9 @@ function PreviewModal({
   photo: GalleryPhoto;
   photos: GalleryPhoto[];
   index: number;
+  slideshowActive: boolean;
+  slideshowPaused: boolean;
+  onToggleSlideshowPause: () => void;
   onClose: () => void;
   onPrevious: () => void;
   onNext: () => void;
@@ -517,6 +558,26 @@ function PreviewModal({
             </div>
           )}
         </aside>
+        {slideshowActive && (
+          <div className="absolute left-3 top-3 flex items-center gap-2 rounded-full border border-white/10 bg-black/55 p-1.5 text-white shadow-lg backdrop-blur">
+            <button
+              onClick={onToggleSlideshowPause}
+              className="inline-flex min-h-9 items-center gap-2 rounded-full px-3 text-sm font-semibold transition hover:bg-white/10"
+              aria-label={slideshowPaused ? "Tiếp tục slideshow" : "Tạm dừng slideshow"}
+            >
+              {slideshowPaused ? <Play size={17} fill="currentColor" /> : <Pause size={17} fill="currentColor" />}
+              {slideshowPaused ? "Tiếp tục" : "Tạm dừng"}
+            </button>
+            <button
+              onClick={onClose}
+              className="inline-flex min-h-9 items-center gap-2 rounded-full bg-white/10 px-3 text-sm font-semibold transition hover:bg-[#d8b766] hover:text-black"
+              aria-label="Thoát slideshow"
+            >
+              <X size={17} />
+              Thoát
+            </button>
+          </div>
+        )}
         <button onClick={onClose} className="absolute right-3 top-3 grid size-10 place-items-center rounded-full bg-white/10 text-white backdrop-blur" aria-label="Đóng">
           <X size={20} />
         </button>
