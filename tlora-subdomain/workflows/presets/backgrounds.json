@@ -1,0 +1,8 @@
+{
+  "backgrounds": [
+    { "id": "white-studio", "label": "Studio trắng cao cấp", "prompt": "bright white premium studio backdrop" },
+    { "id": "soft-window", "label": "Cửa sổ ánh sáng mềm", "prompt": "large window soft daylight, airy interior" },
+    { "id": "art-gallery", "label": "Gallery nghệ thuật", "prompt": "minimal art gallery background, neutral walls" },
+    { "id": "pastel-floral", "label": "Set hoa pastel", "prompt": "pastel floral studio set, soft romantic mood" }
+  ]
+}
