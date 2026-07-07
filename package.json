@@ -8,9 +8,6 @@
     "build:platform": "npm run build --prefix tlora-platform",
     "build:subdomain": "npm run build --prefix tlora-subdomain",
     "lint:platform": "npm run lint --prefix tlora-platform",
-    "lint:subdomain": "npm run lint --prefix tlora-subdomain",
-    "dev:raw-selector": "npm run dev --prefix tlora-raw-selector",
-    "build:raw-selector": "npm run build --prefix tlora-raw-selector",
-    "tauri:raw-selector": "npm run tauri --prefix tlora-raw-selector"
+    "lint:subdomain": "npm run lint --prefix tlora-subdomain"
   }
 }
