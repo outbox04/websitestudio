@@ -33,6 +33,12 @@ type InvitationForm = {
   showGuestBook: boolean;
 };
 
+type CreatedInvitation = {
+  id: string;
+  slug: string;
+  status: string;
+};
+
 const defaultForm: InvitationForm = {
   groomName: "Minh Anh",
   brideName: "Hoai Thu",
@@ -99,17 +105,21 @@ function fieldId(name: keyof InvitationForm) {
   return `wedding-${name}`;
 }
 
-export function WeddingInvitationBuilder({ studioName }: { studioName: string }) {
+export function WeddingInvitationBuilder({ studioName, studioSlug }: { studioName: string; studioSlug: string }) {
   const [form, setForm] = useState<InvitationForm>(defaultForm);
   const [coverUrl, setCoverUrl] = useState("");
   const [copied, setCopied] = useState(false);
-  const [created, setCreated] = useState(false);
+  const [created, setCreated] = useState<CreatedInvitation | null>(null);
+  const [publicUrl, setPublicUrl] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState("");
   const theme = themes[form.theme];
   const config = useMemo(() => ({ studioName, invitation: form, coverImage: coverUrl }), [coverUrl, form, studioName]);
 
   function update<K extends keyof InvitationForm>(key: K, value: InvitationForm[K]) {
     setForm((current) => ({ ...current, [key]: value }));
-    setCreated(false);
+    setCreated(null);
+    setSaveError("");
   }
 
   function uploadCover(event: ChangeEvent<HTMLInputElement>) {
@@ -117,12 +127,46 @@ export function WeddingInvitationBuilder({ studioName }: { studioName: string })
     if (!file) return;
     if (coverUrl) URL.revokeObjectURL(coverUrl);
     setCoverUrl(URL.createObjectURL(file));
-    setCreated(false);
+    setCreated(null);
+    setSaveError("");
   }
 
-  function submit(event: FormEvent<HTMLFormElement>) {
+  async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    setCreated(true);
+    setSaving(true);
+    setSaveError("");
+    setCreated(null);
+
+    try {
+      const response = await fetch("/api/wedding-invitations", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          studioSlug,
+          status: "draft",
+          groomName: form.groomName,
+          brideName: form.brideName,
+          eventDate: form.eventDate,
+          eventTime: form.eventTime,
+          venueName: form.venueName,
+          venueAddress: form.venueAddress,
+          theme: form.theme,
+          config,
+        }),
+      });
+      const payload = (await response.json()) as { invitation?: CreatedInvitation; publicUrl?: string; error?: string };
+
+      if (!response.ok || !payload.invitation) {
+        throw new Error(payload.error || "Khong tao duoc thiep cuoi.");
+      }
+
+      setCreated(payload.invitation);
+      setPublicUrl(payload.publicUrl || "");
+    } catch (error) {
+      setSaveError(error instanceof Error ? error.message : "Khong tao duoc thiep cuoi.");
+    } finally {
+      setSaving(false);
+    }
   }
 
   async function copyConfig() {
@@ -218,16 +262,24 @@ export function WeddingInvitationBuilder({ studioName }: { studioName: string })
 
           {created && (
             <div className="mt-5 rounded-md border border-[#B7EB8F] bg-[#F6FFED] p-3 text-sm font-semibold text-[#389E0D]">
-              Da tao ban nhap thiep. Ban co the copy cau hinh de luu hoac ket noi API luu thiep o buoc tiep theo.
+              Da luu ban nhap thiep: {created.slug}
+              {publicUrl && <span className="mt-1 block break-all font-normal text-[#333333]">{publicUrl}</span>}
+            </div>
+          )}
+
+          {saveError && (
+            <div className="mt-5 rounded-md border border-[#FFCCC7] bg-[#FFF1F0] p-3 text-sm font-semibold text-[#CF1322]">
+              {saveError}
             </div>
           )}
 
           <button
             type="submit"
-            className="mt-6 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-md bg-[#EB2F96] px-5 text-sm font-semibold text-white shadow-[0_2px_0_rgba(0,0,0,0.02)] transition hover:bg-[#C41D7F] focus:outline-none focus:ring-2 focus:ring-[#BAE0FF]"
+            disabled={saving}
+            className="mt-6 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-md bg-[#EB2F96] px-5 text-sm font-semibold text-white shadow-[0_2px_0_rgba(0,0,0,0.02)] transition hover:bg-[#C41D7F] focus:outline-none focus:ring-2 focus:ring-[#BAE0FF] disabled:cursor-not-allowed disabled:bg-[#BFBFBF]"
           >
             <Sparkles size={17} />
-            Tao ban nhap thiep
+            {saving ? "Dang luu..." : "Tao ban nhap thiep"}
           </button>
         </form>
 

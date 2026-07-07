@@ -49,5 +49,5 @@ export default async function WeddingInvitationPage({ params }: { params: Promis
 
   if (!studio && studioSlug !== WEDDING_FEATURE_SLUG) notFound();
 
-  return <WeddingInvitationBuilder studioName={studio?.display_name || WEDDING_FEATURE_NAME} />;
+  return <WeddingInvitationBuilder studioName={studio?.display_name || WEDDING_FEATURE_NAME} studioSlug={studioSlug} />;
 }
