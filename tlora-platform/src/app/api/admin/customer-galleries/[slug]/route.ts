@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { checkAuthContext } from "@/lib/studio-admin";
+import { requireTloraStudioId } from "@/lib/tlora-studio";
 
 export async function PATCH(request: Request, { params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
@@ -39,7 +40,9 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ sl
 
   if (context) {
     query = query.eq("studio_id", context.studioId);
-  } else if (!isPlatformAdmin) {
+  } else if (isPlatformAdmin) {
+    query = query.eq("studio_id", await requireTloraStudioId());
+  } else {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 

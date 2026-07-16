@@ -2,6 +2,7 @@ import { createCustomerDriveFolders } from "@/lib/google-drive";
 import { createSlug } from "@/lib/slug";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { errorMessage, isAuthorized, json, options, publicOrigin, unauthorized } from "@/lib/tlora-api";
+import { requireTloraStudioId } from "@/lib/tlora-studio";
 
 export const runtime = "nodejs";
 
@@ -33,12 +34,14 @@ export async function GET(request: Request) {
 
   try {
     const supabase = createAdminClient();
+    const studioId = await requireTloraStudioId();
     const origin = publicOrigin(request);
     const { data, error } = await supabase
       .from("customer_galleries")
       .select(
         "id,customer_name,customer_name_slug,shoot_date,raw_drive_folder_url,edited_drive_folder_url,created_at,updated_at",
       )
+      .eq("studio_id", studioId)
       .order("created_at", { ascending: false });
 
     if (error) {
@@ -83,12 +86,14 @@ export async function POST(request: Request) {
 
   try {
     const supabase = createAdminClient();
+    const studioId = await requireTloraStudioId();
     const origin = publicOrigin(request);
 
     const { data: existing, error: existingError } = await supabase
       .from("customer_galleries")
       .select("*")
       .eq("customer_name_slug", slug)
+      .eq("studio_id", studioId)
       .maybeSingle();
 
     if (existingError) {
@@ -120,6 +125,7 @@ export async function POST(request: Request) {
         raw_drive_folder_url: folders.rawFolderUrl,
         edited_drive_folder_url: folders.editedFolderUrl,
         edited_download_enabled: false,
+        studio_id: studioId,
       })
       .select("*")
       .single();

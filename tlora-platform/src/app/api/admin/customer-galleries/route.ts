@@ -7,6 +7,7 @@ import { createSlug } from "@/lib/slug";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { checkAuthContext } from "@/lib/studio-admin";
 import { getStudioDriveClient, getStudioDriveConnection } from "@/lib/studio-google-drive";
+import { requireTloraStudioId } from "@/lib/tlora-studio";
 
 export const runtime = "nodejs";
 
@@ -14,12 +15,13 @@ function publicOrigin(request: Request) {
   return publicOriginFromHeaders(request.headers) || new URL(request.url).origin;
 }
 
-type StudioJoin = { slug: string } | { slug: string }[] | null;
+type StudioJoin = { slug: string; studio_type?: string } | { slug: string; studio_type?: string }[] | null;
 
 type AdminCustomerGalleryRow = {
   id: string;
   customer_name: string;
   customer_name_slug: string;
+  share_token?: string | null;
   studios?: StudioJoin;
 };
 
@@ -44,7 +46,8 @@ type CustomerGalleryInsert = {
 
 function joinedStudioSlug(studios: StudioJoin | undefined) {
   if (!studios) return null;
-  return Array.isArray(studios) ? studios[0]?.slug || null : studios.slug;
+  const studio = Array.isArray(studios) ? studios[0] : studios;
+  return studio?.studio_type === "tenant" ? studio.slug : null;
 }
 
 
@@ -74,13 +77,14 @@ export async function GET(request: Request) {
     const auth = await checkAuthContext(request);
     if (auth.errorResponse) return auth.errorResponse;
     const { context } = auth;
+    const targetStudioId = context?.studioId || await requireTloraStudioId();
 
     const supabase = createAdminClient();
     
     let galleriesQuery = supabase
       .from("customer_galleries")
       .select(
-        "id,customer_name,customer_name_slug,shoot_date,raw_drive_folder_url,edited_drive_folder_url,raw_download_enabled,edited_download_enabled,created_at,updated_at,studio_id,studios(slug)",
+        "id,customer_name,customer_name_slug,shoot_date,raw_drive_folder_url,edited_drive_folder_url,raw_download_enabled,edited_download_enabled,share_token,created_at,updated_at,studio_id,studios(slug,studio_type)",
       )
       .order("created_at", { ascending: false });
 
@@ -91,13 +95,8 @@ export async function GET(request: Request) {
       .eq("kind", "raw")
       .order("file_name", { ascending: true });
 
-    if (context) {
-      galleriesQuery = galleriesQuery.eq("studio_id", context.studioId);
-      photosQuery = photosQuery.eq("customer_galleries.studio_id", context.studioId);
-    } else {
-      galleriesQuery = galleriesQuery.is("studio_id", null);
-      photosQuery = photosQuery.is("customer_galleries.studio_id", null);
-    }
+    galleriesQuery = galleriesQuery.eq("studio_id", targetStudioId);
+    photosQuery = photosQuery.eq("customer_galleries.studio_id", targetStudioId);
 
     const [{ data, error }, { data: selectedPhotosData, error: selectedPhotosError }] = await Promise.all([
       galleriesQuery,
@@ -124,7 +123,7 @@ export async function GET(request: Request) {
       galleries: ((data || []) as AdminCustomerGalleryRow[]).map((gallery) => {
         const origin = publicOrigin(request);
         const galleryStudioSlug = joinedStudioSlug(gallery.studios);
-        const urls = getGalleryUrls(gallery.customer_name_slug, galleryStudioSlug, origin);
+        const urls = getGalleryUrls(gallery.customer_name_slug, galleryStudioSlug, origin, gallery.share_token);
         return {
           ...gallery,
           customerUrl: urls.customerUrl,
@@ -161,22 +160,18 @@ export async function POST(request: Request) {
     const auth = await checkAuthContext(request);
     if (auth.errorResponse) return auth.errorResponse;
     const { context } = auth;
+    const targetStudioId = context?.studioId || await requireTloraStudioId();
 
     const supabase = createAdminClient();
     const origin = publicOrigin(request);
     const studioSlug = context?.studioSlug || null;
-    const urls = getGalleryUrls(slug, studioSlug, origin);
 
     let checkQuery = supabase
       .from("customer_galleries")
       .select("*")
       .eq("customer_name_slug", slug);
 
-    if (context) {
-      checkQuery = checkQuery.eq("studio_id", context.studioId);
-    } else {
-      checkQuery = checkQuery.is("studio_id", null);
-    }
+    checkQuery = checkQuery.eq("studio_id", targetStudioId);
 
     const { data: existingGallery, error: existingError } = await checkQuery.maybeSingle();
 
@@ -187,8 +182,7 @@ export async function POST(request: Request) {
     if (existingGallery) {
       return NextResponse.json({
         gallery: existingGallery,
-        customerUrl: urls.customerUrl,
-        customerDoneUrl: urls.customerDoneUrl,
+        ...getGalleryUrls(slug, studioSlug, origin, existingGallery.share_token),
         reused: true,
       });
     }
@@ -237,9 +231,7 @@ export async function POST(request: Request) {
       edited_download_enabled: false,
     };
 
-    if (context) {
-      insertData.studio_id = context.studioId;
-    }
+    insertData.studio_id = targetStudioId;
 
     const { data, error } = await supabase
       .from("customer_galleries")
@@ -253,8 +245,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({
       gallery: data,
-      customerUrl: urls.customerUrl,
-      customerDoneUrl: urls.customerDoneUrl,
+      ...getGalleryUrls(slug, studioSlug, origin, data.share_token),
       reused: false,
     });
   } catch (error) {

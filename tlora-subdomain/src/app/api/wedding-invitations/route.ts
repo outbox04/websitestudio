@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { resolveStudioRequest } from "@/lib/tenancy/request-context";
 import {
   createUniqueInvitationSlug,
   getErrorMessage,
@@ -32,7 +33,7 @@ export async function GET(request: Request) {
       .eq("slug", slug)
       .eq("status", "published");
 
-    query = studio ? query.eq("studio_id", studio.id) : query.is("studio_id", null);
+    query = query.eq("studio_id", studio.id);
     const { data, error } = await query.maybeSingle();
 
     if (error) throw error;
@@ -49,12 +50,15 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
+    const context = await resolveStudioRequest(request);
+    if (!context.userId || !context.studio || !["owner", "admin"].includes(context.role || "")) {
+      return NextResponse.json({ error: "Studio owner or admin required." }, { status: 403 });
+    }
     const body = (await request.json()) as WeddingInvitationPayload;
-    const studioSlug = body.studioSlug?.trim() || getRequestStudioSlug(request);
     const admin = createAdminClient();
-    const studio = await resolveStudio(admin, studioSlug);
-    const insertData = invitationInsertFromPayload(body, studio?.id || null);
-    const slug = await createUniqueInvitationSlug(admin, studio?.id || null, body);
+    const studio = { id: context.studio.id, slug: context.studio.slug };
+    const insertData = invitationInsertFromPayload(body, studio.id);
+    const slug = await createUniqueInvitationSlug(admin, studio.id, body);
 
     if (!insertData.groom_name || !insertData.bride_name) {
       return NextResponse.json({ error: "Ten co dau va chu re la bat buoc." }, { status: 400 });
@@ -71,7 +75,7 @@ export async function POST(request: Request) {
     return NextResponse.json(
       {
         invitation: data,
-        publicUrl: invitationPublicUrl(request, studio?.slug || studioSlug || null, slug),
+        publicUrl: invitationPublicUrl(request, studio.slug, slug),
       },
       { status: 201 },
     );

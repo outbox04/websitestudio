@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { checkAuthContext } from "@/lib/studio-admin";
+import { requireTloraStudioId } from "@/lib/tlora-studio";
 import {
   createUniqueInvitationSlug,
   getErrorMessage,
@@ -25,20 +26,21 @@ export async function GET(request: Request) {
     if (auth.errorResponse) return auth.errorResponse;
     const { context } = auth;
     const admin = createAdminClient();
+    const targetStudioId = context?.studioId || await requireTloraStudioId();
 
     let query = admin
       .from("wedding_invitations")
       .select(`${weddingInvitationSelect},studios(slug)`)
       .order("created_at", { ascending: false });
 
-    if (context) query = query.eq("studio_id", context.studioId);
+    query = query.eq("studio_id", targetStudioId);
 
     const { data, error } = await query;
     if (error) throw error;
 
     return NextResponse.json({
       invitations: ((data || []) as unknown as InvitationListRow[]).map((invitation) => {
-        const studioSlug = context?.studioSlug || invitation.studios?.slug || null;
+        const studioSlug = context?.studioSlug || null;
         return {
           ...invitation,
           publicUrl: invitationPublicUrl(request, studioSlug, invitation.slug),
@@ -62,7 +64,7 @@ export async function POST(request: Request) {
 
     const body = (await request.json()) as WeddingInvitationPayload;
     const admin = createAdminClient();
-    const studioId = context?.studioId || null;
+    const studioId = context?.studioId || await requireTloraStudioId();
     const insertData = invitationInsertFromPayload(body, studioId, context?.userId);
     const slug = await createUniqueInvitationSlug(admin, studioId, body);
 

@@ -3,6 +3,7 @@ import "server-only";
 import { notFound } from "next/navigation";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { studioSlugFromHost } from "@/lib/studio-admin";
+import { requireTloraStudioId } from "@/lib/tlora-studio";
 
 type HeaderReader = Pick<Headers, "get">;
 
@@ -15,7 +16,7 @@ export async function studioIdForHeaders(headers: HeaderReader) {
   const studioSlug = studioSlugFromHost(requestHost(headers));
 
   if (!studioSlug) {
-    return { studioId: null, studioSlug: null };
+    return { studioId: await requireTloraStudioId(), studioSlug: null };
   }
 
   const { data: studio, error } = await supabase
@@ -40,7 +41,7 @@ export async function scopedGalleryQuery(headers: HeaderReader, customerSlug: st
     .select("*")
     .eq("customer_name_slug", customerSlug);
 
-  query = studioId ? query.eq("studio_id", studioId) : query.is("studio_id", null);
+  query = query.eq("studio_id", studioId);
 
   return { query, studioId, studioSlug };
 }

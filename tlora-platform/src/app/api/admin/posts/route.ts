@@ -14,7 +14,7 @@ export async function GET(request: Request) {
   if (context) {
     query = query.eq("studio_id", context.studioId);
   } else if (isPlatformAdmin) {
-    query = query.is("studio_id", null);
+    return NextResponse.json({ error: "TLORA posts moved to /api/admin/tlora/posts" }, { status: 410 });
   } else {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
@@ -33,7 +33,16 @@ export async function POST(request: Request) {
   const slug = createSlug(title);
   if (!title || !slug) return NextResponse.json({ error: "Tiêu đề không hợp lệ." }, { status: 400 });
 
-  const insertData: any = {
+  const insertData: {
+    title: string;
+    slug: string;
+    excerpt: string | null;
+    content: string | null;
+    keywords: string | null;
+    cover_image_url: string | null;
+    published: boolean;
+    studio_id?: string;
+  } = {
     title,
     slug,
     excerpt: body.excerpt?.trim() || null,
@@ -46,7 +55,7 @@ export async function POST(request: Request) {
   if (context) {
     insertData.studio_id = context.studioId;
   } else if (isPlatformAdmin) {
-    insertData.studio_id = null;
+    return NextResponse.json({ error: "TLORA posts moved to /api/admin/tlora/posts" }, { status: 410 });
   } else {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }

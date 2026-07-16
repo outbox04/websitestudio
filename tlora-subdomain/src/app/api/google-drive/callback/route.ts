@@ -37,7 +37,7 @@ export async function GET(request: Request) {
     if (!existing && !tokens.access_token) throw new Error("Google không trả về access token.");
     const rootFolderId = existing?.root_folder_id || await createStudioRootFolder(tokens.access_token!, verified.studioName);
     const refreshTokenCiphertext = refreshToken ? encryptRefreshToken(refreshToken) : existing!.refresh_token_ciphertext;
-    const { error } = await admin.from("studio_google_drive_connections").upsert({
+    const { error } = await admin.from("studio_drive_connections").upsert({
       studio_id: verified.studioId,
       root_folder_id: rootFolderId,
       refresh_token_ciphertext: refreshTokenCiphertext,

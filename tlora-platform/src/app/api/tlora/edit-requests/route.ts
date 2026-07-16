@@ -1,6 +1,7 @@
 import { createSlug } from "@/lib/slug";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { errorMessage, isAuthorized, json, options, unauthorized } from "@/lib/tlora-api";
+import { requireTloraStudioId } from "@/lib/tlora-studio";
 
 export const runtime = "nodejs";
 
@@ -43,11 +44,13 @@ export async function GET(request: Request) {
 
   try {
     const supabase = createAdminClient();
+    const studioId = await requireTloraStudioId();
     const slug = createSlug(albumName);
     const { data: gallery, error: galleryError } = await supabase
       .from("customer_galleries")
       .select("id,customer_name,customer_name_slug")
       .or(`customer_name_slug.eq.${slug},customer_name.eq.${albumName}`)
+      .eq("studio_id", studioId)
       .maybeSingle();
 
     if (galleryError) {

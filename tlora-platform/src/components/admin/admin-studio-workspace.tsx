@@ -20,9 +20,9 @@ import {
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import Image from "next/image";
+import Link from "next/link";
 import { Fragment, useEffect, useMemo, useState } from "react";
 import { CustomerGalleryCreator } from "@/components/admin/customer-gallery-creator";
-import { StudioSiteBuilder } from "@/components/admin/studio-site-builder";
 import { adminMenu } from "@/lib/site-data";
 
 export type AdminGallery = {
@@ -84,7 +84,6 @@ export function AdminStudioWorkspace({
   studioSettings = {},
 }: AdminStudioWorkspaceProps) {
   const [activeMenu, setActiveMenu] = useState("Tổng quan website");
-  const [cmsPanel, setCmsPanel] = useState<"content" | "brand">("content");
   const activeView = getViewFromMenu(activeMenu);
   const menu = adminMenu;
 
@@ -153,22 +152,12 @@ export function AdminStudioWorkspace({
           )}
 
           {activeView === "site-builder" && (
-            <div className="space-y-5">
-              <div className="flex flex-col justify-between gap-4 rounded-xl border border-[#2a2722] bg-[#101115] p-5 text-[#f8f5ee] sm:flex-row sm:items-center">
-                <div>
-                  <p className="text-xs font-bold uppercase tracking-[.14em] text-[#d8b766]">Website CMS</p>
-                  <h1 className="mt-2 text-2xl font-extrabold">Biên tập website trực quan</h1>
-                  <p className="mt-1 text-sm text-[#cbc0b0]">Thay đổi nội dung, hình ảnh và nhận diện rồi xem kết quả ngay trên website thật.</p>
-                </div>
-                <div className="flex rounded-lg border border-white/10 bg-[#07080a] p-1">
-                  <button type="button" onClick={() => setCmsPanel("content")} className={`min-h-10 rounded-md px-4 text-sm font-bold ${cmsPanel === "content" ? "bg-[#d8b766] text-[#07080a]" : "text-[#cbc0b0]"}`}>Nội dung & preview</button>
-                  <button type="button" onClick={() => setCmsPanel("brand")} className={`min-h-10 rounded-md px-4 text-sm font-bold ${cmsPanel === "brand" ? "bg-[#d8b766] text-[#07080a]" : "text-[#cbc0b0]"}`}>Thương hiệu & SEO</button>
-                </div>
-              </div>
-              {cmsPanel === "content"
-                ? <StudioSiteBuilder mode="builder" studioSettings={studioSettings} studioSlug={studioSlug} />
-                : <StudioSiteBuilder mode="settings" studioSettings={studioSettings} studioSlug={studioSlug} />}
-            </div>
+            <section className="rounded-xl border border-[#2a2722] bg-[#101115] p-6 text-[#f8f5ee]">
+              <p className="text-xs font-bold uppercase tracking-[.14em] text-[#d8b766]">TLORA First-party CMS</p>
+              <h1 className="mt-2 text-3xl font-extrabold">CMS website TLORA đã được tách riêng</h1>
+              <p className="mt-3 max-w-2xl text-sm leading-6 text-[#cbc0b0]">Quản lý trang, live preview, bài viết, danh mục, media, menu, thiết lập và lịch sử xuất bản trong namespace TLORA riêng. Studio tenant không thể truy cập khu vực này.</p>
+              <Link href="/admin/tlora" className="mt-6 inline-flex min-h-11 items-center rounded-md bg-[#d8b766] px-5 text-sm font-bold text-[#07080a] hover:bg-[#f3d88e]">Mở TLORA CMS</Link>
+            </section>
           )}
 
           {activeView === "placeholder" && (

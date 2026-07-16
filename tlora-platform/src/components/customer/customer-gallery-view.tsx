@@ -167,20 +167,22 @@ export function CustomerGalleryView({
     return () => window.clearInterval(timer);
   }, [gallery.customer_name_slug, gallery.payment_status]);
 
+  // Auto-sync intentionally runs once on mount; syncPhotos uses refs to prevent overlap.
   useEffect(() => {
     if (autoSyncStarted.current) return;
     autoSyncStarted.current = true;
 
     void syncPhotos({ silent: true });
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Keep a stable polling interval instead of recreating it after each render.
   useEffect(() => {
     const timer = window.setInterval(() => {
       void syncPhotos({ silent: true });
     }, 120000);
 
     return () => window.clearInterval(timer);
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   async function patchPhoto(photoId: string, body: { selected?: boolean; editNote?: string }) {
     await fetch(`/api/customer-galleries/photos/${photoId}`, {

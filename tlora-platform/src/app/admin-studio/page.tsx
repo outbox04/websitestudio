@@ -3,6 +3,7 @@ import { headers } from "next/headers";
 import { AdminStudioWorkspace, type AdminEditRequest, type AdminGallery } from "@/components/admin/admin-studio-workspace";
 import { getGalleryUrls, publicOriginFromHeaders } from "@/lib/public-origin";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { requireTloraStudioId } from "@/lib/tlora-studio";
 
 export const metadata: Metadata = {
   title: "TLORA Website CMS",
@@ -25,8 +26,9 @@ type CustomerGalleryRow = {
   edited_drive_folder_url: string;
   raw_download_enabled: boolean;
   edited_download_enabled: boolean;
+  share_token?: string | null;
   studio_id?: string;
-  studios?: { slug: string } | { slug: string }[] | null;
+  studios?: { slug: string; studio_type?: string; system_key?: string | null } | { slug: string; studio_type?: string; system_key?: string | null }[] | null;
 };
 
 type CustomerGalleryPhotoRow = {
@@ -48,18 +50,19 @@ async function getAdminGalleryData(): Promise<{
 }> {
   try {
     const supabase = createAdminClient();
+    const tloraStudioId = await requireTloraStudioId();
     const siteUrl = publicOriginFromHeaders(await headers());
 
     const [{ data: galleriesData, error: galleriesError }, { data: photosData, error: photosError }] = await Promise.all([
       supabase
         .from("customer_galleries")
-        .select("id,customer_name,customer_name_slug,shoot_date,raw_drive_folder_url,edited_drive_folder_url,raw_download_enabled,edited_download_enabled,studio_id,studios(slug)")
-        .is("studio_id", null)
+        .select("id,customer_name,customer_name_slug,shoot_date,raw_drive_folder_url,edited_drive_folder_url,raw_download_enabled,edited_download_enabled,share_token,studio_id,studios(slug,studio_type,system_key)")
+        .eq("studio_id", tloraStudioId)
         .order("created_at", { ascending: false }),
       supabase
         .from("customer_gallery_photos")
         .select("id,gallery_id,file_name,preview_url,download_url,kind,selected,edit_note,updated_at,customer_galleries!inner(studio_id)")
-        .is("customer_galleries.studio_id", null)
+        .eq("customer_galleries.studio_id", tloraStudioId)
         .order("updated_at", { ascending: false }),
     ]);
 
@@ -82,10 +85,9 @@ async function getAdminGalleryData(): Promise<{
       const editedPhotos = galleryPhotos.filter((photo) => photo.kind === "edited");
 
       const studiosData = gallery.studios;
-      const studioSlug = studiosData
-        ? (Array.isArray(studiosData) ? studiosData[0]?.slug : studiosData.slug)
-        : null;
-      const urls = getGalleryUrls(gallery.customer_name_slug, studioSlug, siteUrl);
+      const joinedStudio = studiosData ? (Array.isArray(studiosData) ? studiosData[0] : studiosData) : null;
+      const studioSlug = joinedStudio?.studio_type === "tenant" ? joinedStudio.slug : null;
+      const urls = getGalleryUrls(gallery.customer_name_slug, studioSlug, siteUrl, gallery.share_token);
 
       return {
         id: gallery.id,
@@ -115,10 +117,9 @@ async function getAdminGalleryData(): Promise<{
         }
 
         const studiosData = gallery.studios;
-        const studioSlug = studiosData
-          ? (Array.isArray(studiosData) ? studiosData[0]?.slug : studiosData.slug)
-          : null;
-        const urls = getGalleryUrls(gallery.customer_name_slug, studioSlug, siteUrl);
+        const joinedStudio = studiosData ? (Array.isArray(studiosData) ? studiosData[0] : studiosData) : null;
+        const studioSlug = joinedStudio?.studio_type === "tenant" ? joinedStudio.slug : null;
+        const urls = getGalleryUrls(gallery.customer_name_slug, studioSlug, siteUrl, gallery.share_token);
 
         return {
           id: photo.id,

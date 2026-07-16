@@ -295,6 +295,7 @@ function RenderBlock({ block, onChange, onImagePick }: { block: UxBlock; onChang
   if (block.type === "image") {
     return (
       <section className="group relative px-6 py-6" style={{ textAlign: style.align, background: style.background }}>
+        {/* eslint-disable-next-line @next/next/no-img-element -- Builder accepts data URLs and arbitrary tenant image origins. */}
         <img src={block.image || "/brand/tlora-logo.png"} alt="" className="inline-block max-h-96 max-w-full object-contain" style={{ borderRadius: style.radius }} />
         <button
           type="button"

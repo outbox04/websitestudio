@@ -72,7 +72,7 @@ export async function createStudioRootFolder(accessToken: string, studioName: st
 }
 
 export async function getStudioDriveConnection(studioId: string): Promise<DriveConnection | null> {
-  const { data, error } = await createAdminClient().from("studio_google_drive_connections").select("root_folder_id,refresh_token_ciphertext").eq("studio_id", studioId).maybeSingle();
+  const { data, error } = await createAdminClient().from("studio_drive_connections").select("root_folder_id,refresh_token_ciphertext").eq("studio_id", studioId).maybeSingle();
   if (error) throw error;
   return data;
 }

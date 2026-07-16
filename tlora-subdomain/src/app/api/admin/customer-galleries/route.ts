@@ -74,6 +74,7 @@ export async function GET(request: Request) {
     const auth = await checkAuthContext(request);
     if (auth.errorResponse) return auth.errorResponse;
     const { context } = auth;
+    if (!context) return NextResponse.json({ error: "Tenant studio context required" }, { status: 403 });
 
     const supabase = createAdminClient();
     
@@ -91,13 +92,8 @@ export async function GET(request: Request) {
       .eq("kind", "raw")
       .order("file_name", { ascending: true });
 
-    if (context) {
-      galleriesQuery = galleriesQuery.eq("studio_id", context.studioId);
-      photosQuery = photosQuery.eq("customer_galleries.studio_id", context.studioId);
-    } else {
-      galleriesQuery = galleriesQuery.is("studio_id", null);
-      photosQuery = photosQuery.is("customer_galleries.studio_id", null);
-    }
+    galleriesQuery = galleriesQuery.eq("studio_id", context.studioId);
+    photosQuery = photosQuery.eq("customer_galleries.studio_id", context.studioId);
 
     const [{ data, error }, { data: selectedPhotosData, error: selectedPhotosError }] = await Promise.all([
       galleriesQuery,
@@ -161,6 +157,7 @@ export async function POST(request: Request) {
     const auth = await checkAuthContext(request);
     if (auth.errorResponse) return auth.errorResponse;
     const { context } = auth;
+    if (!context) return NextResponse.json({ error: "Tenant studio context required" }, { status: 403 });
 
     const supabase = createAdminClient();
     const origin = publicOrigin(request);
@@ -172,11 +169,7 @@ export async function POST(request: Request) {
       .select("*")
       .eq("customer_name_slug", slug);
 
-    if (context) {
-      checkQuery = checkQuery.eq("studio_id", context.studioId);
-    } else {
-      checkQuery = checkQuery.is("studio_id", null);
-    }
+    checkQuery = checkQuery.eq("studio_id", context.studioId);
 
     const { data: existingGallery, error: existingError } = await checkQuery.maybeSingle();
 

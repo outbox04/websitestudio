@@ -2,6 +2,7 @@ import { createSlug } from "@/lib/slug";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { errorMessage, isAuthorized, json, options, unauthorized } from "@/lib/tlora-api";
 import { uploadDriveImage } from "@/lib/google-drive";
+import { requireTloraStudioId } from "@/lib/tlora-studio";
 
 export const runtime = "nodejs";
 
@@ -44,12 +45,14 @@ export async function POST(request: Request) {
     }
 
     const supabase = createAdminClient();
+    const studioId = await requireTloraStudioId();
     const lookupNames = uniqueValues([albumName, customerName, customerNameFromAlbumName(albumName)]);
     const lookupSlugs = uniqueValues(lookupNames.map(createSlug));
     const { data: galleryBySlug, error: galleryBySlugError } = await supabase
       .from("customer_galleries")
       .select("id,customer_name,customer_name_slug,raw_drive_folder_id,edited_drive_folder_id")
       .in("customer_name_slug", lookupSlugs)
+      .eq("studio_id", studioId)
       .limit(1)
       .maybeSingle();
 
@@ -63,6 +66,7 @@ export async function POST(request: Request) {
           .from("customer_galleries")
           .select("id,customer_name,customer_name_slug,raw_drive_folder_id,edited_drive_folder_id")
           .in("customer_name", lookupNames)
+          .eq("studio_id", studioId)
           .limit(1)
           .maybeSingle();
 

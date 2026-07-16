@@ -97,22 +97,22 @@ export function invitationPublicUrl(request: Request, studioSlug: string | null,
   return `${origin.replace(/\/$/, "")}/thiep/${invitationSlug}`;
 }
 
-export async function resolveStudio(admin: SupabaseAdmin, studioSlug: string) {
-  if (!studioSlug || studioSlug === WEDDING_FEATURE_SLUG) return null;
-
-  const { data, error } = await admin
+export async function resolveStudio(admin: SupabaseAdmin, studioSlug: string): Promise<StudioRow> {
+  let query = admin
     .from("studios")
     .select("id,slug,display_name")
-    .eq("slug", studioSlug)
-    .eq("status", "active")
-    .maybeSingle();
+    .eq("status", "active");
+  query = !studioSlug || studioSlug === WEDDING_FEATURE_SLUG
+    ? query.eq("studio_type", "first_party").eq("system_key", "tlora")
+    : query.eq("slug", studioSlug).eq("studio_type", "tenant");
+  const { data, error } = await query.maybeSingle();
 
   if (error) throw error;
   if (!data) throw new Error("Studio khong ton tai hoac chua kich hoat.");
   return data as StudioRow;
 }
 
-export function invitationInsertFromPayload(payload: WeddingInvitationPayload, studioId: string | null, createdBy?: string) {
+export function invitationInsertFromPayload(payload: WeddingInvitationPayload, studioId: string, createdBy?: string) {
   const status = payload.status === "published" ? "published" : payload.status === "archived" ? "archived" : "draft";
   const groomName = cleanString(payload.groomName, 160);
   const brideName = cleanString(payload.brideName, 160);
@@ -159,7 +159,7 @@ export function invitationUpdateFromPayload(payload: WeddingInvitationPayload) {
   return update;
 }
 
-export async function createUniqueInvitationSlug(admin: SupabaseAdmin, studioId: string | null, payload: WeddingInvitationPayload) {
+export async function createUniqueInvitationSlug(admin: SupabaseAdmin, studioId: string, payload: WeddingInvitationPayload) {
   const requestedSlug = createSlug(payload.slug || "");
   const base =
     requestedSlug ||
@@ -169,7 +169,7 @@ export async function createUniqueInvitationSlug(admin: SupabaseAdmin, studioId:
   for (let attempt = 0; attempt < 20; attempt += 1) {
     const slug = attempt === 0 ? base : `${base}-${attempt + 1}`;
     let query = admin.from("wedding_invitations").select("id").eq("slug", slug);
-    query = studioId ? query.eq("studio_id", studioId) : query.is("studio_id", null);
+    query = query.eq("studio_id", studioId);
     const { data, error } = await query.maybeSingle();
     if (error) throw error;
     if (!data) return slug;

@@ -1,4 +1,5 @@
 "use client";
+/* eslint-disable @next/next/no-img-element -- Legacy tenant HTML editor previews data URLs that next/image cannot optimize. */
 
 import { Bold, Code2, ImagePlus, Italic, Link2, List, ListOrdered, Loader2, Newspaper, Strikethrough, Underline, Upload, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";

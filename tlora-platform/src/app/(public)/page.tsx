@@ -1,6 +1,7 @@
 import { ArrowRight, Check, ChevronDown } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 const trustItems = [
   "Tư vấn concept trước khi chụp",
@@ -132,7 +133,19 @@ const faqs = [
   ["Bao lâu thì nhận được ảnh?", "Khách chọn ảnh online trong 48h sau buổi chụp, ảnh đã retouch được bàn giao theo lịch hẹn cụ thể tại buổi tư vấn."],
 ];
 
-export default function HomePage() {
+async function getPublishedHero() {
+  const admin = createAdminClient();
+  const { data: studio } = await admin.from("studios").select("id").eq("studio_type", "first_party").eq("system_key", "tlora").maybeSingle();
+  if (!studio) return null;
+  const { data: page } = await admin.from("tlora_cms_pages").select("id").eq("studio_id", studio.id).eq("page_key", "home").eq("status", "published").maybeSingle();
+  if (!page) return null;
+  const { data: section } = await admin.from("tlora_cms_page_sections").select("published_content,is_enabled").eq("page_id", page.id).eq("section_key", "hero").maybeSingle();
+  if (!section?.is_enabled) return null;
+  return section.published_content as { title?: string; description?: string; image?: string; ctaLabel?: string; ctaHref?: string };
+}
+
+export default async function HomePage() {
+  const publishedHero = await getPublishedHero();
   const structuredData = {
     "@context": "https://schema.org",
     "@type": "WebSite",
@@ -148,10 +161,11 @@ export default function HomePage() {
       <div className="bg-[#14110f] text-[#f4ece0]">
       <section className="relative min-h-[calc(100svh-73px)] overflow-hidden px-4 py-16 sm:px-6 sm:py-20 lg:px-8 lg:py-28">
         <Image
-          src="/concept/concept-14.webp"
+          src={publishedHero?.image || "/concept/concept-14.webp"}
           alt="Ảnh nền concept studio TLORA"
           fill
           priority
+          unoptimized={Boolean(publishedHero?.image)}
           sizes="100vw"
           className="object-cover object-[62%_center]"
         />
@@ -161,16 +175,14 @@ export default function HomePage() {
         <div className="pointer-events-none absolute -right-28 -top-28 size-96 rounded-full border border-[#f4ece0]/10 opacity-45 lg:size-[480px]" />
         <div className="relative mx-auto max-w-6xl">
           <h1 className="max-w-4xl pt-10 font-heading text-4xl font-extrabold leading-tight text-[#f4ece0] sm:pt-16 sm:text-5xl lg:pt-24 lg:text-7xl">
-            Mỗi set chụp là <span className="italic text-[#c99a5e]">một concept</span>
-            <br />
-            dựng riêng cho bạn.
+            {publishedHero?.title || <>Mỗi set chụp là <span className="italic text-[#c99a5e]">một concept</span><br />dựng riêng cho bạn.</>}
           </h1>
           <p className="mt-6 max-w-2xl text-base leading-8 text-[#cbc0b0] sm:text-lg">
-            TLORA không chụp đại trà. Ba dịch vụ, một tiêu chuẩn duy nhất: ảnh nhận về phải xứng đáng với số tiền bạn bỏ ra.
+            {publishedHero?.description || "TLORA không chụp đại trà. Ba dịch vụ, một tiêu chuẩn duy nhất: ảnh nhận về phải xứng đáng với số tiền bạn bỏ ra."}
           </p>
           <div className="mt-8 flex flex-col gap-3 sm:mt-9 sm:flex-row">
-            <PillLink href="/bang-gia" tone="light">
-              Đặt lịch tư vấn <ArrowRight size={16} />
+            <PillLink href={publishedHero?.ctaHref || "/bang-gia"} tone="light">
+              {publishedHero?.ctaLabel || "Đặt lịch tư vấn"} <ArrowRight size={16} />
             </PillLink>
             <PillLink href="#mood">Xem mood ảnh mẫu</PillLink>
           </div>

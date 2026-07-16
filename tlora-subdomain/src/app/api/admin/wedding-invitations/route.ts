@@ -24,6 +24,7 @@ export async function GET(request: Request) {
     const auth = await checkAuthContext(request);
     if (auth.errorResponse) return auth.errorResponse;
     const { context } = auth;
+    if (!context) return NextResponse.json({ error: "Tenant studio context required" }, { status: 403 });
     const admin = createAdminClient();
 
     let query = admin
@@ -31,7 +32,7 @@ export async function GET(request: Request) {
       .select(`${weddingInvitationSelect},studios(slug)`)
       .order("created_at", { ascending: false });
 
-    if (context) query = query.eq("studio_id", context.studioId);
+    query = query.eq("studio_id", context.studioId);
 
     const { data, error } = await query;
     if (error) throw error;
@@ -56,14 +57,12 @@ export async function POST(request: Request) {
     if (auth.errorResponse) return auth.errorResponse;
     const { context, isPlatformAdmin } = auth;
 
-    if (!context && !isPlatformAdmin) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-    }
+    if (!context?.studioId) return NextResponse.json({ error: isPlatformAdmin ? "First-party invitations are managed by the platform application." : "Forbidden" }, { status: 403 });
 
     const body = (await request.json()) as WeddingInvitationPayload;
     const admin = createAdminClient();
-    const studioId = context?.studioId || null;
-    const insertData = invitationInsertFromPayload(body, studioId, context?.userId);
+    const studioId = context.studioId;
+    const insertData = invitationInsertFromPayload(body, studioId, context.userId);
     const slug = await createUniqueInvitationSlug(admin, studioId, body);
 
     if (!insertData.groom_name || !insertData.bride_name) {
@@ -81,7 +80,7 @@ export async function POST(request: Request) {
     return NextResponse.json(
       {
         invitation: data,
-        publicUrl: invitationPublicUrl(request, context?.studioSlug || null, slug),
+        publicUrl: invitationPublicUrl(request, context.studioSlug || null, slug),
       },
       { status: 201 },
     );

@@ -30,7 +30,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ ph
     .select("id,customer_galleries!inner(studio_id)")
     .eq("id", photoId);
 
-  photoQuery = studioId ? photoQuery.eq("customer_galleries.studio_id", studioId) : photoQuery.is("customer_galleries.studio_id", null);
+  photoQuery = photoQuery.eq("customer_galleries.studio_id", studioId);
 
   const { data: allowedPhoto, error: allowedError } = await photoQuery.maybeSingle();
   if (allowedError || !allowedPhoto) {

@@ -22,6 +22,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     const auth = await checkAuthContext(request);
     if (auth.errorResponse) return auth.errorResponse;
     const { context, isPlatformAdmin } = auth;
+    if (!context) return NextResponse.json({ error: isPlatformAdmin ? "First-party invitations are managed by the platform application." : "Forbidden" }, { status: 403 });
     const { id } = await params;
     const body = (await request.json()) as WeddingInvitationPayload;
     const updateData = invitationUpdateFromPayload(body);
@@ -31,13 +32,12 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     }
 
     const admin = createAdminClient();
-    if (!context && !isPlatformAdmin) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     let query = admin
       .from("wedding_invitations")
       .update(updateData)
       .eq("id", id);
 
-    if (context) query = query.eq("studio_id", context.studioId);
+    query = query.eq("studio_id", context.studioId);
 
     const { data, error } = await query.select(weddingInvitationSelect).single();
     if (error) throw error;
@@ -57,12 +57,12 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ i
     const auth = await checkAuthContext(request);
     if (auth.errorResponse) return auth.errorResponse;
     const { context, isPlatformAdmin } = auth;
+    if (!context) return NextResponse.json({ error: isPlatformAdmin ? "First-party invitations are managed by the platform application." : "Forbidden" }, { status: 403 });
     const { id } = await params;
     const admin = createAdminClient();
 
     let query = admin.from("wedding_invitations").delete().eq("id", id);
-    if (context) query = query.eq("studio_id", context.studioId);
-    if (!context && !isPlatformAdmin) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    query = query.eq("studio_id", context.studioId);
 
     const { error } = await query;
     if (error) throw error;

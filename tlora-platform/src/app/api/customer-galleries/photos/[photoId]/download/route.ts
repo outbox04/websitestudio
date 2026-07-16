@@ -20,7 +20,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ phot
     .select("drive_file_id,file_name,kind,customer_galleries!inner(raw_download_enabled,edited_download_enabled,studio_id)")
     .eq("id", photoId);
 
-  query = studioId ? query.eq("customer_galleries.studio_id", studioId) : query.is("customer_galleries.studio_id", null);
+  query = query.eq("customer_galleries.studio_id", studioId);
   const { data: photo, error } = await query.maybeSingle();
 
   if (error) {

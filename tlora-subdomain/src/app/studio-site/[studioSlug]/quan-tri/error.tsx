@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useEffect } from 'react';
 
 export default function Error({
@@ -53,12 +54,12 @@ export default function Error({
           >
             Thử tải lại trang
           </button>
-          <a
+          <Link
             href="/"
             className="flex-1 min-h-11 flex items-center justify-center rounded-md border border-white/10 hover:bg-white/5 font-semibold text-sm transition-all"
           >
             Quay lại trang chủ
-          </a>
+          </Link>
         </div>
       </div>
     </div>

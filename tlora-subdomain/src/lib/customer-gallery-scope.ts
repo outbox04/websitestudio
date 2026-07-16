@@ -15,7 +15,7 @@ export async function studioIdForHeaders(headers: HeaderReader) {
   const studioSlug = studioSlugFromHost(requestHost(headers));
 
   if (!studioSlug) {
-    return { studioId: null, studioSlug: null };
+    notFound();
   }
 
   const { data: studio, error } = await supabase
@@ -40,7 +40,7 @@ export async function scopedGalleryQuery(headers: HeaderReader, customerSlug: st
     .select("*")
     .eq("customer_name_slug", customerSlug);
 
-  query = studioId ? query.eq("studio_id", studioId) : query.is("studio_id", null);
+  query = query.eq("studio_id", studioId);
 
   return { query, studioId, studioSlug };
 }

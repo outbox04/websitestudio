@@ -44,7 +44,7 @@ export function LoginForm() {
           setError("Lỗi máy chủ khi xác minh tên đăng nhập.");
           return;
         }
-      } catch (err) {
+      } catch {
         setLoading(false);
         setError("Không kết nối được máy chủ xác minh.");
         return;

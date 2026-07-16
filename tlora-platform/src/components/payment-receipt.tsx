@@ -8,7 +8,13 @@ const money = (value: number) => value ? new Intl.NumberFormat("vi-VN").format(v
 
 export function PaymentReceipt({ orderId }: { orderId: string }) {
   const [receipt, setReceipt] = useState<ReceiptData | null>(null);
-  useEffect(() => { const stored = sessionStorage.getItem("tlora-registration-receipt"); if (stored) setReceipt(JSON.parse(stored) as ReceiptData); }, []);
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      const stored = sessionStorage.getItem("tlora-registration-receipt");
+      if (stored) setReceipt(JSON.parse(stored) as ReceiptData);
+    }, 0);
+    return () => window.clearTimeout(timer);
+  }, []);
   const info = receipt || { studio: "Studio của bạn", plan: "TLORA Platform", total: 0, domain: "Đang khởi tạo", username: "Đang khởi tạo", email: "", phone: "", address: "" };
   const websiteUrl = info.domain.includes(".") ? `https://${info.domain}` : "";
   const adminUrl = websiteUrl ? `${websiteUrl}/quan-tri` : "/dang-nhap";
