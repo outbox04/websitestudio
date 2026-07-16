@@ -22,6 +22,7 @@ function isPreviewMessage(value: unknown): value is PreviewMessage {
 function setText(sectionKey: string, field: string, value: unknown) {
   document.querySelectorAll<HTMLElement>(`[data-cms-section="${sectionKey}"][data-cms-field="${field}"]`)
     .forEach((element) => {
+      if (document.activeElement === element) return;
       element.textContent = typeof value === "string" ? value : "";
     });
 }
@@ -43,6 +44,56 @@ function setImage(sectionKey: string, value: unknown) {
     });
 }
 
+function sendChange(sectionKey: string, field: string, value: string) {
+  window.parent.postMessage({
+    type: "tlora:cms-preview-change",
+    sectionKey,
+    field,
+    value,
+  }, window.location.origin);
+}
+
+function makeEditable(element: HTMLElement) {
+  if (element.dataset.cmsEditorBound === "true") return;
+  element.dataset.cmsEditorBound = "true";
+  const sectionKey = element.dataset.cmsSection;
+  const field = element.dataset.cmsField;
+  if (!sectionKey || !field) return;
+
+  if (element instanceof HTMLImageElement) {
+    element.title = "Nhấp đúp để đổi URL ảnh";
+    element.addEventListener("dblclick", () => {
+      const value = window.prompt("URL ảnh mới", element.currentSrc || element.src);
+      if (value !== null) sendChange(sectionKey, field, value.trim());
+    });
+    return;
+  }
+
+  if (element instanceof HTMLAnchorElement && field === "ctaHref") {
+    element.addEventListener("click", (event) => event.preventDefault());
+    element.addEventListener("dblclick", () => {
+      const value = window.prompt("Liên kết CTA", element.getAttribute("href") || "#");
+      if (value !== null) sendChange(sectionKey, field, value.trim());
+    });
+    return;
+  }
+
+  element.contentEditable = "true";
+  element.spellcheck = true;
+  element.title = "Nhấp để sửa trực tiếp";
+  element.addEventListener("focus", () => {
+    element.style.outline = "2px solid #d8b766";
+    element.style.outlineOffset = "4px";
+  });
+  element.addEventListener("blur", () => {
+    element.style.outline = "";
+    element.style.outlineOffset = "";
+  });
+  element.addEventListener("input", () => {
+    sendChange(sectionKey, field, element.innerText);
+  });
+}
+
 function applySection(section: PreviewSection) {
   document.querySelectorAll<HTMLElement>(`[data-cms-section-root="${section.sectionKey}"]`)
     .forEach((element) => {
@@ -56,6 +107,9 @@ function applySection(section: PreviewSection) {
 
   setLink(section.sectionKey, "ctaHref", section.draftContent.ctaHref);
   setImage(section.sectionKey, section.draftContent.image);
+
+  document.querySelectorAll<HTMLElement>(`[data-cms-section="${section.sectionKey}"][data-cms-field]`)
+    .forEach(makeEditable);
 }
 
 export function TloraPublicPreviewBridge() {

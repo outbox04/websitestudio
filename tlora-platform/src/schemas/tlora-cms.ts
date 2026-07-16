@@ -67,6 +67,13 @@ export const publishPageSchema = z.object({
   changeNote: z.string().trim().max(500).optional(),
 });
 
+export const updatePageMetaSchema = z.object({
+  pageId: z.string().uuid(),
+  seoTitle: z.string().trim().max(70),
+  seoDescription: z.string().trim().max(200),
+  ogImageUrl: imageUrl,
+});
+
 export const cmsPostSchema = z.object({
   id: z.string().uuid().optional(),
   title: z.string().trim().min(3).max(240),

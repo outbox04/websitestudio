@@ -27,6 +27,9 @@ export type TloraCmsPage = {
   slug: string;
   title: string;
   status: "draft" | "published" | "archived";
+  seoTitle: string;
+  seoDescription: string;
+  ogImageUrl: string;
   publishedAt: string | null;
 };
 

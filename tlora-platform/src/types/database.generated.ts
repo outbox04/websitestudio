@@ -24,8 +24,8 @@ export type Database = {
         Relationships: [];
       };
       tlora_cms_pages: {
-        Row: { id: string; studio_id: string; page_key: string; slug: string; title: string; status: "draft" | "published" | "archived"; seo_title: string | null; seo_description: string | null; published_at: string | null; created_by: string | null; updated_by: string | null; created_at: string; updated_at: string };
-        Insert: { id?: string; studio_id: string; page_key: string; slug: string; title: string; status?: "draft" | "published" | "archived"; seo_title?: string | null; seo_description?: string | null; published_at?: string | null; created_by?: string | null; updated_by?: string | null; created_at?: string; updated_at?: string };
+        Row: { id: string; studio_id: string; page_key: string; slug: string; title: string; status: "draft" | "published" | "archived"; draft_seo_title: string | null; draft_seo_description: string | null; draft_og_image_url: string | null; seo_title: string | null; seo_description: string | null; og_image_url: string | null; published_at: string | null; created_by: string | null; updated_by: string | null; created_at: string; updated_at: string };
+        Insert: { id?: string; studio_id: string; page_key: string; slug: string; title: string; status?: "draft" | "published" | "archived"; draft_seo_title?: string | null; draft_seo_description?: string | null; draft_og_image_url?: string | null; seo_title?: string | null; seo_description?: string | null; og_image_url?: string | null; published_at?: string | null; created_by?: string | null; updated_by?: string | null; created_at?: string; updated_at?: string };
         Update: Partial<Database["public"]["Tables"]["tlora_cms_pages"]["Insert"]>;
         Relationships: [];
       };

@@ -35,6 +35,7 @@ Release A backfills a unique `share_token` and new admin-generated links include
 ## Deployment
 
 1. Run Release A database migration.
+   - If Release A was already applied before direct-preview OG editing was added, also run `sql/20260716_add_tlora_page_og_image.sql`.
 2. Regenerate Supabase types.
 3. Deploy platform and subdomain together because both now read `studio_type` and `studio_drive_connections`.
 4. Smoke-test the modules above.

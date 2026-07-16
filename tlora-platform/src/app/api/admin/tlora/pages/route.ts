@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { requireTloraAdmin } from "@/lib/tenancy/request-context";
-import { getTloraCmsPage, publishTloraPage, updateTloraSectionDraft } from "@/repositories/tlora/cms-repository";
-import { publishPageSchema, updateSectionSchema } from "@/schemas/tlora-cms";
+import { getTloraCmsPage, publishTloraPage, updateTloraPageMeta, updateTloraSectionDraft } from "@/repositories/tlora/cms-repository";
+import { publishPageSchema, updatePageMetaSchema, updateSectionSchema } from "@/schemas/tlora-cms";
 import { tloraApiError } from "@/app/api/admin/tlora/_shared";
 
 export async function GET(request: Request) {
@@ -9,6 +9,21 @@ export async function GET(request: Request) {
     const context = await requireTloraAdmin(request);
     const pageKey = new URL(request.url).searchParams.get("pageKey") || "home";
     return NextResponse.json(await getTloraCmsPage(context.studio.id, pageKey));
+  } catch (error) {
+    return tloraApiError(error);
+  }
+}
+
+export async function PUT(request: Request) {
+  try {
+    const context = await requireTloraAdmin(request);
+    const input = updatePageMetaSchema.parse(await request.json());
+    await updateTloraPageMeta({
+      studioId: context.studio.id,
+      userId: context.userId!,
+      ...input,
+    });
+    return NextResponse.json({ updated: true });
   } catch (error) {
     return tloraApiError(error);
   }

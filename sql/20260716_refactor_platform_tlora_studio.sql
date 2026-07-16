@@ -189,8 +189,12 @@ create table if not exists public.tlora_cms_pages (
   slug text not null,
   title text not null,
   status public.cms_content_status not null default 'draft',
+  draft_seo_title text,
+  draft_seo_description text,
+  draft_og_image_url text,
   seo_title text,
   seo_description text,
+  og_image_url text,
   published_at timestamptz,
   created_by uuid references auth.users(id) on delete set null,
   updated_by uuid references auth.users(id) on delete set null,
@@ -199,6 +203,12 @@ create table if not exists public.tlora_cms_pages (
   unique (studio_id, page_key),
   unique (studio_id, slug)
 );
+
+alter table public.tlora_cms_pages
+  add column if not exists draft_seo_title text,
+  add column if not exists draft_seo_description text,
+  add column if not exists draft_og_image_url text,
+  add column if not exists og_image_url text;
 
 create table if not exists public.tlora_cms_page_sections (
   id uuid primary key default gen_random_uuid(),
@@ -489,7 +499,13 @@ begin
   where page_id = target_page_id;
 
   update public.tlora_cms_pages
-  set status = 'published', published_at = now(), updated_at = now(), updated_by = auth.uid()
+  set status = 'published',
+      seo_title = draft_seo_title,
+      seo_description = draft_seo_description,
+      og_image_url = draft_og_image_url,
+      published_at = now(),
+      updated_at = now(),
+      updated_by = auth.uid()
   where id = target_page_id;
 end
 $$;
@@ -500,7 +516,7 @@ as $$
   select jsonb_build_object(
     'page', jsonb_build_object(
       'page_key', p.page_key, 'slug', p.slug, 'title', p.title,
-      'seo_title', p.seo_title, 'seo_description', p.seo_description,
+      'seo_title', p.seo_title, 'seo_description', p.seo_description, 'og_image_url', p.og_image_url,
       'published_at', p.published_at
     ),
     'sections', coalesce(jsonb_agg(jsonb_build_object(

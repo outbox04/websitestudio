@@ -1,6 +1,8 @@
 import { ArrowRight, Check, ChevronDown } from "lucide-react";
+import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
+import { cache } from "react";
 import { TloraPublicPreviewBridge } from "@/components/tlora-cms/tlora-public-preview-bridge";
 import { createAdminClient } from "@/lib/supabase/admin";
 
@@ -139,26 +141,45 @@ type PublishedSection = {
   content: Record<string, unknown>;
 };
 
-async function getPublishedHomeSections() {
+const getPublishedHome = cache(async () => {
   const admin = createAdminClient();
   const { data: studio } = await admin.from("studios").select("id").eq("studio_type", "first_party").eq("system_key", "tlora").maybeSingle();
-  if (!studio) return {};
-  const { data: page } = await admin.from("tlora_cms_pages").select("id").eq("studio_id", studio.id).eq("page_key", "home").eq("status", "published").maybeSingle();
-  if (!page) return {};
+  if (!studio) return { page: null, sections: {} as Record<string, PublishedSection> };
+  const { data: page } = await admin
+    .from("tlora_cms_pages")
+    .select("id,seo_title,seo_description,og_image_url")
+    .eq("studio_id", studio.id)
+    .eq("page_key", "home")
+    .eq("status", "published")
+    .maybeSingle();
+  if (!page) return { page: null, sections: {} as Record<string, PublishedSection> };
   const { data: sections } = await admin
     .from("tlora_cms_page_sections")
     .select("section_key,published_content,is_enabled")
     .eq("page_id", page.id)
     .order("sort_order");
 
-  return Object.fromEntries((sections || []).map((section) => [
+  const sectionMap = Object.fromEntries((sections || []).map((section) => [
     section.section_key,
     { isEnabled: section.is_enabled, content: section.published_content as Record<string, unknown> },
   ])) as Record<string, PublishedSection>;
+  return { page, sections: sectionMap };
+});
+
+export async function generateMetadata(): Promise<Metadata> {
+  const { page } = await getPublishedHome();
+  const title = page?.seo_title || "TLORA Studio";
+  const description = page?.seo_description || "TLORA Studio chụp ảnh concept cá nhân, chọn ảnh online và quản lý album riêng.";
+  const images = page?.og_image_url ? [page.og_image_url] : undefined;
+  return {
+    title,
+    description,
+    openGraph: { title, description, type: "website", images },
+  };
 }
 
 export default async function HomePage() {
-  const publishedSections = await getPublishedHomeSections();
+  const { sections: publishedSections } = await getPublishedHome();
   const publishedHero = publishedSections.hero?.isEnabled ? publishedSections.hero.content : {};
   const publishedAbout = publishedSections.about?.isEnabled ? publishedSections.about.content : {};
   const publishedServices = publishedSections.services?.isEnabled ? publishedSections.services.content : {};

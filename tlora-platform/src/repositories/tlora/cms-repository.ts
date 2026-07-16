@@ -10,6 +10,9 @@ type PageRow = {
   slug: string;
   title: string;
   status: TloraCmsPage["status"];
+  draft_seo_title: string | null;
+  draft_seo_description: string | null;
+  draft_og_image_url: string | null;
   published_at: string | null;
 };
 
@@ -27,7 +30,8 @@ type SectionRow = {
 
 const mapPage = (row: PageRow): TloraCmsPage => ({
   id: row.id, pageKey: row.page_key, slug: row.slug, title: row.title,
-  status: row.status, publishedAt: row.published_at,
+  status: row.status, seoTitle: row.draft_seo_title || "", seoDescription: row.draft_seo_description || "",
+  ogImageUrl: row.draft_og_image_url || "", publishedAt: row.published_at,
 });
 
 const mapSection = (row: SectionRow): TloraCmsSection => ({
@@ -40,7 +44,7 @@ export async function getTloraCmsPage(studioId: string, pageKey = "home") {
   const admin = createAdminClient();
   const { data: page, error } = await admin
     .from("tlora_cms_pages")
-    .select("id,page_key,slug,title,status,published_at")
+    .select("id,page_key,slug,title,status,draft_seo_title,draft_seo_description,draft_og_image_url,published_at")
     .eq("studio_id", studioId)
     .eq("page_key", pageKey)
     .single();
@@ -53,6 +57,47 @@ export async function getTloraCmsPage(studioId: string, pageKey = "home") {
     .order("sort_order");
   if (sectionsError) throw sectionsError;
   return { page: mapPage(page as PageRow), sections: (sections || []).map((row) => mapSection(row as SectionRow)) };
+}
+
+export async function updateTloraPageMeta(input: {
+  studioId: string;
+  userId: string;
+  pageId: string;
+  seoTitle: string;
+  seoDescription: string;
+  ogImageUrl: string;
+}) {
+  const admin = createAdminClient();
+  const { data: before, error: readError } = await admin
+    .from("tlora_cms_pages")
+    .select("draft_seo_title,draft_seo_description,draft_og_image_url")
+    .eq("id", input.pageId)
+    .eq("studio_id", input.studioId)
+    .single();
+  if (readError) throw readError;
+
+  const nextValue = {
+    draft_seo_title: input.seoTitle || null,
+    draft_seo_description: input.seoDescription || null,
+    draft_og_image_url: input.ogImageUrl || null,
+    updated_by: input.userId,
+  };
+  const { error } = await admin
+    .from("tlora_cms_pages")
+    .update(nextValue)
+    .eq("id", input.pageId)
+    .eq("studio_id", input.studioId);
+  if (error) throw error;
+
+  await admin.from("tlora_cms_activity_logs").insert({
+    studio_id: input.studioId,
+    actor_user_id: input.userId,
+    action: "page.meta.updated",
+    entity_type: "page",
+    entity_id: input.pageId,
+    before_value: before,
+    after_value: nextValue,
+  });
 }
 
 export async function updateTloraSectionDraft(input: {
@@ -100,4 +145,3 @@ export async function publishTloraPage(studioId: string, userId: string, pageId:
     entity_type: "page", entity_id: pageId, after_value: { changeNote: changeNote || null },
   });
 }
-
