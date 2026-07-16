@@ -38,7 +38,8 @@ Release A backfills a unique `share_token`, and all gallery page, photo, sync, p
    - If Release A was already applied before direct-preview OG editing was added, also run `sql/20260716_add_tlora_page_og_image.sql`.
    - Run `sql/20260716_add_tlora_concept_albums.sql` to enable the Album Concept library, featured homepage albums and consultation submissions.
    - Run `sql/20260717_expand_tlora_cms.sql` to seed page-level OG metadata and enable CMS user management.
-   - Run `sql/20260717_security_hardening.sql` last to enforce private gallery access and transaction uniqueness.
+   - Run `sql/20260717_security_hardening.sql` to enforce private gallery access and transaction uniqueness.
+   - Run `sql/20260718_tlora_concept_categories.sql` to add Concept categories, album assignment and consultation shooting dates.
 2. Regenerate Supabase types.
 3. Deploy platform and subdomain together because both now read `studio_type` and `studio_drive_connections`.
 4. Smoke-test the modules above.

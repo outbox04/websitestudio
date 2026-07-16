@@ -1,58 +1,139 @@
 "use client";
 
-import { ArrowRight, Check, Loader2, MessageCircle, X } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check, ChevronLeft, ChevronRight, Images, Loader2, MessageCircle, X } from "lucide-react";
 import Image from "next/image";
-import { useState } from "react";
-import type { TloraConceptAlbum } from "@/types/scope";
+import { useEffect, useMemo, useState } from "react";
+import type { TloraConceptAlbum, TloraConceptCategory } from "@/types/scope";
 
-export function ConceptAlbumsView({ albums, initialSlug }: { albums: TloraConceptAlbum[]; initialSlug?: string }) {
+const pageSize = 15;
+
+export function ConceptAlbumsView({
+  albums,
+  categories,
+  initialSlug,
+}: {
+  albums: TloraConceptAlbum[];
+  categories: TloraConceptCategory[];
+  initialSlug?: string;
+}) {
   const [selected, setSelected] = useState<TloraConceptAlbum | null>(() => albums.find((album) => album.slug === initialSlug) || null);
   const [consulting, setConsulting] = useState<TloraConceptAlbum | null>(null);
+  const [category, setCategory] = useState("all");
+  const [page, setPage] = useState(1);
+  const filtered = useMemo(() => category === "all" ? albums : albums.filter((album) => album.categorySlug === category), [albums, category]);
+  const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
+  const visible = filtered.slice((page - 1) * pageSize, page * pageSize);
+
+  useEffect(() => {
+    if (!selected && !consulting) return;
+    const previous = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => { document.body.style.overflow = previous; };
+  }, [consulting, selected]);
+
+  function chooseCategory(value: string) {
+    setCategory(value);
+    setPage(1);
+  }
 
   return (
     <>
-      <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
-        {albums.map((album, index) => (
-          <article key={album.id} className="group overflow-hidden rounded-2xl border border-white/10 bg-[#101115] opacity-0 [animation:concept-card_.55s_ease-out_forwards]" style={{ animationDelay: `${index * 80}ms` }}>
-            <button type="button" onClick={() => setSelected(album)} className="relative block aspect-[4/3] w-full overflow-hidden bg-[#1c1813] text-left">
-              <span className="absolute inset-0 bg-cover bg-center transition duration-700 group-hover:scale-105" style={album.coverImageUrl ? { backgroundImage: `url(${album.coverImageUrl})` } : undefined} />
-              <span className="absolute inset-0 bg-linear-to-t from-black/80 via-transparent to-transparent" />
-              <span className="absolute bottom-4 left-4 right-4 flex items-center justify-between text-sm font-bold text-white">Xem thêm album <ArrowRight size={17} /></span>
-            </button>
-            <div className="p-5">
-              <h2 className="text-xl font-extrabold text-[#f8f5ee]">{album.title}</h2>
-              <p className="mt-2 line-clamp-2 text-sm leading-6 text-[#8c8174]">{album.excerpt}</p>
-              <button type="button" onClick={() => setConsulting(album)} className="mt-5 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-md bg-[#d8b766] px-4 text-sm font-bold text-[#07080a]"><MessageCircle size={16} /> Liên hệ tư vấn</button>
-            </div>
-          </article>
-        ))}
+      <div className="mb-8 flex gap-2 overflow-x-auto pb-2" aria-label="Lọc album theo danh mục">
+        <FilterButton active={category === "all"} onClick={() => chooseCategory("all")}>Tất cả <span>{albums.length}</span></FilterButton>
+        {categories.map((item) => ({ ...item, publicCount: albums.filter((album) => album.categoryId === item.id).length })).filter((item) => item.publicCount > 0).map((item) => <FilterButton key={item.id} active={category === item.slug} onClick={() => chooseCategory(item.slug)}>{item.name} <span>{item.publicCount}</span></FilterButton>)}
       </div>
 
-      {selected && (
-        <div className="fixed inset-0 z-50 overflow-y-auto bg-[#07080a]/95 p-4 backdrop-blur-md [animation:concept-fade_.25s_ease-out]">
-          <div className="mx-auto max-w-6xl [animation:concept-open_.4s_cubic-bezier(.2,.8,.2,1)]">
-            <div className="sticky top-4 z-10 flex justify-end"><button type="button" onClick={() => setSelected(null)} aria-label="Đóng album" className="grid size-11 place-items-center rounded-full bg-white text-black shadow-xl"><X size={20} /></button></div>
-            <header className="pb-8 pt-2"><p className="text-xs font-bold uppercase tracking-[.16em] text-[#d8b766]">Album Concept</p><h2 className="mt-3 text-4xl font-black text-[#f8f5ee] md:text-6xl">{selected.title}</h2><p className="mt-4 max-w-2xl text-base leading-7 text-[#cbc0b0]">{selected.excerpt}</p></header>
-            <div className="columns-1 gap-4 sm:columns-2 lg:columns-3">
-              {[selected.coverImageUrl, ...selected.images].filter(Boolean).map((image, index) => <div key={`${image}-${index}`} className="mb-4 break-inside-avoid overflow-hidden rounded-xl border border-white/10 opacity-0 [animation:concept-card_.5s_ease-out_forwards]" style={{ animationDelay: `${index * 60}ms` }}><Image src={image} alt={`${selected.title} ${index + 1}`} width={1200} height={900} unoptimized className="h-auto w-full" /></div>)}
-            </div>
-            <button type="button" onClick={() => { setConsulting(selected); setSelected(null); }} className="sticky bottom-5 mx-auto mt-8 flex min-h-12 items-center gap-2 rounded-md bg-[#d8b766] px-6 text-sm font-bold text-[#07080a] shadow-2xl"><MessageCircle size={17} /> Tư vấn concept này</button>
-          </div>
+      {visible.length ? (
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+          {visible.map((album, index) => <ConceptCard key={album.id} album={album} index={index} onOpen={() => setSelected(album)} onConsult={() => setConsulting(album)} />)}
         </div>
+      ) : (
+        <p className="rounded-xl border border-dashed border-white/15 p-10 text-center text-[#8c8174]">Danh mục này chưa có album.</p>
       )}
 
+      {totalPages > 1 && (
+        <nav className="mt-10 flex flex-wrap items-center justify-center gap-2" aria-label="Phân trang Album Concept">
+          <button type="button" disabled={page === 1} onClick={() => setPage((value) => value - 1)} className="grid size-11 place-items-center rounded-md border border-white/15 disabled:opacity-30" aria-label="Trang trước"><ChevronLeft /></button>
+          {Array.from({ length: totalPages }, (_, index) => index + 1).map((value) => <button type="button" key={value} onClick={() => setPage(value)} className={`size-11 rounded-md border text-sm font-bold ${page === value ? "border-[#d8b766] bg-[#d8b766] text-[#07080a]" : "border-white/15 text-[#cbc0b0]"}`}>{value}</button>)}
+          <button type="button" disabled={page === totalPages} onClick={() => setPage((value) => value + 1)} className="grid size-11 place-items-center rounded-md border border-white/15 disabled:opacity-30" aria-label="Trang sau"><ChevronRight /></button>
+        </nav>
+      )}
+
+      {selected && <AlbumViewer album={selected} onClose={() => setSelected(null)} onConsult={() => { setSelected(null); setConsulting(selected); }} />}
       {consulting && <ConsultationModal album={consulting} onClose={() => setConsulting(null)} />}
+
       <style jsx global>{`
         @keyframes concept-card { from { opacity: 0; transform: translateY(22px); } to { opacity: 1; transform: translateY(0); } }
         @keyframes concept-fade { from { opacity: 0; } to { opacity: 1; } }
         @keyframes concept-open { from { opacity: 0; transform: scale(.96) translateY(20px); } to { opacity: 1; transform: scale(1) translateY(0); } }
+        @media (prefers-reduced-motion: reduce) {
+          [class*="animation:concept"] { animation: none !important; opacity: 1 !important; }
+        }
       `}</style>
     </>
   );
 }
 
+function FilterButton({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) {
+  return <button type="button" onClick={onClick} className={`inline-flex min-h-11 shrink-0 items-center gap-2 rounded-full border px-4 text-sm font-bold transition ${active ? "border-[#d8b766] bg-[#d8b766] text-[#07080a]" : "border-white/15 bg-white/[.03] text-[#cbc0b0] hover:border-[#d8b766]/60 hover:text-white"} [&_span]:text-xs [&_span]:opacity-70`}>{children}</button>;
+}
+
+function ConceptCard({ album, index, onOpen, onConsult }: { album: TloraConceptAlbum; index: number; onOpen: () => void; onConsult: () => void }) {
+  const previewImages = album.images.slice(0, 2);
+  return (
+    <article className="group opacity-0 [animation:concept-card_.55s_ease-out_forwards]" style={{ animationDelay: `${(index % pageSize) * 55}ms` }}>
+      <div className="relative mx-3 h-8">
+        {previewImages.map((image, imageIndex) => <span key={image} className={`absolute inset-x-4 top-3 h-40 rounded-xl border border-white/10 bg-cover bg-center transition duration-500 ${imageIndex === 0 ? "group-hover:-translate-y-2 group-hover:-rotate-3" : "group-hover:-translate-y-4 group-hover:rotate-3"}`} style={{ backgroundImage: `url(${image})`, zIndex: imageIndex }} />)}
+      </div>
+      <div className="relative overflow-hidden rounded-xl border border-white/10 bg-[#101115] shadow-2xl shadow-black/20">
+        <button type="button" onClick={onOpen} className="relative block aspect-[4/3] w-full overflow-hidden bg-[#1c1813] text-left">
+          {album.coverImageUrl && <Image src={album.coverImageUrl} alt={album.title} fill sizes="(min-width:1280px) 33vw, (min-width:768px) 50vw, 100vw" unoptimized className="object-cover transition duration-700 group-hover:scale-105" />}
+          <span className="absolute inset-0 bg-linear-to-t from-black/85 via-black/5 to-transparent" />
+          <span className="absolute bottom-4 left-4 right-4 flex items-center justify-between text-sm font-bold text-white"><span className="inline-flex items-center gap-2"><Images size={17} /> {album.images.length} ảnh</span><span className="inline-flex items-center gap-2">Xem album <ArrowRight size={17} /></span></span>
+        </button>
+        <div className="p-5">
+          {album.categoryName && <p className="text-xs font-bold uppercase tracking-[.12em] text-[#d8b766]">{album.categoryName}</p>}
+          <h2 className="mt-2 text-xl font-extrabold text-[#f8f5ee]">{album.title}</h2>
+          <p className="mt-2 line-clamp-3 text-sm leading-6 text-[#8c8174]">{album.excerpt}</p>
+          <button type="button" onClick={onConsult} className="mt-5 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-md bg-[#d8b766] px-4 text-sm font-bold text-[#07080a]"><MessageCircle size={16} /> Liên hệ tư vấn</button>
+        </div>
+      </div>
+    </article>
+  );
+}
+
+function AlbumViewer({ album, onClose, onConsult }: { album: TloraConceptAlbum; onClose: () => void; onConsult: () => void }) {
+  const images = [album.coverImageUrl, ...album.images].filter(Boolean);
+  return (
+    <div className="fixed inset-0 z-50 bg-[#07080a]/95 backdrop-blur-xl [animation:concept-fade_.25s_ease-out]">
+      <div className="absolute inset-0 scale-110 bg-cover bg-center opacity-15 blur-2xl md:hidden" style={{ backgroundImage: `url(${album.coverImageUrl})` }} />
+      <div className="relative h-full overflow-y-auto md:p-5">
+        <div className="mx-auto min-h-full max-w-7xl [animation:concept-open_.4s_cubic-bezier(.2,.8,.2,1)]">
+          <header className="sticky top-0 z-20 flex items-center justify-between gap-3 border-b border-white/10 bg-[#07080a]/85 px-4 py-3 backdrop-blur-xl md:rounded-t-xl md:border">
+            <button type="button" onClick={onClose} className="inline-flex min-h-11 items-center gap-2 rounded-md border border-white/15 px-4 text-sm font-bold"><ArrowLeft size={17} /> Thoát</button>
+            <div className="min-w-0 text-center"><p className="truncate text-sm font-extrabold">{album.title}</p><p className="text-xs text-[#8c8174]">{images.length} ảnh</p></div>
+            <button type="button" onClick={onConsult} className="inline-flex min-h-11 items-center gap-2 rounded-md bg-[#d8b766] px-4 text-sm font-bold text-[#07080a]"><MessageCircle size={16} /><span className="hidden sm:inline">Tư vấn</span></button>
+          </header>
+
+          <div className="md:hidden">
+            <div className="flex h-[calc(100dvh-70px)] snap-x snap-mandatory overflow-x-auto">
+              {images.map((image, index) => <figure key={`${image}-${index}`} className="relative h-full min-w-full snap-center p-4"><Image src={image} alt={`${album.title} ${index + 1}`} fill sizes="100vw" unoptimized className="object-contain p-4" /><figcaption className="absolute bottom-5 left-1/2 -translate-x-1/2 rounded-full bg-black/65 px-4 py-2 text-xs font-bold">{index + 1} / {images.length}</figcaption></figure>)}
+            </div>
+          </div>
+
+          <div className="hidden border-x border-b border-white/10 bg-[#101115] p-6 md:block">
+            <div className="mb-8"><p className="text-xs font-bold uppercase tracking-[.16em] text-[#d8b766]">{album.categoryName || "Album Concept"}</p><h2 className="mt-3 text-4xl font-black text-[#f8f5ee]">{album.title}</h2><p className="mt-4 max-w-2xl text-base leading-7 text-[#cbc0b0]">{album.excerpt}</p></div>
+            <div className="columns-2 gap-4 lg:columns-3">{images.map((image, index) => <div key={`${image}-${index}`} className="mb-4 break-inside-avoid overflow-hidden rounded-xl border border-white/10"><Image src={image} alt={`${album.title} ${index + 1}`} width={1200} height={900} unoptimized className="h-auto w-full transition duration-500 hover:scale-[1.02]" /></div>)}</div>
+          </div>
+        </div>
+      </div>
+      <button type="button" onClick={onClose} aria-label="Đóng album" className="absolute right-3 top-20 z-30 hidden size-11 place-items-center rounded-full bg-white text-black shadow-xl md:grid"><X size={20} /></button>
+    </div>
+  );
+}
+
 function ConsultationModal({ album, onClose }: { album: TloraConceptAlbum; onClose: () => void }) {
-  const [form, setForm] = useState({ customerName: "", phone: "", email: "", note: `Tôi muốn được tư vấn album ${album.title}.` });
+  const [form, setForm] = useState({ customerName: "", shootingDate: "", phone: "", note: "" });
   const [busy, setBusy] = useState(false);
   const [done, setDone] = useState(false);
   const [message, setMessage] = useState("");
@@ -68,10 +149,10 @@ function ConsultationModal({ album, onClose }: { album: TloraConceptAlbum; onClo
   }
 
   return (
-    <div className="fixed inset-0 z-[60] grid place-items-center bg-black/80 p-4 backdrop-blur-sm [animation:concept-fade_.2s_ease-out]">
-      <section className="w-full max-w-lg rounded-2xl border border-white/10 bg-[#101115] p-6 text-[#f8f5ee] [animation:concept-open_.3s_ease-out]">
-        <div className="flex items-start justify-between gap-4"><div><p className="text-xs font-bold uppercase tracking-[.14em] text-[#d8b766]">Đăng ký tư vấn</p><h2 className="mt-2 text-2xl font-extrabold">{album.title}</h2></div><button type="button" onClick={onClose} className="grid size-10 place-items-center rounded-md border border-white/10"><X size={18} /></button></div>
-        {done ? <div className="py-10 text-center"><span className="mx-auto grid size-14 place-items-center rounded-full bg-emerald-400 text-black"><Check /></span><h3 className="mt-4 text-xl font-bold">Đã nhận đăng ký</h3><p className="mt-2 text-sm text-[#8c8174]">TLORA sẽ liên hệ tư vấn với bạn sớm nhất.</p></div> : <form onSubmit={submit} className="mt-6 space-y-4"><Input label="Họ và tên" value={form.customerName} onChange={(customerName) => setForm((current) => ({ ...current, customerName }))} required /><Input label="Số điện thoại" value={form.phone} onChange={(phone) => setForm((current) => ({ ...current, phone }))} required /><Input label="Email" value={form.email} onChange={(email) => setForm((current) => ({ ...current, email }))} type="email" /><label className="block text-sm font-bold">Nội dung<textarea value={form.note} onChange={(event) => setForm((current) => ({ ...current, note: event.target.value }))} className="mt-2 min-h-24 w-full rounded-md border border-white/10 bg-[#07080a] p-3 font-normal outline-none focus:border-[#d8b766]" /></label>{message && <p className="text-sm text-red-300">{message}</p>}<button type="submit" disabled={busy} className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-md bg-[#d8b766] px-5 text-sm font-bold text-[#07080a] disabled:opacity-50">{busy ? <Loader2 className="animate-spin" size={17} /> : <MessageCircle size={17} />} Gửi đăng ký tư vấn</button></form>}
+    <div className="fixed inset-0 z-[60] grid place-items-center overflow-y-auto bg-black/80 p-4 backdrop-blur-sm [animation:concept-fade_.2s_ease-out]">
+      <section className="w-full max-w-lg rounded-xl border border-white/10 bg-[#101115] p-6 text-[#f8f5ee] [animation:concept-open_.3s_ease-out]">
+        <div className="flex items-start justify-between gap-4"><div><p className="text-xs font-bold uppercase tracking-[.14em] text-[#d8b766]">Liên hệ tư vấn</p><h2 className="mt-2 text-2xl font-extrabold">{album.title}</h2></div><button type="button" onClick={onClose} aria-label="Đóng form" className="grid size-10 place-items-center rounded-md border border-white/10"><X size={18} /></button></div>
+        {done ? <div className="py-10 text-center"><span className="mx-auto grid size-14 place-items-center rounded-full bg-emerald-400 text-black"><Check /></span><h3 className="mt-4 text-xl font-bold">Đã nhận đăng ký</h3><p className="mt-2 text-sm text-[#8c8174]">TLORA sẽ liên hệ tư vấn với bạn sớm nhất.</p></div> : <form onSubmit={submit} className="mt-6 space-y-4"><Input label="Tên" value={form.customerName} onChange={(customerName) => setForm((current) => ({ ...current, customerName }))} required /><Input label="Thời gian chụp" value={form.shootingDate} onChange={(shootingDate) => setForm((current) => ({ ...current, shootingDate }))} type="date" /><Input label="SĐT / Zalo" value={form.phone} onChange={(phone) => setForm((current) => ({ ...current, phone }))} required type="tel" /><label className="block text-sm font-bold">Mô tả<textarea value={form.note} onChange={(event) => setForm((current) => ({ ...current, note: event.target.value }))} placeholder="Bạn mong muốn phong cách, trang phục hoặc bối cảnh như thế nào?" className="mt-2 min-h-28 w-full rounded-md border border-white/10 bg-[#07080a] p-3 font-normal outline-none focus:border-[#d8b766]" /></label>{message && <p className="text-sm text-red-300">{message}</p>}<button type="submit" disabled={busy} className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-md bg-[#d8b766] px-5 text-sm font-bold text-[#07080a] disabled:opacity-50">{busy ? <Loader2 className="animate-spin" size={17} /> : <MessageCircle size={17} />} Gửi</button></form>}
       </section>
     </div>
   );

@@ -84,14 +84,20 @@ export type Database = {
         Relationships: [];
       };
       tlora_concept_albums: {
-        Row: { id: string; studio_id: string; slug: string; title: string; excerpt: string; cover_image_url: string | null; images: Json; is_featured: boolean; sort_order: number; status: "draft" | "published" | "archived"; published_at: string | null; created_by: string | null; updated_by: string | null; created_at: string; updated_at: string };
-        Insert: { id?: string; studio_id: string; slug: string; title: string; excerpt?: string; cover_image_url?: string | null; images?: Json; is_featured?: boolean; sort_order?: number; status?: "draft" | "published" | "archived"; published_at?: string | null; created_by?: string | null; updated_by?: string | null; created_at?: string; updated_at?: string };
+        Row: { id: string; studio_id: string; category_id: string | null; slug: string; title: string; excerpt: string; cover_image_url: string | null; images: Json; is_featured: boolean; sort_order: number; status: "draft" | "published" | "archived"; published_at: string | null; created_by: string | null; updated_by: string | null; created_at: string; updated_at: string };
+        Insert: { id?: string; studio_id: string; category_id?: string | null; slug: string; title: string; excerpt?: string; cover_image_url?: string | null; images?: Json; is_featured?: boolean; sort_order?: number; status?: "draft" | "published" | "archived"; published_at?: string | null; created_by?: string | null; updated_by?: string | null; created_at?: string; updated_at?: string };
         Update: Partial<Database["public"]["Tables"]["tlora_concept_albums"]["Insert"]>;
         Relationships: [];
       };
+      tlora_concept_categories: {
+        Row: { id: string; studio_id: string; name: string; slug: string; created_by: string | null; created_at: string; updated_at: string };
+        Insert: { id?: string; studio_id: string; name: string; slug: string; created_by?: string | null; created_at?: string; updated_at?: string };
+        Update: Partial<Database["public"]["Tables"]["tlora_concept_categories"]["Insert"]>;
+        Relationships: [];
+      };
       tlora_concept_inquiries: {
-        Row: { id: string; studio_id: string; album_id: string | null; customer_name: string; phone: string; email: string | null; note: string | null; status: string; created_at: string };
-        Insert: { id?: string; studio_id: string; album_id?: string | null; customer_name: string; phone: string; email?: string | null; note?: string | null; status?: string; created_at?: string };
+        Row: { id: string; studio_id: string; album_id: string | null; customer_name: string; phone: string; email: string | null; shooting_date: string | null; note: string | null; status: string; created_at: string };
+        Insert: { id?: string; studio_id: string; album_id?: string | null; customer_name: string; phone: string; email?: string | null; shooting_date?: string | null; note?: string | null; status?: string; created_at?: string };
         Update: Partial<Database["public"]["Tables"]["tlora_concept_inquiries"]["Insert"]>;
         Relationships: [];
       };

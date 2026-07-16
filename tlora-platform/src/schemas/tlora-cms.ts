@@ -139,19 +139,23 @@ export const conceptAlbumSchema = z.object({
   id: z.string().uuid().optional(),
   title: z.string().trim().min(2).max(160),
   slug: z.string().trim().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/).max(160),
-  excerpt: z.string().trim().max(500),
-  coverImageUrl: imageUrl,
-  images: z.array(imageUrl).max(30),
-  isFeatured: z.boolean(),
-  sortOrder: z.number().int().min(0).max(1000),
-  status: z.enum(["draft", "published", "archived"]),
+  excerpt: z.string().trim().min(1, "Cần nhập mô tả ngắn.").max(500),
+  coverImageUrl: imageUrl.refine((value) => Boolean(value), "Cần chọn ảnh bìa."),
+  images: z.array(imageUrl).min(1, "Album cần ít nhất một ảnh nội dung.").max(60),
+  categoryId: z.string().uuid().nullable().optional().default(null),
+});
+
+export const conceptCategorySchema = z.object({
+  id: z.string().uuid().optional(),
+  name: z.string().trim().min(2).max(120),
+  slug: z.string().trim().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/).max(120),
 });
 
 export const conceptInquirySchema = z.object({
   albumId: z.string().uuid().nullable().optional(),
   customerName: z.string().trim().min(2).max(120),
   phone: z.string().trim().min(8).max(30),
-  email: z.string().trim().email().or(z.literal("")).optional().default(""),
+  shootingDate: z.string().trim().regex(/^\d{4}-\d{2}-\d{2}$/).optional().or(z.literal("")),
   note: z.string().trim().max(1000).optional().default(""),
 });
 

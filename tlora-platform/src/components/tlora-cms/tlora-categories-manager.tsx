@@ -30,7 +30,7 @@ export function TloraCategoriesManager({ initialCategories }: { initialCategorie
         <section className="rounded-xl border border-zinc-200 bg-white p-5">
           <div className="space-y-4">
             <Field label="Tên danh mục" value={form.name} onChange={(name) => setForm((current) => ({ ...current, name, slug: current.id ? current.slug : slugify(name) }))} />
-            <Field label="Slug" value={form.slug} onChange={(slug) => setForm((current) => ({ ...current, slug: slugify(slug) }))} />
+            <Field label="Tên đường dẫn" value={form.slug} onChange={(slug) => setForm((current) => ({ ...current, slug: slugify(slug) }))} />
             <Field label="Mô tả" value={form.description} onChange={(description) => setForm((current) => ({ ...current, description }))} />
           </div>
           {message && <p className="mt-4 text-sm font-semibold text-zinc-600">{message}</p>}
@@ -45,4 +45,3 @@ export function TloraCategoriesManager({ initialCategories }: { initialCategorie
 function Field({ label, value, onChange }: { label: string; value: string; onChange: (value: string) => void }) {
   return <label className="block text-sm font-bold">{label}<input value={value} onChange={(event) => onChange(event.target.value)} className="mt-2 min-h-11 w-full rounded-md border border-zinc-300 px-3 font-normal outline-none focus:border-zinc-950" /></label>;
 }
-

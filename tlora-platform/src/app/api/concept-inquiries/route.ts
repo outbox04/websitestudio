@@ -19,7 +19,7 @@ export async function POST(request: Request) {
       album_id: input.albumId || null,
       customer_name: input.customerName,
       phone: input.phone,
-      email: input.email || null,
+      shooting_date: input.shootingDate || null,
       note: input.note || null,
     });
     if (error) throw error;

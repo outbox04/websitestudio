@@ -82,6 +82,7 @@ Date: 2026-07-17
 1. Back up the Supabase database.
 2. Apply migrations in chronological order, ending with:
    - `sql/20260717_security_hardening.sql`
+   - `sql/20260718_tlora_concept_categories.sql`
 3. Set and verify:
    - `SEPAY_IPN_SECRET`
    - `TLORA_API_KEY`

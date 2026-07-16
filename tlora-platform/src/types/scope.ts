@@ -87,11 +87,22 @@ export type TloraConceptAlbum = {
   excerpt: string;
   coverImageUrl: string;
   images: string[];
+  categoryId: string | null;
+  categoryName: string | null;
+  categorySlug: string | null;
   isFeatured: boolean;
   sortOrder: number;
   status: "draft" | "published" | "archived";
   publishedAt: string | null;
   updatedAt: string;
+};
+
+export type TloraConceptCategory = {
+  id: string;
+  name: string;
+  slug: string;
+  albumCount: number;
+  imageCount: number;
 };
 
 export type TloraCmsMenuItem = {
