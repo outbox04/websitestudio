@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  Activity,
   BarChart3,
   Check,
   ChevronDown,
@@ -8,19 +9,19 @@ import {
   ExternalLink,
   FileText,
   FolderSync,
-  ImageUp,
+  Globe2,
   Landmark,
+  LayoutTemplate,
   Link as LinkIcon,
+  MonitorSmartphone,
+  Palette,
   RefreshCw,
   Save,
-  Settings,
-  Sparkles,
 } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import Image from "next/image";
 import { Fragment, useEffect, useMemo, useState } from "react";
 import { CustomerGalleryCreator } from "@/components/admin/customer-gallery-creator";
-import { StudioDriveConnection } from "@/components/admin/studio-drive-connection";
-import { StudioNewsManager } from "@/components/admin/studio-news-manager";
 import { StudioSiteBuilder } from "@/components/admin/studio-site-builder";
 import { adminMenu } from "@/lib/site-data";
 
@@ -82,23 +83,25 @@ export function AdminStudioWorkspace({
   studioSlug = "",
   studioSettings = {},
 }: AdminStudioWorkspaceProps) {
-  const [activeMenu, setActiveMenu] = useState("Dashboard");
+  const [activeMenu, setActiveMenu] = useState("Tổng quan website");
+  const [cmsPanel, setCmsPanel] = useState<"content" | "brand">("content");
   const activeView = getViewFromMenu(activeMenu);
   const menu = adminMenu;
 
   return (
-    <main className="min-h-screen bg-[#f4f6f8] text-zinc-950">
-      <div className="grid lg:grid-cols-[288px_1fr]">
-        <aside className="border-r border-zinc-200/80 bg-white px-4 py-5 lg:sticky lg:top-0 lg:min-h-screen">
-          <div className="flex items-center gap-3 rounded-md bg-zinc-950 p-3 text-white">
+    <main className="min-h-screen bg-[#f4f4f2] text-zinc-950">
+      <div className="grid lg:grid-cols-[272px_minmax(0,1fr)]">
+        <aside className="border-r border-[#2a2722] bg-[#07080a] px-4 py-5 text-[#f8f5ee] lg:sticky lg:top-0 lg:flex lg:min-h-screen lg:flex-col">
+          <div className="flex items-center gap-3 border-b border-white/10 px-2 pb-5">
             <Image src="/brand/tlora-logo.png" alt="TLORA Studio" width={1536} height={1024} className="h-11 w-auto object-contain" />
             <div>
               <p className="font-heading text-base font-bold">{studioName || "TLORA Admin"}</p>
-              <p className="text-xs text-zinc-300">{studioName ? "Studio Management" : "Management Console"}</p>
+              <p className="text-xs text-[#8c8174]">{studioName ? "Không gian quản trị" : "Website Studio CMS"}</p>
             </div>
           </div>
 
-          <nav className="mt-6 space-y-1">
+          <p className="mt-6 px-3 text-[11px] font-bold uppercase tracking-[.14em] text-[#8c8174]">Không gian làm việc</p>
+          <nav className="mt-2 flex gap-2 overflow-x-auto pb-1 lg:block lg:space-y-1">
             {menu.map((item) => {
               const isActive = item === activeMenu;
 
@@ -107,10 +110,10 @@ export function AdminStudioWorkspace({
                   key={item}
                   type="button"
                   onClick={() => setActiveMenu(item)}
-                  className={`flex min-h-11 w-full items-center gap-3 rounded-md px-3 text-left text-sm font-semibold transition ${
+                  className={`flex min-h-11 shrink-0 items-center gap-3 rounded-md px-3 text-left text-sm font-semibold transition lg:w-full ${
                     isActive
-                      ? "bg-zinc-950 text-white shadow-sm"
-                      : "text-zinc-600 hover:bg-zinc-100 hover:text-zinc-950"
+                      ? "bg-[#d8b766] text-[#07080a]"
+                      : "text-[#cbc0b0] hover:bg-white/[.06] hover:text-[#f8f5ee]"
                   }`}
                 >
                   {getMenuIcon(item)}
@@ -119,9 +122,18 @@ export function AdminStudioWorkspace({
               );
             })}
           </nav>
+          <div className="mt-auto hidden border-t border-white/10 pt-4 lg:block">
+            <div className="flex items-center gap-3 rounded-lg bg-white/[.04] p-3">
+              <span className="grid size-9 place-items-center rounded-full bg-[#1c1813] text-sm font-extrabold text-[#d8b766]">{(studioName || "T").slice(0, 1).toUpperCase()}</span>
+              <div className="min-w-0">
+                <p className="truncate text-sm font-bold">{studioName || "TLORA Studio"}</p>
+                <p className="text-xs text-[#8c8174]">Quản trị viên</p>
+              </div>
+            </div>
+          </div>
         </aside>
 
-        <section className="min-w-0 p-4 sm:p-6 lg:p-8">
+        <section className="min-w-0 p-4 sm:p-6 lg:p-8 xl:p-10">
           {databaseError && (
             <div className="mb-5 rounded-md border border-amber-200 bg-amber-50 p-4 text-sm font-medium text-amber-800">
               Chưa đọc được dữ liệu album: {databaseError}
@@ -130,8 +142,6 @@ export function AdminStudioWorkspace({
 
           {activeView === "dashboard" && (
             <DashboardView
-              galleries={galleries}
-              editRequests={editRequests}
               tenantMode={tenantMode}
               studioSlug={studioSlug}
               studioSettings={studioSettings}
@@ -142,14 +152,24 @@ export function AdminStudioWorkspace({
             <AlbumManagerView initialGalleries={galleries} editRequests={editRequests} tenantMode={tenantMode} />
           )}
 
-          {activeView === "edit-requests" && (
-            <EditRequestsView editRequests={editRequests} />
+          {activeView === "site-builder" && (
+            <div className="space-y-5">
+              <div className="flex flex-col justify-between gap-4 rounded-xl border border-[#2a2722] bg-[#101115] p-5 text-[#f8f5ee] sm:flex-row sm:items-center">
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-[.14em] text-[#d8b766]">Website CMS</p>
+                  <h1 className="mt-2 text-2xl font-extrabold">Biên tập website trực quan</h1>
+                  <p className="mt-1 text-sm text-[#cbc0b0]">Thay đổi nội dung, hình ảnh và nhận diện rồi xem kết quả ngay trên website thật.</p>
+                </div>
+                <div className="flex rounded-lg border border-white/10 bg-[#07080a] p-1">
+                  <button type="button" onClick={() => setCmsPanel("content")} className={`min-h-10 rounded-md px-4 text-sm font-bold ${cmsPanel === "content" ? "bg-[#d8b766] text-[#07080a]" : "text-[#cbc0b0]"}`}>Nội dung & preview</button>
+                  <button type="button" onClick={() => setCmsPanel("brand")} className={`min-h-10 rounded-md px-4 text-sm font-bold ${cmsPanel === "brand" ? "bg-[#d8b766] text-[#07080a]" : "text-[#cbc0b0]"}`}>Thương hiệu & SEO</button>
+                </div>
+              </div>
+              {cmsPanel === "content"
+                ? <StudioSiteBuilder mode="builder" studioSettings={studioSettings} studioSlug={studioSlug} />
+                : <StudioSiteBuilder mode="settings" studioSettings={studioSettings} studioSlug={studioSlug} />}
+            </div>
           )}
-
-          {activeView === "payment-settings" && (tenantMode ? <StudioSiteBuilder mode="settings" studioSettings={studioSettings} /> : <PaymentSettingsView />)}
-
-          {activeView === "news" && <StudioNewsManager />}
-          {activeView === "site-builder" && <StudioSiteBuilder mode="builder" studioSettings={studioSettings} studioSlug={studioSlug} />}
 
           {activeView === "placeholder" && (
             <PlaceholderView />
@@ -161,14 +181,10 @@ export function AdminStudioWorkspace({
 }
 
 function DashboardView({
-  galleries,
-  editRequests,
   tenantMode,
   studioSlug,
   studioSettings,
 }: {
-  galleries: AdminGallery[];
-  editRequests: AdminEditRequest[];
   tenantMode: boolean;
   studioSlug: string;
   studioSettings: StudioSettings;
@@ -177,14 +193,15 @@ function DashboardView({
   const [isSettingUp, setIsSettingUp] = useState(false);
   const [setupError, setSetupError] = useState("");
 
-  const totalJobs = galleries.length;
-  const completedJobs = galleries.filter((gallery) => gallery.editedPhotoCount > 0).length;
-  const pendingJobs = Math.max(totalJobs - completedJobs, 0);
-  const selectedCount = galleries.reduce((total, gallery) => total + gallery.selectedPhotoCount, 0);
-  const openRawCount = galleries.filter((gallery) => gallery.rawDownloadEnabled).length;
-  const revenue = completedJobs * 1900000;
-
   const rootDomain = process.env.NEXT_PUBLIC_ROOT_DOMAIN || "tlgroup.site";
+  const publicUrl = studioSlug ? `https://${studioSlug}.${rootDomain}` : "/";
+  const profileFields = ["logo_url", "site_description", "primary_color", "accent_color", "phone", "email", "address", "facebook_url"];
+  const completedFields = profileFields.filter((key) => Boolean(String(studioSettings[key] || "").trim())).length;
+  const completion = Math.round((completedFields / profileFields.length) * 100);
+  const trackingFields = ["google_analytics_id", "google_tag_manager_id", "facebook_pixel_id", "tiktok_pixel_id"];
+  const connectedTracking = trackingFields.filter((key) => Boolean(String(studioSettings[key] || "").trim())).length;
+  const content = studioSettings.site_content as { services?: unknown[]; pricing?: unknown[]; gallery?: unknown[] } | undefined;
+  const contentSections = [content?.services?.length, content?.pricing?.length, content?.gallery?.length].filter(Boolean).length;
 
   async function handleSetupWebsite() {
     setIsSettingUp(true);
@@ -210,106 +227,52 @@ function DashboardView({
 
   return (
     <div className="space-y-5">
-      {tenantMode && (
-        <>
-          {setupCompleted ? (
-            <div className="rounded-lg border border-emerald-200 bg-emerald-50/70 p-5 shadow-sm">
-              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <div>
-                  <h3 className="flex items-center gap-2 text-lg font-bold text-emerald-950">
-                    <Check className="text-emerald-600" size={20} />
-                    Website đã được đưa vào vận hành chính thức!
-                  </h3>
-                  <p className="mt-1 text-sm leading-6 text-emerald-800">
-                    Trang chủ của studio hiện đã sẵn sàng phục vụ khách hàng. Bạn có thể truy cập trang chủ để xem giao diện dịch vụ, bảng giá và portfolio album mẫu.
-                  </p>
-                </div>
-                <a
-                  href={`https://${studioSlug}.${rootDomain}`}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="inline-flex min-h-10 items-center justify-center gap-2 rounded-md bg-emerald-600 hover:bg-emerald-700 px-5 text-sm font-semibold text-white shadow-sm transition-all"
-                >
-                  Xem website của tôi <ExternalLink size={15} />
-                </a>
-              </div>
-            </div>
-          ) : (
-            <div className="rounded-lg border border-amber-200 bg-amber-50/70 p-5 shadow-sm">
-              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <div>
-                  <h3 className="flex items-center gap-2 text-lg font-bold text-amber-950">
-                    <Sparkles className="text-amber-600 animate-pulse" size={20} />
-                    Website của bạn chưa được đưa vào vận hành
-                  </h3>
-                  {/* eslint-disable react/no-unescaped-entities */}
-                  <p className="mt-1 text-sm leading-6 text-amber-800">
-                    Trang chủ subdomain hiện tại đang hiển thị thông báo "Website đang hoàn thiện". Nhấp nút bên dưới để tạo các dữ liệu mẫu (album, ảnh, tin tức, tài khoản ngân hàng) và đưa website vào hoạt động chính thức ngay lập tức!
-                  </p>
-                  {/* eslint-enable react/no-unescaped-entities */}
-                </div>
-                <button
-                  type="button"
-                  onClick={handleSetupWebsite}
-                  disabled={isSettingUp}
-                  className="inline-flex min-h-10 items-center justify-center gap-2 rounded-md bg-amber-600 hover:bg-amber-700 px-5 text-sm font-semibold text-white shadow-sm transition-all disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                  {isSettingUp ? (
-                    <>
-                      <RefreshCw className="animate-spin" size={15} /> Đang thiết lập...
-                    </>
-                  ) : (
-                    <>
-                      <Sparkles size={15} /> Setup & Vận hành ngay
-                    </>
-                  )}
-                </button>
-              </div>
-              {setupError && (
-                <p className="mt-3 text-xs font-semibold text-red-600">{setupError}</p>
-              )}
-            </div>
-          )}
-          <StudioDriveConnection />
-        </>
-      )}
-      <HeaderCard
-        title="Dashboard"
-        description="Tổng quan job, doanh thu, tiến độ hoàn thiện và trạng thái album."
-        action="Báo cáo tổng quan"
-      />
+      <section className="overflow-hidden rounded-xl border border-[#2a2722] bg-[#101115] text-[#f8f5ee]">
+        <div className="flex flex-col justify-between gap-5 p-6 md:flex-row md:items-center">
+          <div>
+            <p className="text-xs font-bold uppercase tracking-[.14em] text-[#d8b766]">Website overview</p>
+            <h1 className="mt-2 text-3xl font-extrabold">Tổng quan website</h1>
+            <p className="mt-2 max-w-2xl text-sm leading-6 text-[#cbc0b0]">Theo dõi mức độ sẵn sàng, nội dung, nhận diện và các công cụ đo lường của website studio.</p>
+          </div>
+          <a href={publicUrl} target="_blank" rel="noreferrer" className="inline-flex min-h-11 items-center justify-center gap-2 rounded-md bg-[#d8b766] px-5 text-sm font-bold text-[#07080a] transition hover:bg-[#f3d88e]">
+            Mở website <ExternalLink size={16} />
+          </a>
+        </div>
+        <div className="border-t border-white/10 bg-[#14110f] px-6 py-3 text-xs text-[#8c8174]">
+          {studioSlug || "TLORA"} · {setupCompleted ? "Đang hoạt động" : "Chưa xuất bản"}
+        </div>
+      </section>
 
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
-        <Metric label="Tổng job" value={totalJobs.toString()} helper="Album đã tạo" />
-        <Metric label="Doanh thu" value={formatCurrency(revenue)} helper="Tạm tính từ job hoàn thiện" />
-        <Metric label="Job hoàn thiện" value={completedJobs.toString()} helper="Đã có file chỉnh sửa" />
-        <Metric label="Job chưa hoàn thiện" value={pendingJobs.toString()} helper="Chưa có file chỉnh sửa" />
-        <Metric label="Ảnh cần sửa" value={editRequests.length.toString()} helper={`${selectedCount} ảnh đã chọn`} />
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <WebsiteMetric icon={Activity} label="Trạng thái" value={setupCompleted ? "Online" : "Bản nháp"} helper={setupCompleted ? "Website đang phục vụ khách hàng" : "Cần xuất bản website"} tone={setupCompleted ? "success" : "warning"} />
+        <WebsiteMetric icon={Palette} label="Mức hoàn thiện" value={`${completion}%`} helper={`${completedFields}/${profileFields.length} thông tin thương hiệu`} />
+        <WebsiteMetric icon={LayoutTemplate} label="Nội dung chính" value={`${contentSections}/3`} helper="Dịch vụ, bảng giá và album mẫu" />
+        <WebsiteMetric icon={BarChart3} label="Đo lường" value={`${connectedTracking}/4`} helper="GA, GTM, Meta và TikTok Pixel" />
       </div>
 
-      <div className="grid gap-5 xl:grid-cols-[1.2fr_0.8fr]">
-        <section className="rounded-lg border border-zinc-200 bg-white p-5 shadow-sm">
-          <div className="flex items-center justify-between gap-4">
+      <div className="grid gap-5 xl:grid-cols-[1.35fr_.65fr]">
+        <section className="rounded-xl border border-zinc-200 bg-white p-5 shadow-sm">
+          <div className="flex items-start justify-between gap-4">
             <div>
-              <h2 className="text-xl font-bold text-zinc-950">Biểu đồ tiến độ job</h2>
-              <p className="mt-2 text-sm leading-6 text-zinc-600">Tỷ lệ album hoàn thiện, chưa hoàn thiện và đang mở tải FILE GỐC.</p>
+              <h2 className="text-xl font-extrabold">Sức khỏe website</h2>
+              <p className="mt-1 text-sm text-zinc-600">Các hạng mục cần thiết để website sẵn sàng tăng trưởng.</p>
             </div>
-            <BarChart3 size={22} className="text-zinc-500" />
+            <MonitorSmartphone className="text-zinc-500" size={22} />
           </div>
-          <div className="mt-6 space-y-5">
-            <ProgressRow label="Hoàn thiện" value={completedJobs} total={Math.max(totalJobs, 1)} tone="bg-emerald-600" />
-            <ProgressRow label="Chưa hoàn thiện" value={pendingJobs} total={Math.max(totalJobs, 1)} tone="bg-amber-500" />
-            <ProgressRow label="Đang mở FILE GỐC" value={openRawCount} total={Math.max(totalJobs, 1)} tone="bg-sky-600" />
+          <div className="mt-5 grid gap-3 sm:grid-cols-2">
+            <HealthItem label="Nhận diện thương hiệu" ready={completedFields >= 4} detail={completedFields >= 4 ? "Đã có thông tin nền tảng" : "Cần bổ sung logo, màu và mô tả"} />
+            <HealthItem label="Nội dung trang chủ" ready={contentSections >= 2} detail={contentSections >= 2 ? "Nội dung chính đã sẵn sàng" : "Cần hoàn thiện nội dung CMS"} />
+            <HealthItem label="Kênh liên hệ" ready={Boolean(studioSettings.phone || studioSettings.email)} detail={studioSettings.phone || studioSettings.email ? "Khách có thể liên hệ trực tiếp" : "Chưa có điện thoại hoặc email"} />
+            <HealthItem label="Công cụ đo lường" ready={connectedTracking > 0} detail={connectedTracking ? `${connectedTracking} công cụ đã kết nối` : "Chưa kết nối công cụ đo lường"} />
           </div>
         </section>
 
-        <section className="rounded-lg border border-zinc-200 bg-white p-5 shadow-sm">
-          <h2 className="text-xl font-bold text-zinc-950">Việc cần chú ý</h2>
-          <div className="mt-4 space-y-3 text-sm text-zinc-700">
-            <StatusLine label="Ảnh chờ chỉnh" value={`${editRequests.length} ảnh`} />
-            <StatusLine label="Album chưa hoàn thiện" value={`${pendingJobs} job`} />
-            <StatusLine label="Album đang mở tải gốc" value={`${openRawCount} album`} />
-          </div>
+        <section className="rounded-xl border border-zinc-200 bg-white p-5 shadow-sm">
+          <p className="text-xs font-bold uppercase tracking-[.14em] text-[#a57f2c]">Hành động đề xuất</p>
+          <h2 className="mt-2 text-xl font-extrabold">{setupCompleted ? "Tiếp tục tối ưu" : "Xuất bản website"}</h2>
+          <p className="mt-2 text-sm leading-6 text-zinc-600">{setupCompleted ? "Vào Website CMS để cập nhật nội dung và xem live preview trước khi lưu." : "Hoàn thiện nội dung cơ bản, sau đó đưa website vào hoạt động."}</p>
+          {tenantMode && !setupCompleted && <button type="button" onClick={handleSetupWebsite} disabled={isSettingUp} className="mt-5 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-md bg-zinc-950 px-4 text-sm font-bold text-white disabled:opacity-50">{isSettingUp ? <RefreshCw className="animate-spin" size={16} /> : <Globe2 size={16} />}{isSettingUp ? "Đang xuất bản..." : "Xuất bản website"}</button>}
+          {setupError && <p className="mt-3 text-xs font-semibold text-red-600">{setupError}</p>}
         </section>
       </div>
     </div>
@@ -548,6 +511,8 @@ function FragmentRow({
   );
 }
 
+// Kept as a private operational view so album workflows can reuse it later without exposing a separate tab.
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function EditRequestsView({ editRequests }: { editRequests: AdminEditRequest[] }) {
   return (
     <div className="space-y-5">
@@ -686,40 +651,44 @@ function HeaderCard({ title, description, action }: { title: string; description
   );
 }
 
-function Metric({ label, value, helper }: { label: string; value: string; helper: string }) {
+function WebsiteMetric({
+  icon: Icon,
+  label,
+  value,
+  helper,
+  tone = "default",
+}: {
+  icon: LucideIcon;
+  label: string;
+  value: string;
+  helper: string;
+  tone?: "default" | "success" | "warning";
+}) {
+  const toneClass = tone === "success" ? "bg-emerald-50 text-emerald-700" : tone === "warning" ? "bg-amber-50 text-amber-700" : "bg-[#f5efe1] text-[#8a681f]";
   return (
-    <article className="rounded-lg border border-zinc-200 bg-white p-5 shadow-sm">
-      <p className="text-sm font-semibold text-zinc-600">{label}</p>
-      <p className="mt-3 text-3xl font-extrabold text-zinc-950">{value}</p>
-      <p className="mt-2 text-xs font-medium text-zinc-500">{helper}</p>
+    <article className="rounded-xl border border-zinc-200 bg-white p-5 shadow-sm">
+      <div className={`grid size-10 place-items-center rounded-lg ${toneClass}`}><Icon size={19} /></div>
+      <p className="mt-5 text-sm font-semibold text-zinc-500">{label}</p>
+      <p className="mt-1 text-2xl font-extrabold text-zinc-950">{value}</p>
+      <p className="mt-2 text-xs leading-5 text-zinc-500">{helper}</p>
     </article>
   );
 }
 
-function ProgressRow({ label, value, total, tone }: { label: string; value: number; total: number; tone: string }) {
-  const percent = Math.round((value / total) * 100);
-
+function HealthItem({ label, ready, detail }: { label: string; ready: boolean; detail: string }) {
   return (
-    <div>
-      <div className="flex items-center justify-between gap-4 text-sm font-semibold text-zinc-700">
-        <span>{label}</span>
-        <span>{value} job</span>
-      </div>
-      <div className="mt-2 h-3 overflow-hidden rounded-full bg-zinc-100">
-        <div className={`h-full rounded-full ${tone}`} style={{ width: `${percent}%` }} />
+    <div className="flex items-start gap-3 rounded-lg border border-zinc-200 p-4">
+      <span className={`mt-0.5 grid size-6 shrink-0 place-items-center rounded-full ${ready ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-700"}`}>
+        {ready ? <Check size={14} /> : <span className="size-1.5 rounded-full bg-current" />}
+      </span>
+      <div>
+        <p className="text-sm font-bold text-zinc-900">{label}</p>
+        <p className="mt-1 text-xs leading-5 text-zinc-500">{detail}</p>
       </div>
     </div>
   );
 }
 
-function StatusLine({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="flex items-center justify-between rounded-md border border-zinc-100 px-3 py-3">
-      <span>{label}</span>
-      <span className="font-bold text-zinc-950">{value}</span>
-    </div>
-  );
-}
 
 function LinkWithCopy({ value, copied, onCopy, label }: { value: string; copied: boolean; onCopy: () => void; label?: string }) {
   return (
@@ -792,6 +761,8 @@ type VietQrBank = { id: number; name: string; code: string; bin: string; shortNa
 
 const emptyPaymentSettings: PaymentSettingsForm = { bank_bin: "", bank_name: "", account_number: "", account_name: "" };
 
+// Payment configuration is intentionally no longer exposed in the admin navigation.
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function PaymentSettingsView() {
   const [form, setForm] = useState<PaymentSettingsForm>(emptyPaymentSettings);
   const [loading, setLoading] = useState(true);
@@ -858,21 +829,16 @@ function EmptyText({ text }: { text: string }) {
 }
 
 function getViewFromMenu(item: string): AdminView {
-  if (item === "Dashboard") return "dashboard";
-  if (item === "Cài đặt") return "payment-settings";
-  if (item === "Tin tức") return "news";
-  if (item === "Build UI / UX") return "site-builder";
+  if (item === "Tổng quan website") return "dashboard";
+  if (item === "Website CMS") return "site-builder";
   if (item === "Quản lý album khách hàng") return "album-manager";
-  if (item === "Ảnh cần sửa") return "edit-requests";
   return "placeholder";
 }
 
 function getMenuIcon(item: string) {
-  if (item === "Dashboard") return <BarChart3 size={17} />;
+  if (item === "Tổng quan website") return <BarChart3 size={17} />;
   if (item === "Quản lý album khách hàng") return <LinkIcon size={17} />;
-  if (item === "Ảnh cần sửa") return <ImageUp size={17} />;
-  if (item === "Cài đặt") return <Settings size={17} />;
-  if (item === "Build UI / UX") return <Sparkles size={17} />;
+  if (item === "Website CMS") return <LayoutTemplate size={17} />;
   return <span className="size-2 rounded-full bg-current" />;
 }
 
@@ -881,10 +847,3 @@ function formatDate(value: string) {
   return new Date(value).toLocaleDateString("vi-VN");
 }
 
-function formatCurrency(value: number) {
-  return new Intl.NumberFormat("vi-VN", {
-    style: "currency",
-    currency: "VND",
-    maximumFractionDigits: 0,
-  }).format(value);
-}

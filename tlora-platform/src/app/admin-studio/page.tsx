@@ -5,11 +5,11 @@ import { getGalleryUrls, publicOriginFromHeaders } from "@/lib/public-origin";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 export const metadata: Metadata = {
-  title: "TLORA Admin",
-  description: "Dashboard quản lý khách hàng, album, ảnh cần sửa, tin tức và AI workflow.",
+  title: "TLORA Website CMS",
+  description: "Quản trị website, tùy biến nội dung trực quan và quản lý album khách hàng.",
   openGraph: {
-    title: "TLORA Admin",
-    description: "Dashboard quản lý khách hàng, album, ảnh cần sửa, tin tức và AI workflow.",
+    title: "TLORA Website CMS",
+    description: "Quản trị website, tùy biến nội dung trực quan và quản lý album khách hàng.",
     images: ["/brand/tlora-logo.png"],
   },
 };

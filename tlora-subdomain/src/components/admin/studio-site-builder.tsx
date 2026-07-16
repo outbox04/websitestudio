@@ -97,8 +97,8 @@ export function StudioSiteBuilder({ mode, studioSettings = {}, studioSlug }: Pro
     return (
       <div className="max-w-[1500px] space-y-5">
         <header className="rounded-xl border border-zinc-200 bg-white p-6 shadow-sm">
-          <p className="text-xs font-bold uppercase tracking-[.16em] text-[#c99a5e]">Website studio</p>
-          <h1 className="mt-2 text-3xl font-extrabold text-zinc-950">Build UI / UX</h1>
+          <p className="text-xs font-bold uppercase tracking-[.16em] text-[#a57f2c]">Nội dung website</p>
+          <h1 className="mt-2 text-3xl font-extrabold text-zinc-950">Trình biên tập trực quan</h1>
           <p className="mt-2 max-w-3xl text-sm leading-6 text-zinc-600">
             Chỉnh trực tiếp trên live preview thật của website studio. Bấm vào khu vực trong preview để sửa nội dung và hình ảnh.
           </p>
@@ -122,8 +122,8 @@ export function StudioSiteBuilder({ mode, studioSettings = {}, studioSlug }: Pro
         }}
       />
       <header className="rounded-xl border border-zinc-200 bg-white p-6 shadow-sm">
-        <p className="text-xs font-bold uppercase tracking-[.16em] text-[#c99a5e]">Website studio</p>
-        <h1 className="mt-2 text-3xl font-extrabold text-zinc-950">Cài đặt website</h1>
+        <p className="text-xs font-bold uppercase tracking-[.16em] text-[#a57f2c]">Tùy biến website</p>
+        <h1 className="mt-2 text-3xl font-extrabold text-zinc-950">Thương hiệu & hiển thị</h1>
         <p className="mt-2 max-w-3xl text-sm leading-6 text-zinc-600">
           Những thông tin nền tảng giúp website, chia sẻ Facebook/Zalo và kết quả tìm kiếm hiển thị đúng thương hiệu của bạn.
         </p>

@@ -109,12 +109,9 @@ export const aiPresets = {
 };
 
 export const adminMenu = [
-  "Dashboard",
+  "Tổng quan website",
   "Quản lý album khách hàng",
-  "Ảnh cần sửa",
-  "Tin tức",
-  "Build UI / UX",
-  "Cài đặt",
+  "Website CMS",
 ];
 
 export const colorSwatches = ["#f8fafc", "#f3e8d7", "#dbeafe", "#fce7f3", "#111827"];
