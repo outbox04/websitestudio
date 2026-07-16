@@ -86,6 +86,20 @@ export function AdminStudioWorkspace({
   const [activeMenu, setActiveMenu] = useState("Tổng quan website");
   const activeView = getViewFromMenu(activeMenu);
   const menu = adminMenu;
+  const dashboardPanel = useMemo(() => (
+    <DashboardView tenantMode={tenantMode} studioSlug={studioSlug} studioSettings={studioSettings} />
+  ), [studioSettings, studioSlug, tenantMode]);
+  const albumPanel = useMemo(() => (
+    <AlbumManagerView initialGalleries={galleries} editRequests={editRequests} tenantMode={tenantMode} />
+  ), [editRequests, galleries, tenantMode]);
+  const cmsPanel = useMemo(() => (
+    <section className="rounded-xl border border-[#2a2722] bg-[#101115] p-6 text-[#f8f5ee]">
+      <p className="text-xs font-bold uppercase tracking-[.14em] text-[#d8b766]">TLORA First-party CMS</p>
+      <h1 className="mt-2 text-3xl font-extrabold">CMS website TLORA đã được tách riêng</h1>
+      <p className="mt-3 max-w-2xl text-sm leading-6 text-[#cbc0b0]">Quản lý trang, live preview, bài viết, danh mục, media, menu, thiết lập và lịch sử xuất bản trong namespace TLORA riêng. Studio tenant không thể truy cập khu vực này.</p>
+      <Link href="/admin/tlora" prefetch className="mt-6 inline-flex min-h-11 items-center rounded-md bg-[#d8b766] px-5 text-sm font-bold text-[#07080a] hover:bg-[#f3d88e]">Mở TLORA CMS</Link>
+    </section>
+  ), []);
 
   return (
     <main className="min-h-screen bg-[#f4f4f2] text-zinc-950">
@@ -139,26 +153,9 @@ export function AdminStudioWorkspace({
             </div>
           )}
 
-          {activeView === "dashboard" && (
-            <DashboardView
-              tenantMode={tenantMode}
-              studioSlug={studioSlug}
-              studioSettings={studioSettings}
-            />
-          )}
-
-          {activeView === "album-manager" && (
-            <AlbumManagerView initialGalleries={galleries} editRequests={editRequests} tenantMode={tenantMode} />
-          )}
-
-          {activeView === "site-builder" && (
-            <section className="rounded-xl border border-[#2a2722] bg-[#101115] p-6 text-[#f8f5ee]">
-              <p className="text-xs font-bold uppercase tracking-[.14em] text-[#d8b766]">TLORA First-party CMS</p>
-              <h1 className="mt-2 text-3xl font-extrabold">CMS website TLORA đã được tách riêng</h1>
-              <p className="mt-3 max-w-2xl text-sm leading-6 text-[#cbc0b0]">Quản lý trang, live preview, bài viết, danh mục, media, menu, thiết lập và lịch sử xuất bản trong namespace TLORA riêng. Studio tenant không thể truy cập khu vực này.</p>
-              <Link href="/admin/tlora" className="mt-6 inline-flex min-h-11 items-center rounded-md bg-[#d8b766] px-5 text-sm font-bold text-[#07080a] hover:bg-[#f3d88e]">Mở TLORA CMS</Link>
-            </section>
-          )}
+          <div hidden={activeView !== "dashboard"}>{dashboardPanel}</div>
+          <div hidden={activeView !== "album-manager"}>{albumPanel}</div>
+          <div hidden={activeView !== "site-builder"}>{cmsPanel}</div>
 
           {activeView === "placeholder" && (
             <PlaceholderView />

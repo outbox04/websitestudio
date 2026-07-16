@@ -1,6 +1,7 @@
 import { ArrowRight, Check, ChevronDown } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
+import { TloraPublicPreviewBridge } from "@/components/tlora-cms/tlora-public-preview-bridge";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 const trustItems = [
@@ -133,19 +134,36 @@ const faqs = [
   ["Bao lâu thì nhận được ảnh?", "Khách chọn ảnh online trong 48h sau buổi chụp, ảnh đã retouch được bàn giao theo lịch hẹn cụ thể tại buổi tư vấn."],
 ];
 
-async function getPublishedHero() {
+type PublishedSection = {
+  isEnabled: boolean;
+  content: Record<string, unknown>;
+};
+
+async function getPublishedHomeSections() {
   const admin = createAdminClient();
   const { data: studio } = await admin.from("studios").select("id").eq("studio_type", "first_party").eq("system_key", "tlora").maybeSingle();
-  if (!studio) return null;
+  if (!studio) return {};
   const { data: page } = await admin.from("tlora_cms_pages").select("id").eq("studio_id", studio.id).eq("page_key", "home").eq("status", "published").maybeSingle();
-  if (!page) return null;
-  const { data: section } = await admin.from("tlora_cms_page_sections").select("published_content,is_enabled").eq("page_id", page.id).eq("section_key", "hero").maybeSingle();
-  if (!section?.is_enabled) return null;
-  return section.published_content as { title?: string; description?: string; image?: string; ctaLabel?: string; ctaHref?: string };
+  if (!page) return {};
+  const { data: sections } = await admin
+    .from("tlora_cms_page_sections")
+    .select("section_key,published_content,is_enabled")
+    .eq("page_id", page.id)
+    .order("sort_order");
+
+  return Object.fromEntries((sections || []).map((section) => [
+    section.section_key,
+    { isEnabled: section.is_enabled, content: section.published_content as Record<string, unknown> },
+  ])) as Record<string, PublishedSection>;
 }
 
 export default async function HomePage() {
-  const publishedHero = await getPublishedHero();
+  const publishedSections = await getPublishedHomeSections();
+  const publishedHero = publishedSections.hero?.isEnabled ? publishedSections.hero.content : {};
+  const publishedAbout = publishedSections.about?.isEnabled ? publishedSections.about.content : {};
+  const publishedServices = publishedSections.services?.isEnabled ? publishedSections.services.content : {};
+  const publishedGallery = publishedSections.gallery?.isEnabled ? publishedSections.gallery.content : {};
+  const publishedContact = publishedSections.contact?.isEnabled ? publishedSections.contact.content : {};
   const structuredData = {
     "@context": "https://schema.org",
     "@type": "WebSite",
@@ -158,14 +176,17 @@ export default async function HomePage() {
   return (
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }} />
+      <TloraPublicPreviewBridge />
       <div className="bg-[#14110f] text-[#f4ece0]">
-      <section className="relative min-h-[calc(100svh-73px)] overflow-hidden px-4 py-16 sm:px-6 sm:py-20 lg:px-8 lg:py-28">
+      <section hidden={publishedSections.hero?.isEnabled === false} data-cms-section-root="hero" className="relative min-h-[calc(100svh-73px)] overflow-hidden px-4 py-16 sm:px-6 sm:py-20 lg:px-8 lg:py-28">
         <Image
-          src={publishedHero?.image || "/concept/concept-14.webp"}
+          data-cms-section="hero"
+          data-cms-field="image"
+          src={String(publishedHero.image || "/concept/concept-14.webp")}
           alt="Ảnh nền concept studio TLORA"
           fill
           priority
-          unoptimized={Boolean(publishedHero?.image)}
+          unoptimized={Boolean(publishedHero.image)}
           sizes="100vw"
           className="object-cover object-[62%_center]"
         />
@@ -174,16 +195,16 @@ export default async function HomePage() {
         <div className="absolute inset-x-0 bottom-0 h-48 bg-linear-to-t from-[#14110f] to-transparent" />
         <div className="pointer-events-none absolute -right-28 -top-28 size-96 rounded-full border border-[#f4ece0]/10 opacity-45 lg:size-[480px]" />
         <div className="relative mx-auto max-w-6xl">
-          <h1 className="max-w-4xl pt-10 font-heading text-4xl font-extrabold leading-tight text-[#f4ece0] sm:pt-16 sm:text-5xl lg:pt-24 lg:text-7xl">
-            {publishedHero?.title || <>Mỗi set chụp là <span className="italic text-[#c99a5e]">một concept</span><br />dựng riêng cho bạn.</>}
+          <h1 data-cms-section="hero" data-cms-field="title" className="max-w-4xl pt-10 font-heading text-4xl font-extrabold leading-tight text-[#f4ece0] sm:pt-16 sm:text-5xl lg:pt-24 lg:text-7xl">
+            {String(publishedHero.title || "Mỗi set chụp là một concept dựng riêng cho bạn.")}
           </h1>
-          <p className="mt-6 max-w-2xl text-base leading-8 text-[#cbc0b0] sm:text-lg">
-            {publishedHero?.description || "TLORA không chụp đại trà. Ba dịch vụ, một tiêu chuẩn duy nhất: ảnh nhận về phải xứng đáng với số tiền bạn bỏ ra."}
+          <p data-cms-section="hero" data-cms-field="description" className="mt-6 max-w-2xl text-base leading-8 text-[#cbc0b0] sm:text-lg">
+            {String(publishedHero.description || "TLORA không chụp đại trà. Ba dịch vụ, một tiêu chuẩn duy nhất: ảnh nhận về phải xứng đáng với số tiền bạn bỏ ra.")}
           </p>
           <div className="mt-8 flex flex-col gap-3 sm:mt-9 sm:flex-row">
-            <PillLink href={publishedHero?.ctaHref || "/bang-gia"} tone="light">
-              {publishedHero?.ctaLabel || "Đặt lịch tư vấn"} <ArrowRight size={16} />
-            </PillLink>
+            <Link data-cms-section="hero" data-cms-field="ctaHref" href={String(publishedHero.ctaHref || "/bang-gia")} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-full bg-[#f4ece0] px-5 text-sm font-bold text-[#14110f] transition hover:-translate-y-0.5">
+              <span data-cms-section="hero" data-cms-field="ctaLabel">{String(publishedHero.ctaLabel || "Đặt lịch tư vấn")}</span> <ArrowRight size={16} />
+            </Link>
             <PillLink href="#mood">Xem mood ảnh mẫu</PillLink>
           </div>
           <div className="mt-10 flex flex-wrap items-center gap-3 sm:mt-12">
@@ -211,12 +232,12 @@ export default async function HomePage() {
         </div>
       </section>
 
-      <section id="dich-vu" className="px-4 pb-8 pt-14 text-center sm:px-6 sm:pb-10 sm:pt-16 lg:px-8">
+      <section hidden={publishedSections.services?.isEnabled === false} id="dich-vu" data-cms-section-root="services" className="px-4 pb-8 pt-14 text-center sm:px-6 sm:pb-10 sm:pt-16 lg:px-8">
         <div className="mx-auto max-w-4xl">
           <Eyebrow center>Dịch vụ studio</Eyebrow>
-          <h2 className="font-heading text-3xl font-extrabold text-[#f4ece0] md:text-5xl">Ba concept, một tiêu chuẩn giá trị</h2>
-          <p className="mx-auto mt-5 max-w-2xl text-base leading-7 text-[#cbc0b0]">
-            Không có gói chụp đại trà. Mỗi dịch vụ được tính đúng theo công sức bỏ vào: tư vấn, set dựng, trang phục, ánh sáng và hậu kỳ.
+          <h2 data-cms-section="services" data-cms-field="title" className="font-heading text-3xl font-extrabold text-[#f4ece0] md:text-5xl">{String(publishedServices.title || "Ba concept, một tiêu chuẩn giá trị")}</h2>
+          <p data-cms-section="services" data-cms-field="description" className="mx-auto mt-5 max-w-2xl text-base leading-7 text-[#cbc0b0]">
+            {String(publishedServices.description || "Không có gói chụp đại trà. Mỗi dịch vụ được tính đúng theo công sức bỏ vào: tư vấn, set dựng, trang phục, ánh sáng và hậu kỳ.")}
           </p>
         </div>
       </section>
@@ -244,12 +265,15 @@ export default async function HomePage() {
         </div>
       </section>
 
-      <section className="px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
+      <section hidden={publishedSections.about?.isEnabled === false} data-cms-section-root="about" className="px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
         <div className="mx-auto max-w-6xl text-center">
           <Eyebrow center>Khách hàng cần một ekip biết lắng nghe</Eyebrow>
-          <h2 className="mx-auto max-w-4xl font-heading text-3xl font-extrabold text-[#f4ece0] md:text-5xl">
-            TLORA giữ buổi chụp riêng tư, rõ ràng và tôn trọng cá tính từng người
+          <h2 data-cms-section="about" data-cms-field="title" className="mx-auto max-w-4xl font-heading text-3xl font-extrabold text-[#f4ece0] md:text-5xl">
+            {String(publishedAbout.title || "TLORA giữ buổi chụp riêng tư, rõ ràng và tôn trọng cá tính từng người")}
           </h2>
+          <p data-cms-section="about" data-cms-field="description" className="mx-auto mt-5 max-w-2xl text-base leading-7 text-[#cbc0b0]">
+            {String(publishedAbout.description || "Trải nghiệm nhiếp ảnh được thiết kế theo cá tính của từng khách hàng.")}
+          </p>
           <div className="mt-10 grid gap-4 sm:gap-6 md:grid-cols-3 lg:mt-12">
             {whyCards.map(([title, description]) => (
               <article key={title} className="rounded-2xl border border-[#f4ece0]/12 p-8 text-left">
@@ -261,12 +285,12 @@ export default async function HomePage() {
         </div>
       </section>
 
-      <section id="mood" className="bg-[#1c1813] px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
+      <section hidden={publishedSections.gallery?.isEnabled === false} id="mood" data-cms-section-root="gallery" className="bg-[#1c1813] px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
         <div className="mx-auto max-w-6xl text-center">
           <Eyebrow center>Chọn mood trước khi chốt lịch</Eyebrow>
-          <h2 className="font-heading text-3xl font-extrabold text-[#f4ece0] md:text-5xl">Mỗi mood là một phiên bản ánh sáng và màu khác nhau</h2>
-          <p className="mx-auto mt-5 max-w-2xl text-base leading-7 text-[#cbc0b0]">
-            Xem trước không khí của từng mood để chọn đúng cảm xúc bạn muốn mang về, sau đó mới cần quyết định trang phục.
+          <h2 data-cms-section="gallery" data-cms-field="title" className="font-heading text-3xl font-extrabold text-[#f4ece0] md:text-5xl">{String(publishedGallery.title || "Mỗi mood là một phiên bản ánh sáng và màu khác nhau")}</h2>
+          <p data-cms-section="gallery" data-cms-field="description" className="mx-auto mt-5 max-w-2xl text-base leading-7 text-[#cbc0b0]">
+            {String(publishedGallery.description || "Xem trước không khí của từng mood để chọn đúng cảm xúc bạn muốn mang về, sau đó mới cần quyết định trang phục.")}
           </p>
           <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:mt-12 lg:grid-cols-3">
             {moodCards.map(([title, type, accent, image]) => (
@@ -324,16 +348,16 @@ export default async function HomePage() {
         </div>
       </section>
 
-      <section className="px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
+      <section hidden={publishedSections.contact?.isEnabled === false} data-cms-section-root="contact" className="px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
         <div className="relative mx-auto max-w-5xl overflow-hidden rounded-[32px] border border-[#f4ece0]/12 bg-[#1c1813] px-6 py-16 text-center sm:px-10">
           <div className="absolute inset-x-0 top-0 h-56 bg-radial-[ellipse_at_top] from-[#c99a5e]/18 to-transparent" />
           <div className="relative">
             <Eyebrow center>Đặt lịch TLORA Studio</Eyebrow>
-            <h2 className="mx-auto max-w-3xl font-heading text-3xl font-extrabold text-[#f4ece0] md:text-5xl">
-              Sẵn sàng có một bộ ảnh thể hiện đúng cá tính của bạn?
+            <h2 data-cms-section="contact" data-cms-field="title" className="mx-auto max-w-3xl font-heading text-3xl font-extrabold text-[#f4ece0] md:text-5xl">
+              {String(publishedContact.title || "Sẵn sàng có một bộ ảnh thể hiện đúng cá tính của bạn?")}
             </h2>
-            <p className="mx-auto mt-5 max-w-2xl text-base leading-7 text-[#cbc0b0]">
-              Xem giá chụp, chuẩn bị lịch trình và để TLORA lo phần concept. Bạn chỉ cần tới đúng giờ.
+            <p data-cms-section="contact" data-cms-field="description" className="mx-auto mt-5 max-w-2xl text-base leading-7 text-[#cbc0b0]">
+              {String(publishedContact.description || "Xem giá chụp, chuẩn bị lịch trình và để TLORA lo phần concept. Bạn chỉ cần tới đúng giờ.")}
             </p>
             <div className="mt-9 flex flex-col justify-center gap-3 sm:flex-row">
               <PillLink href="/bang-gia" tone="light">

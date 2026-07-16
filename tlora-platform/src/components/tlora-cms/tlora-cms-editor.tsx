@@ -1,7 +1,7 @@
 "use client";
 
 import { Check, Eye, Image as ImageIcon, Laptop, Loader2, Save, Send, Smartphone, Tablet, Type } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { updateSectionSchema } from "@/schemas/tlora-cms";
 import type { TloraCmsPage, TloraCmsSection } from "@/types/scope";
 
@@ -24,7 +24,34 @@ export function TloraCmsEditor({
   const [device, setDevice] = useState<Device>("desktop");
   const [busy, setBusy] = useState("");
   const [message, setMessage] = useState("");
+  const previewRef = useRef<HTMLIFrameElement>(null);
   const selected = useMemo(() => sections.find((section) => section.id === selectedId) || sections[0], [sections, selectedId]);
+
+  const syncPreview = useCallback(() => {
+    previewRef.current?.contentWindow?.postMessage({
+      type: "tlora:cms-preview",
+      sections: sections.map((section) => ({
+        sectionKey: section.sectionKey,
+        isEnabled: section.isEnabled,
+        draftContent: section.draftContent,
+      })),
+    }, window.location.origin);
+  }, [sections]);
+
+  useEffect(() => {
+    syncPreview();
+  }, [syncPreview]);
+
+  useEffect(() => {
+    function handleReady(event: MessageEvent<unknown>) {
+      if (event.origin !== window.location.origin) return;
+      const message = event.data as { type?: string } | null;
+      if (message?.type === "tlora:cms-preview-ready") syncPreview();
+    }
+
+    window.addEventListener("message", handleReady);
+    return () => window.removeEventListener("message", handleReady);
+  }, [syncPreview]);
 
   function updateSelected(patch: Partial<EditableContent>) {
     if (!selected) return;
@@ -144,7 +171,14 @@ export function TloraCmsEditor({
             </div>
           </div>
           <div className="mx-auto min-h-[760px] overflow-hidden rounded-xl border border-[#2a2722] bg-[#f8f5ee] text-[#07080a] shadow-2xl transition-[width]" style={{ width: deviceWidth[device], maxWidth: "100%" }}>
-            <DraftPreview sections={sections} />
+            <iframe
+              ref={previewRef}
+              src="/?cmsPreview=1"
+              title="Live Preview website TLORA"
+              onLoad={syncPreview}
+              sandbox="allow-same-origin allow-scripts allow-forms allow-popups"
+              className="h-[760px] w-full border-0 bg-[#14110f]"
+            />
           </div>
         </section>
       </div>
@@ -155,22 +189,4 @@ export function TloraCmsEditor({
 function CmsField({ label, value, onChange, textarea = false }: { label: string; value: string; onChange: (value: string) => void; textarea?: boolean }) {
   const className = "mt-2 w-full rounded-md border border-white/10 bg-[#07080a] px-3 py-2 text-sm font-normal text-[#f8f5ee] outline-none focus:border-[#d8b766]";
   return <label className="block text-sm font-bold text-[#cbc0b0]">{label}{textarea ? <textarea value={value} onChange={(event) => onChange(event.target.value)} className={`${className} min-h-24`} /> : <input value={value} onChange={(event) => onChange(event.target.value)} className={className} />}</label>;
-}
-
-function DraftPreview({ sections }: { sections: TloraCmsSection[] }) {
-  return (
-    <div>
-      {sections.filter((section) => section.isEnabled).map((section) => {
-        const content = section.draftContent as EditableContent;
-        if (section.sectionType === "hero") {
-          return <section key={section.id} className="grid min-h-[520px] place-items-center bg-[#0d0a08] px-6 py-20 text-center text-white" style={content.image ? { backgroundImage: `linear-gradient(#07080aaa,#07080acc),url(${String(content.image)})`, backgroundSize: "cover", backgroundPosition: "center" } : undefined}><div className="max-w-3xl"><p className="text-xs font-bold uppercase tracking-[.2em] text-[#d8b766]">TLORA Studio</p><h2 className="mt-5 text-4xl font-black leading-tight md:text-6xl">{String(content.title || "")}</h2><p className="mx-auto mt-5 max-w-2xl text-base leading-7 text-white/70">{String(content.description || "")}</p>{content.ctaLabel && <span className="mt-8 inline-flex rounded-md bg-[#d8b766] px-5 py-3 text-sm font-bold text-[#07080a]">{String(content.ctaLabel)}</span>}</div></section>;
-        }
-        if (section.sectionType === "collection" || section.sectionType === "gallery") {
-          const items = Array.isArray(content.items) ? content.items as Array<Record<string, unknown>> : [];
-          return <section key={section.id} className="px-6 py-16"><h2 className="text-3xl font-black">{String(content.title || "")}</h2><p className="mt-3 max-w-2xl text-sm leading-6 text-zinc-600">{String(content.description || "")}</p><div className="mt-8 grid gap-4 md:grid-cols-3">{items.slice(0, 6).map((item, index) => <article key={index} className="min-h-48 rounded-lg border border-zinc-200 p-5"><p className="font-extrabold">{String(item.title || `Nội dung ${index + 1}`)}</p><p className="mt-2 text-sm leading-6 text-zinc-600">{String(item.description || "")}</p></article>)}</div></section>;
-        }
-        return <section key={section.id} className="border-t border-zinc-200 px-6 py-16"><h2 className="text-3xl font-black">{String(content.title || "")}</h2><p className="mt-4 max-w-3xl text-base leading-7 text-zinc-600">{String(content.description || "")}</p></section>;
-      })}
-    </div>
-  );
 }
