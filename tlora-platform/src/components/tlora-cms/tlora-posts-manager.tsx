@@ -71,7 +71,7 @@ export function TloraPostsManager({ initialPosts, categories }: { initialPosts: 
   return (
     <main className="min-h-screen bg-[#f4f4f2] p-4 text-zinc-950 sm:p-6 lg:p-8">
       <header className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
-        <div><p className="text-xs font-bold uppercase tracking-[.14em] text-[#a57f2c]">TLORA CMS</p><h1 className="mt-2 text-3xl font-extrabold">Bài viết</h1><p className="mt-2 text-sm text-zinc-600">Nội dung plain text có kiểm soát, tách biệt hoàn toàn với bài viết tenant.</p></div>
+        <div><p className="text-xs font-bold uppercase tracking-[.14em] text-[#a57f2c]">Nội dung truyền cảm hứng</p><h1 className="mt-2 text-3xl font-extrabold">Bài viết</h1><p className="mt-2 text-sm text-zinc-600">Chia sẻ gợi ý chọn concept, chuẩn bị trang phục, tạo dáng và những câu chuyện phía sau mỗi bộ ảnh.</p></div>
         <button type="button" onClick={() => setForm(emptyForm)} className="inline-flex min-h-11 items-center gap-2 rounded-md bg-zinc-950 px-4 text-sm font-bold text-white"><FilePlus2 size={17} /> Bài viết mới</button>
       </header>
       <div className="mt-6 grid gap-5 xl:grid-cols-[340px_minmax(0,1fr)]">

@@ -4,10 +4,10 @@ import { getPublishedTloraSection } from "@/repositories/tlora/cms-repository";
 
 export const metadata: Metadata = {
   title: "Dịch vụ chụp ảnh concept",
-  description: "Các gói chụp concept cá nhân, gia đình, lookbook và retouch hậu kỳ trong studio.",
+  description: "Khám phá các concept chân dung cá nhân, couple, gia đình và thời trang được chuẩn bị riêng theo phong cách của bạn.",
   openGraph: {
     title: "Dịch vụ chụp ảnh concept",
-    description: "Các gói chụp concept cá nhân, gia đình, lookbook và retouch hậu kỳ trong studio.",
+    description: "Khám phá các concept chân dung cá nhân, couple, gia đình và thời trang được chuẩn bị riêng theo phong cách của bạn.",
     images: ["/brand/tlora-logo.png"],
   },
 };
@@ -22,7 +22,7 @@ export default async function ServicesPage() {
   };
   return (
     <section className="px-4 py-16 sm:px-6 lg:px-8">
-      <header className="mx-auto max-w-4xl text-center"><h1 data-cms-section="services" data-cms-field="text.servicePage.title" className="text-4xl font-black text-white md:text-6xl">{text("servicePage.title", "Dịch vụ chụp ảnh concept trong studio")}</h1><p data-cms-section="services" data-cms-field="text.servicePage.description" className="mx-auto mt-5 max-w-2xl text-base leading-7 text-zinc-400">{text("servicePage.description", "Thiết kế cho studio cần quy trình rõ ràng từ đặt lịch, chụp, chọn ảnh đến chỉnh sửa.")}</p></header>
+      <header className="mx-auto max-w-4xl text-center"><h1 data-cms-section="services" data-cms-field="text.servicePage.title" className="text-4xl font-black text-white md:text-6xl">{text("servicePage.title", "Chọn concept thể hiện đúng phiên bản bạn muốn lưu giữ")}</h1><p data-cms-section="services" data-cms-field="text.servicePage.description" className="mx-auto mt-5 max-w-2xl text-base leading-7 text-zinc-400">{text("servicePage.description", "Từ chân dung cá nhân, couple, gia đình đến thời trang, mỗi buổi chụp đều được chuẩn bị theo phong cách và mục đích riêng của bạn.")}</p></header>
       <div className="mx-auto mt-10 grid max-w-7xl gap-5 md:grid-cols-2">
         {services.map((service, index) => (
           <article key={service.title} className="rounded-lg border border-white/10 bg-white/[0.04] p-6 shadow-xl shadow-black/20">

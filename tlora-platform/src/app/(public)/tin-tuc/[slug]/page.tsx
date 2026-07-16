@@ -11,7 +11,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const { slug } = await params;
   const post = await findPost(slug);
   const title = post?.title || "Bài viết TLORA";
-  const description = post?.excerpt || "Kênh thông tin chính thức của TLORA Studio.";
+  const description = post?.excerpt || "Gợi ý và cảm hứng giúp bạn chuẩn bị tốt hơn cho bộ ảnh concept của mình.";
   return {
     title,
     description,

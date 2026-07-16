@@ -5,10 +5,10 @@ import { getPublishedTloraSection } from "@/repositories/tlora/cms-repository";
 
 export const metadata: Metadata = {
   title: "Bảng giá chụp ảnh concept",
-  description: "Combo chụp ảnh concept cá nhân, couple, gia đình, lookbook và editorial.",
+  description: "Chọn gói chụp ảnh concept phù hợp với thời lượng, số bối cảnh và số ảnh bạn mong muốn.",
   openGraph: {
     title: "Bảng giá chụp ảnh concept",
-    description: "Combo chụp ảnh concept cá nhân, couple, gia đình, lookbook và editorial.",
+    description: "Chọn gói chụp ảnh concept phù hợp với thời lượng, số bối cảnh và số ảnh bạn mong muốn.",
     images: ["/brand/tlora-logo.png"],
   },
 };
@@ -23,7 +23,7 @@ export default async function PricingPage() {
   };
   return (
     <section className="px-4 py-16 sm:px-6 lg:px-8">
-      <header className="mx-auto max-w-4xl text-center"><h1 data-cms-section="services" data-cms-field="text.pricingPage.title" className="text-4xl font-black text-white md:text-6xl">{text("pricingPage.title", "Combo chụp ảnh concept")}</h1><p data-cms-section="services" data-cms-field="text.pricingPage.description" className="mx-auto mt-5 max-w-2xl text-base leading-7 text-zinc-400">{text("pricingPage.description", "Các gói minh bạch quyền lợi, dễ chọn và dễ nâng cấp theo nhu cầu sản xuất.")}</p></header>
+      <header className="mx-auto max-w-4xl text-center"><h1 data-cms-section="services" data-cms-field="text.pricingPage.title" className="text-4xl font-black text-white md:text-6xl">{text("pricingPage.title", "Chọn gói chụp vừa đủ cho câu chuyện của bạn")}</h1><p data-cms-section="services" data-cms-field="text.pricingPage.description" className="mx-auto mt-5 max-w-2xl text-base leading-7 text-zinc-400">{text("pricingPage.description", "Mỗi gói đều ghi rõ số concept, thời lượng và số ảnh nhận được để bạn dễ chọn theo mong muốn và ngân sách.")}</p></header>
       <div className="mx-auto mt-10 grid max-w-6xl gap-5 md:grid-cols-3">
         {pricing.map((plan, index) => (
           <article key={plan.name} className={`rounded-lg border p-6 shadow-xl shadow-black/20 ${plan.highlighted ? "border-[#d8b766]/50 bg-[#d8b766] text-black" : "border-white/10 bg-white/[0.04] text-white"}`}>

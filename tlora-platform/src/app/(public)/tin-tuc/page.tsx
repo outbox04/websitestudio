@@ -1,26 +1,36 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
-import { SectionHeader } from "@/components/ui";
 import { getFirstPartyStudio } from "@/lib/tenancy/request-context";
+import { getPublishedTloraSection } from "@/repositories/tlora/cms-repository";
 import { listPublishedTloraPosts } from "@/repositories/tlora/posts-repository";
 
 export const metadata: Metadata = {
-  title: "Tin tức TLORA",
-  description: "Thông tin về chụp ảnh concept, studio tips và quy trình chọn ảnh, retouch.",
+  title: "Cảm hứng chụp ảnh concept | TLORA",
+  description: "Gợi ý chọn concept, chuẩn bị trang phục, tạo dáng và lưu giữ những bộ ảnh mang dấu ấn riêng.",
 };
 
 export const dynamic = "force-dynamic";
 
 export default async function NewsPage() {
   const studio = await getFirstPartyStudio();
-  const posts = studio ? await listPublishedTloraPosts(studio.id) : [];
+  const [posts, content] = await Promise.all([
+    studio ? listPublishedTloraPosts(studio.id) : [],
+    getPublishedTloraSection("home", "about"),
+  ]);
+  const text = (key: string, fallback: string) => {
+    const values = content.text as Record<string, unknown> | undefined;
+    return typeof values?.[key] === "string" ? String(values[key]) : fallback;
+  };
   return (
     <section className="px-4 py-16 sm:px-6 lg:px-8">
-      <SectionHeader eyebrow="Tin tức" title="Kênh thông tin TLORA" description="Các bài viết đã được duyệt và xuất bản từ TLORA First-party CMS." />
+      <header className="mx-auto max-w-4xl text-center">
+        <h1 data-cms-section="about" data-cms-field="text.newsPage.title" className="text-4xl font-black text-white md:text-6xl">{text("newsPage.title", "Cảm hứng để bạn bước vào buổi chụp tự tin hơn")}</h1>
+        <p data-cms-section="about" data-cms-field="text.newsPage.description" className="mx-auto mt-5 max-w-2xl text-base leading-7 text-zinc-400">{text("newsPage.description", "Khám phá cách chọn concept, chuẩn bị trang phục, tạo dáng và tìm phong cách hình ảnh phù hợp với chính bạn.")}</p>
+      </header>
       <div className="mx-auto mt-10 grid max-w-7xl gap-5 md:grid-cols-2 xl:grid-cols-3">
         {posts.map((post) => (
-          <Link key={post.id} href={`/tin-tuc/${post.slug}`} className="overflow-hidden rounded-xl border border-white/10 bg-white/[0.04] shadow-xl shadow-black/20 transition hover:border-[#d8b766]/40">
+          <Link key={post.id} href={`/tin-tuc/${post.slug}`} data-cms-preview-navigation className="overflow-hidden rounded-xl border border-white/10 bg-white/[0.04] shadow-xl shadow-black/20 transition hover:border-[#d8b766]/40">
             {post.coverImageUrl && <div className="aspect-video bg-white/5" style={{ backgroundImage: `url(${post.coverImageUrl})`, backgroundPosition: "center", backgroundSize: "cover" }} />}
             <div className="p-5">
               <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#d8b766]">{post.publishedAt ? new Date(post.publishedAt).toLocaleDateString("vi-VN") : "TLORA"}</p>
@@ -30,7 +40,7 @@ export default async function NewsPage() {
             </div>
           </Link>
         ))}
-        {!posts.length && <p className="text-sm text-zinc-400">Chưa có bài viết TLORA nào được xuất bản.</p>}
+        {!posts.length && <p className="text-sm text-zinc-400">Những câu chuyện và gợi ý chụp ảnh mới đang được chuẩn bị.</p>}
       </div>
     </section>
   );

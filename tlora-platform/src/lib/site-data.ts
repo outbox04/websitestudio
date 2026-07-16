@@ -3,45 +3,45 @@ import { Camera, ImagePlus, Palette, Sparkles, Users } from "lucide-react";
 export const services = [
   {
     title: "Concept chân dung cá nhân",
-    description: "Moodboard, stylist, makeup và ánh sáng được chuẩn bị theo cá tính của từng khách hàng.",
+    description: "Một bộ ảnh được chuẩn bị theo cá tính, màu sắc yêu thích và hình ảnh bạn muốn lưu giữ.",
     icon: Camera,
   },
   {
     title: "Concept gia đình và couple",
-    description: "Bố cục nhẹ nhàng, màu ảnh sang trọng, quy trình chọn ảnh riêng qua cổng khách hàng.",
+    description: "Khoảnh khắc tự nhiên, gần gũi và đủ tinh tế để trở thành bộ ảnh kỷ niệm của riêng hai bạn hoặc cả gia đình.",
     icon: Users,
   },
   {
     title: "Lookbook thương hiệu",
-    description: "Thiết lập phông, đạo cụ và checklist shot list cho sản phẩm, thời trang, profile doanh nghiệp.",
+    description: "Hình ảnh chỉn chu cho thời trang, sản phẩm hoặc thương hiệu cá nhân, với concept thống nhất và dễ sử dụng trên nhiều kênh.",
     icon: ImagePlus,
   },
   {
     title: "Retouch và bàn giao album",
-    description: "Chọn ảnh online, ghi chú chỉnh sửa từng file và nhận album hoàn thiện theo đúng tiến độ.",
+    description: "Bạn tự chọn những khoảnh khắc mình yêu thích, gửi mong muốn chỉnh sửa và nhận ảnh hoàn thiện rõ ràng, riêng tư.",
     icon: Palette,
   },
 ];
 
 export const pricing = [
   {
-    name: "Essential",
+    name: "Gói Khởi đầu",
     price: "1.900.000đ",
-    description: "Dành cho chân dung cá nhân hoặc profile nhanh.",
+    description: "Phù hợp khi bạn muốn có một bộ ảnh cá nhân gọn nhẹ nhưng vẫn chỉn chu và có dấu ấn riêng.",
     features: ["1 concept", "60 phút studio", "8 ảnh chỉnh màu", "3 ảnh retouch chi tiết"],
   },
   {
-    name: "Signature",
+    name: "Gói Dấu ấn",
     price: "3.900.000đ",
-    description: "Combo cân bằng cho concept cá nhân, couple hoặc gia đình nhỏ.",
+    description: "Dành cho concept cá nhân, couple hoặc gia đình nhỏ muốn có nhiều lựa chọn trang phục và cảm xúc hơn.",
     features: ["2 concept", "Makeup cơ bản", "20 ảnh chỉnh màu", "8 ảnh retouch chi tiết"],
     highlighted: true,
   },
   {
-    name: "Editorial",
+    name: "Gói Tạp chí",
     price: "7.500.000đ",
-    description: "Cho lookbook, campaign hoặc concept cần art direction đầy đủ.",
-    features: ["3-4 concept", "Stylist + makeup", "Shot list sản xuất", "15 ảnh retouch cao cấp"],
+    description: "Phù hợp với bộ ảnh thời trang, thương hiệu cá nhân hoặc concept cần nhiều bối cảnh và phong cách nổi bật.",
+    features: ["3-4 concept", "Stylist và makeup đồng hành", "Hướng dẫn tạo dáng theo từng bối cảnh", "15 ảnh retouch cao cấp"],
   },
 ];
 

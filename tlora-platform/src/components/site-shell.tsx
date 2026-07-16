@@ -75,9 +75,9 @@ export function SiteFooter({ contact }: { contact?: { siteName?: string; descrip
           {contact?.address && <p>{contact.address}</p>}
         </div>
         <div className="text-sm text-zinc-400">
-          <p className="font-semibold text-white">Vận hành</p>
-          <p className="mt-3">Next.js App Router</p>
-          <p>Supabase, Google Drive API, Vercel</p>
+          <p className="font-semibold text-white">Trải nghiệm tại TLORA</p>
+          <p className="mt-3">Tư vấn concept theo phong cách riêng</p>
+          <p>Chọn ảnh trực tuyến và nhận album riêng tư</p>
         </div>
       </div>
       <div className="mx-auto flex max-w-7xl flex-col gap-3 border-t border-white/10 px-4 py-5 text-sm text-zinc-500 sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:px-8">
