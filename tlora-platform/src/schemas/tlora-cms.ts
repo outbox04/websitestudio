@@ -10,6 +10,8 @@ const imageUrl = z.string().trim().max(500_000).refine(
   (value) => !value || value.startsWith("/") || value.startsWith("data:image/") || /^https:\/\//i.test(value),
   "Ảnh phải là đường dẫn nội bộ, data image hoặc URL HTTPS.",
 );
+const textOverrides = z.record(z.string().max(160), text).optional().default({});
+const imageOverrides = z.record(z.string().max(160), imageUrl).optional().default({});
 
 const heroContent = z.object({
   title: shortText,
@@ -17,12 +19,16 @@ const heroContent = z.object({
   image: imageUrl.optional().default(""),
   ctaLabel: shortText.optional().default(""),
   ctaHref: safeHref.optional().default("#"),
+  text: textOverrides,
+  images: imageOverrides,
 });
 
 const editorialContent = z.object({
   title: shortText,
   description: text,
   image: imageUrl.optional().default(""),
+  text: textOverrides,
+  images: imageOverrides,
 });
 
 const collectionItem = z.object({
@@ -37,6 +43,8 @@ const collectionContent = z.object({
   title: shortText,
   description: text.optional().default(""),
   items: z.array(collectionItem).max(24).default([]),
+  text: textOverrides,
+  images: imageOverrides,
 });
 
 const contactContent = z.object({
@@ -45,6 +53,8 @@ const contactContent = z.object({
   phone: z.string().trim().max(40).optional().default(""),
   email: z.string().trim().email().or(z.literal("")).optional().default(""),
   address: text.optional().default(""),
+  text: textOverrides,
+  images: imageOverrides,
 });
 
 export const sectionContentSchemas = {

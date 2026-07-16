@@ -141,6 +141,16 @@ type PublishedSection = {
   content: Record<string, unknown>;
 };
 
+function cmsText(content: Record<string, unknown>, key: string, fallback: string) {
+  const values = content.text as Record<string, unknown> | undefined;
+  return typeof values?.[key] === "string" ? String(values[key]) : fallback;
+}
+
+function cmsImage(content: Record<string, unknown>, key: string, fallback: string) {
+  const values = content.images as Record<string, unknown> | undefined;
+  return typeof values?.[key] === "string" && values[key] ? String(values[key]) : fallback;
+}
+
 const getPublishedHome = cache(async () => {
   const admin = createAdminClient();
   const { data: studio } = await admin.from("studios").select("id").eq("studio_type", "first_party").eq("system_key", "tlora").maybeSingle();
@@ -203,6 +213,7 @@ export default async function HomePage() {
         <Image
           data-cms-section="hero"
           data-cms-field="image"
+          data-cms-image-url={String(publishedHero.image || "/concept/concept-14.webp")}
           src={String(publishedHero.image || "/concept/concept-14.webp")}
           alt="Ảnh nền concept studio TLORA"
           fill
@@ -211,9 +222,9 @@ export default async function HomePage() {
           sizes="100vw"
           className="object-cover object-[62%_center]"
         />
-        <div className="absolute inset-0 bg-[#14110f]/72 sm:bg-[#14110f]/58" />
-        <div className="absolute inset-0 bg-linear-to-r from-[#14110f] via-[#14110f]/86 to-[#14110f]/25" />
-        <div className="absolute inset-x-0 bottom-0 h-48 bg-linear-to-t from-[#14110f] to-transparent" />
+        <div className="pointer-events-none absolute inset-0 bg-[#14110f]/72 sm:bg-[#14110f]/58" />
+        <div className="pointer-events-none absolute inset-0 bg-linear-to-r from-[#14110f] via-[#14110f]/86 to-[#14110f]/25" />
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-48 bg-linear-to-t from-[#14110f] to-transparent" />
         <div className="pointer-events-none absolute -right-28 -top-28 size-96 rounded-full border border-[#f4ece0]/10 opacity-45 lg:size-[480px]" />
         <div className="relative mx-auto max-w-6xl">
           <h1 data-cms-section="hero" data-cms-field="title" className="max-w-4xl pt-10 font-heading text-4xl font-extrabold leading-tight text-[#f4ece0] sm:pt-16 sm:text-5xl lg:pt-24 lg:text-7xl">
@@ -230,7 +241,7 @@ export default async function HomePage() {
           </div>
           <div className="mt-10 flex flex-wrap items-center gap-3 sm:mt-12">
             <span className="w-full font-mono text-xs uppercase tracking-[0.14em] text-[#cbc0b0] sm:w-auto">Bạn đang tìm gì?</span>
-            {services.map((service) => (
+            {services.map((service, index) => (
               <a
                 key={service.id}
                 href={`#${service.id}`}
@@ -238,15 +249,15 @@ export default async function HomePage() {
                 style={{ backgroundColor: service.soft, borderColor: service.accent }}
               >
                 <span className="mr-2 inline-block size-2 rounded-full align-middle" style={{ backgroundColor: service.accent }} />
-                {service.label === "CONCEPT TRANG PHỤC" ? "Concept trang phục" : service.label.charAt(0) + service.label.slice(1).toLowerCase()}
+                <span data-cms-section="hero" data-cms-field={`text.quickLink.${index}`}>{cmsText(publishedHero, `quickLink.${index}`, service.label === "CONCEPT TRANG PHỤC" ? "Concept trang phục" : service.label.charAt(0) + service.label.slice(1).toLowerCase())}</span>
               </a>
             ))}
           </div>
           <ul className="mt-8 grid gap-3 border-t border-[#f4ece0]/12 pt-6 sm:mt-9 sm:grid-cols-3">
-            {trustItems.map((item) => (
+            {trustItems.map((item, index) => (
               <li key={item} className="flex items-center gap-2 text-sm text-[#cbc0b0]">
                 <Check size={16} className="text-[#c99a5e]" />
-                {item}
+                <span data-cms-section="hero" data-cms-field={`text.trust.${index}`}>{cmsText(publishedHero, `trust.${index}`, item)}</span>
               </li>
             ))}
           </ul>
@@ -264,22 +275,22 @@ export default async function HomePage() {
       </section>
 
       {services.map((service) => (
-        <ServiceSection key={service.id} service={service} />
+        <ServiceSection key={service.id} service={service} content={publishedServices} />
       ))}
 
       <section className="bg-[#1c1813] px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
         <div className="mx-auto max-w-6xl text-center">
           <Eyebrow center>Quy trình</Eyebrow>
-          <h2 className="font-heading text-3xl font-extrabold text-[#f4ece0] md:text-5xl">Từ lúc đặt lịch đến khi nhận ảnh</h2>
-          <p className="mx-auto mt-5 max-w-2xl text-base leading-7 text-[#cbc0b0]">
-            Năm bước, không có công đoạn nào bị giấu đi. Bạn biết mình đang ở đâu trong quy trình tại mọi thời điểm.
+          <h2 data-cms-section="services" data-cms-field="text.process.title" className="font-heading text-3xl font-extrabold text-[#f4ece0] md:text-5xl">{cmsText(publishedServices, "process.title", "Từ lúc đặt lịch đến khi nhận ảnh")}</h2>
+          <p data-cms-section="services" data-cms-field="text.process.description" className="mx-auto mt-5 max-w-2xl text-base leading-7 text-[#cbc0b0]">
+            {cmsText(publishedServices, "process.description", "Năm bước, không có công đoạn nào bị giấu đi. Bạn biết mình đang ở đâu trong quy trình tại mọi thời điểm.")}
           </p>
           <div className="mt-10 grid overflow-hidden rounded-2xl border border-[#f4ece0]/12 bg-[#f4ece0]/12 sm:grid-cols-2 lg:mt-12 lg:grid-cols-5">
             {processSteps.map(([step, title, description]) => (
               <article key={step} className="bg-[#14110f] p-6 text-left">
                 <span className="font-mono text-xs text-[#8c8174]">{step}</span>
-                <h3 className="mt-5 font-heading text-lg font-bold text-[#f4ece0]">{title}</h3>
-                <p className="mt-3 text-sm leading-6 text-[#8c8174]">{description}</p>
+                <h3 data-cms-section="services" data-cms-field={`text.process.${step}.title`} className="mt-5 font-heading text-lg font-bold text-[#f4ece0]">{cmsText(publishedServices, `process.${step}.title`, title)}</h3>
+                <p data-cms-section="services" data-cms-field={`text.process.${step}.description`} className="mt-3 text-sm leading-6 text-[#8c8174]">{cmsText(publishedServices, `process.${step}.description`, description)}</p>
               </article>
             ))}
           </div>
@@ -296,10 +307,10 @@ export default async function HomePage() {
             {String(publishedAbout.description || "Trải nghiệm nhiếp ảnh được thiết kế theo cá tính của từng khách hàng.")}
           </p>
           <div className="mt-10 grid gap-4 sm:gap-6 md:grid-cols-3 lg:mt-12">
-            {whyCards.map(([title, description]) => (
+            {whyCards.map(([title, description], index) => (
               <article key={title} className="rounded-2xl border border-[#f4ece0]/12 p-8 text-left">
-                <h3 className="font-heading text-xl font-bold text-[#f4ece0]">{title}</h3>
-                <p className="mt-3 text-sm leading-7 text-[#8c8174]">{description}</p>
+                <h3 data-cms-section="about" data-cms-field={`text.value.${index}.title`} className="font-heading text-xl font-bold text-[#f4ece0]">{cmsText(publishedAbout, `value.${index}.title`, title)}</h3>
+                <p data-cms-section="about" data-cms-field={`text.value.${index}.description`} className="mt-3 text-sm leading-7 text-[#8c8174]">{cmsText(publishedAbout, `value.${index}.description`, description)}</p>
               </article>
             ))}
           </div>
@@ -314,16 +325,16 @@ export default async function HomePage() {
             {String(publishedGallery.description || "Xem trước không khí của từng mood để chọn đúng cảm xúc bạn muốn mang về, sau đó mới cần quyết định trang phục.")}
           </p>
           <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:mt-12 lg:grid-cols-3">
-            {moodCards.map(([title, type, accent, image]) => (
+            {moodCards.map(([title, type, accent, image], index) => (
               <article key={title} className="text-left">
                 <div className="relative aspect-3/4 overflow-hidden rounded-[26px] border border-[#f4ece0]/12">
-                  <Image src={image} alt={title} fill sizes="(min-width: 1024px) 33vw, 50vw" className="object-cover" />
-                  <div className="absolute inset-0 bg-linear-to-t from-[#14110f]/80 via-transparent to-transparent" />
+                  <Image data-cms-section="gallery" data-cms-field={`images.mood.${index}`} data-cms-image-url={cmsImage(publishedGallery, `mood.${index}`, image)} src={cmsImage(publishedGallery, `mood.${index}`, image)} alt={title} fill sizes="(min-width: 1024px) 33vw, 50vw" className="object-cover" />
+                  <div className="pointer-events-none absolute inset-0 bg-linear-to-t from-[#14110f]/80 via-transparent to-transparent" />
                 </div>
                 <div className="mt-3 flex items-center justify-between gap-3">
-                  <h3 className="font-semibold text-[#f4ece0]">{title}</h3>
-                  <span className="rounded-full px-3 py-1 font-mono text-[10px] uppercase tracking-[0.08em]" style={{ backgroundColor: `${accent}24`, color: accent }}>
-                    {type}
+                  <h3 data-cms-section="gallery" data-cms-field={`text.mood.${index}.title`} className="font-semibold text-[#f4ece0]">{cmsText(publishedGallery, `mood.${index}.title`, title)}</h3>
+                  <span data-cms-section="gallery" data-cms-field={`text.mood.${index}.type`} className="rounded-full px-3 py-1 font-mono text-[10px] uppercase tracking-[0.08em]" style={{ backgroundColor: `${accent}24`, color: accent }}>
+                    {cmsText(publishedGallery, `mood.${index}.type`, type)}
                   </span>
                 </div>
               </article>
@@ -335,16 +346,16 @@ export default async function HomePage() {
       <section className="px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
         <div className="mx-auto max-w-6xl text-center">
           <Eyebrow center>Khách đã chụp tại TLORA</Eyebrow>
-          <h2 className="font-heading text-3xl font-extrabold text-[#f4ece0] md:text-5xl">Phản hồi sau buổi chụp</h2>
+          <h2 data-cms-section="about" data-cms-field="text.testimonials.title" className="font-heading text-3xl font-extrabold text-[#f4ece0] md:text-5xl">{cmsText(publishedAbout, "testimonials.title", "Phản hồi sau buổi chụp")}</h2>
           <div className="mt-10 grid gap-5 md:grid-cols-3 lg:mt-12 lg:gap-6">
             {[
               ["Mình từng nghĩ ảnh sinh nhật chỉ cần thổi nến cho có. Đến lúc nhận ảnh mới thấy giá trị mình bỏ ra hoàn toàn xứng đáng.", "Khách chụp Sinh nhật, tuổi 22"],
               ["Ảnh retouch vẫn là mặt mình, chỉ là phiên bản sáng và mịn hơn, không bị lạ như nhiều nơi mình từng chụp.", "Khách chụp Beauty Concept"],
               ["Ba set bối cảnh trong một buổi giúp mình có đủ ảnh cho cả tháng làm content, không phải đặt lịch lại nhiều lần.", "Khách chụp Concept Trang Phục"],
-            ].map(([quote, person]) => (
+            ].map(([quote, person], index) => (
               <article key={person} className="rounded-2xl border border-[#f4ece0]/12 bg-[#1c1813] p-7 text-left">
-                <p className="font-heading text-xl italic leading-8 text-[#f4ece0]">{quote}</p>
-                <p className="mt-5 font-mono text-xs text-[#8c8174]">- {person}</p>
+                <p data-cms-section="about" data-cms-field={`text.testimonials.${index}.quote`} className="font-heading text-xl italic leading-8 text-[#f4ece0]">{cmsText(publishedAbout, `testimonials.${index}.quote`, quote)}</p>
+                <p data-cms-section="about" data-cms-field={`text.testimonials.${index}.person`} className="mt-5 font-mono text-xs text-[#8c8174]">- {cmsText(publishedAbout, `testimonials.${index}.person`, person)}</p>
               </article>
             ))}
           </div>
@@ -354,15 +365,15 @@ export default async function HomePage() {
       <section className="bg-[#1c1813] px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
         <div className="mx-auto max-w-4xl text-center">
           <Eyebrow center>Câu hỏi thường gặp</Eyebrow>
-          <h2 className="font-heading text-3xl font-extrabold text-[#f4ece0] md:text-5xl">Những điều khách thường hỏi trước khi đặt lịch</h2>
+          <h2 data-cms-section="contact" data-cms-field="text.faq.title" className="font-heading text-3xl font-extrabold text-[#f4ece0] md:text-5xl">{cmsText(publishedContact, "faq.title", "Những điều khách thường hỏi trước khi đặt lịch")}</h2>
           <div className="mt-10 text-left">
             {faqs.map(([question, answer], index) => (
               <details key={question} open={index === 0} className="group border-b border-[#f4ece0]/12 py-5">
                 <summary className="flex cursor-pointer list-none items-center justify-between gap-4 text-base font-semibold text-[#f4ece0]">
-                  {question}
+                  <span data-cms-section="contact" data-cms-field={`text.faq.${index}.question`}>{cmsText(publishedContact, `faq.${index}.question`, question)}</span>
                   <ChevronDown size={18} className="shrink-0 text-[#8c8174] transition group-open:rotate-180" />
                 </summary>
-                <p className="mt-4 max-w-2xl text-sm leading-7 text-[#8c8174]">{answer}</p>
+                <p data-cms-section="contact" data-cms-field={`text.faq.${index}.answer`} className="mt-4 max-w-2xl text-sm leading-7 text-[#8c8174]">{cmsText(publishedContact, `faq.${index}.answer`, answer)}</p>
               </details>
             ))}
           </div>
@@ -382,9 +393,9 @@ export default async function HomePage() {
             </p>
             <div className="mt-9 flex flex-col justify-center gap-3 sm:flex-row">
               <PillLink href="/bang-gia" tone="light">
-                Đặt lịch tư vấn <ArrowRight size={16} />
+                <span data-cms-section="contact" data-cms-field="text.cta.primary">{cmsText(publishedContact, "cta.primary", "Đặt lịch tư vấn")}</span> <ArrowRight size={16} />
               </PillLink>
-              <PillLink href="#dich-vu">Xem lại 3 dịch vụ</PillLink>
+              <PillLink href="#dich-vu"><span data-cms-section="contact" data-cms-field="text.cta.secondary">{cmsText(publishedContact, "cta.secondary", "Xem lại 3 dịch vụ")}</span></PillLink>
             </div>
           </div>
         </div>
@@ -394,22 +405,22 @@ export default async function HomePage() {
   );
 }
 
-function ServiceSection({ service }: { service: (typeof services)[number] }) {
+function ServiceSection({ service, content }: { service: (typeof services)[number]; content: Record<string, unknown> }) {
   return (
     <section id={service.id} className="border-t border-[#f4ece0]/12 px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
       <div className="mx-auto grid max-w-6xl gap-8 md:grid-cols-2 lg:grid-cols-[0.85fr_1fr_1fr] lg:items-start">
         <div className="lg:sticky lg:top-28">
           <div className="relative aspect-4/5 overflow-hidden rounded-[26px] border border-[#f4ece0]/12">
-            <Image src={service.image} alt={service.title} fill sizes="(min-width: 1024px) 30vw, 100vw" className="object-cover" />
-            <div className="absolute inset-0 bg-linear-to-t from-[#14110f]/70 via-transparent to-transparent" />
-            <span className="absolute bottom-5 left-5 rounded-full border border-[#f4ece0]/20 bg-[#14110f]/55 px-4 py-2 font-mono text-xs tracking-[0.04em] text-[#f4ece0] backdrop-blur">
-              {service.mood}
+            <Image data-cms-section="services" data-cms-field={`images.service.${service.id}`} data-cms-image-url={cmsImage(content, `service.${service.id}`, service.image)} src={cmsImage(content, `service.${service.id}`, service.image)} alt={service.title} fill sizes="(min-width: 1024px) 30vw, 100vw" className="object-cover" />
+            <div className="pointer-events-none absolute inset-0 bg-linear-to-t from-[#14110f]/70 via-transparent to-transparent" />
+            <span data-cms-section="services" data-cms-field={`text.service.${service.id}.mood`} className="absolute bottom-5 left-5 rounded-full border border-[#f4ece0]/20 bg-[#14110f]/55 px-4 py-2 font-mono text-xs tracking-[0.04em] text-[#f4ece0] backdrop-blur">
+              {cmsText(content, `service.${service.id}.mood`, service.mood)}
             </span>
           </div>
           <div className="mt-4 flex flex-wrap gap-2">
-            {service.chips.map((chip) => (
-              <span key={chip} className="rounded-full border border-[#f4ece0]/12 px-3 py-1 font-mono text-[11px] text-[#8c8174]">
-                {chip}
+            {service.chips.map((chip, index) => (
+              <span key={chip} data-cms-section="services" data-cms-field={`text.service.${service.id}.chip.${index}`} className="rounded-full border border-[#f4ece0]/12 px-3 py-1 font-mono text-[11px] text-[#8c8174]">
+                {cmsText(content, `service.${service.id}.chip.${index}`, chip)}
               </span>
             ))}
           </div>
@@ -419,52 +430,52 @@ function ServiceSection({ service }: { service: (typeof services)[number] }) {
           <span className="font-mono text-xs uppercase tracking-[0.12em] text-[#8c8174]">
             {service.index} - {service.label}
           </span>
-          <h3 className="mt-4 font-heading text-3xl font-extrabold leading-tight text-[#f4ece0] md:text-4xl">{service.title}</h3>
-          <p className="mt-5 text-base leading-8 text-[#cbc0b0]">{service.description}</p>
-          <p className="mt-6 border-l-2 pl-4 text-sm leading-7 text-[#8c8174]" style={{ borderColor: service.accent }}>
-            {service.who}
+          <h3 data-cms-section="services" data-cms-field={`text.service.${service.id}.title`} className="mt-4 font-heading text-3xl font-extrabold leading-tight text-[#f4ece0] md:text-4xl">{cmsText(content, `service.${service.id}.title`, service.title)}</h3>
+          <p data-cms-section="services" data-cms-field={`text.service.${service.id}.description`} className="mt-5 text-base leading-8 text-[#cbc0b0]">{cmsText(content, `service.${service.id}.description`, service.description)}</p>
+          <p data-cms-section="services" data-cms-field={`text.service.${service.id}.who`} className="mt-6 border-l-2 pl-4 text-sm leading-7 text-[#8c8174]" style={{ borderColor: service.accent }}>
+            {cmsText(content, `service.${service.id}.who`, service.who)}
           </p>
           <ul className="mt-7 space-y-3">
-            {service.features.map((feature) => (
+            {service.features.map((feature, index) => (
               <li key={feature} className="flex gap-3 text-sm leading-6 text-[#cbc0b0]">
                 <span className="mt-2 size-1.5 shrink-0 rounded-full" style={{ backgroundColor: service.accent }} />
-                {feature}
+                <span data-cms-section="services" data-cms-field={`text.service.${service.id}.feature.${index}`}>{cmsText(content, `service.${service.id}.feature.${index}`, feature)}</span>
               </li>
             ))}
           </ul>
         </div>
 
         <div className="md:col-span-2 lg:col-span-1">
-          <Receipt service={service} />
+          <Receipt service={service} content={content} />
         </div>
       </div>
     </section>
   );
 }
 
-function Receipt({ service }: { service: (typeof services)[number] }) {
+function Receipt({ service, content }: { service: (typeof services)[number]; content: Record<string, unknown> }) {
   return (
     <div className="rounded-t bg-[#f4ece0] px-5 pb-8 pt-7 text-[#241d14] shadow-2xl shadow-black/35 sm:-rotate-1 sm:px-6">
       <div className="flex items-baseline justify-between gap-4 border-b border-dashed border-[#241d14]/35 pb-4">
         <span className="font-mono text-[11px] uppercase tracking-[0.12em] text-[#7a6b52]">Hóa đơn giá trị</span>
-        <span className="font-heading text-sm font-bold">{service.receiptName}</span>
+        <span data-cms-section="services" data-cms-field={`text.service.${service.id}.receiptName`} className="font-heading text-sm font-bold">{cmsText(content, `service.${service.id}.receiptName`, service.receiptName)}</span>
       </div>
       <ul className="mt-4 space-y-2">
-        {service.items.map(([item, qty]) => (
+        {service.items.map(([item, qty], index) => (
           <li key={item} className="flex justify-between gap-4 text-sm">
-            <span>{item}</span>
-            <i className="shrink-0 font-mono text-xs not-italic text-[#7a6b52]">{qty}</i>
+            <span data-cms-section="services" data-cms-field={`text.service.${service.id}.receipt.${index}.item`}>{cmsText(content, `service.${service.id}.receipt.${index}.item`, item)}</span>
+            <i data-cms-section="services" data-cms-field={`text.service.${service.id}.receipt.${index}.qty`} className="shrink-0 font-mono text-xs not-italic text-[#7a6b52]">{cmsText(content, `service.${service.id}.receipt.${index}.qty`, qty)}</i>
           </li>
         ))}
       </ul>
       <div className="my-4 border-t border-dashed border-[#241d14]/35" />
       <div className="flex justify-between font-mono text-sm text-[#5c4f3c]">
         <span>Giá trị ước tính</span>
-        <b className="font-medium">{service.value}</b>
+        <b data-cms-section="services" data-cms-field={`text.service.${service.id}.value`} className="font-medium">{cmsText(content, `service.${service.id}.value`, service.value)}</b>
       </div>
       <div className="mt-2 flex justify-between text-lg font-bold text-[#241d14]">
         <span>Bạn trả</span>
-        <b className="font-mono">{service.price}</b>
+        <b data-cms-section="services" data-cms-field={`text.service.${service.id}.price`} className="font-mono">{cmsText(content, `service.${service.id}.price`, service.price)}</b>
       </div>
       <div className="mt-5 rounded border px-3 py-2 text-center font-mono text-[11px] uppercase tracking-[0.08em]" style={{ borderColor: service.accent, color: service.accent }}>
         Nhận nhiều hơn số tiền bỏ ra

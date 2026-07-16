@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { TloraCmsEditor } from "@/components/tlora-cms/tlora-cms-editor";
 import { AuthorizationError, requireTloraAdmin } from "@/lib/tenancy/request-context";
 import { getTloraCmsPage } from "@/repositories/tlora/cms-repository";
+import { listTloraMedia } from "@/repositories/tlora/media-repository";
 
 export const metadata: Metadata = {
   title: "TLORA First-party CMS",
@@ -14,8 +15,11 @@ export const dynamic = "force-dynamic";
 async function loadCmsPage() {
   try {
     const context = await requireTloraAdmin();
-    const data = await getTloraCmsPage(context.studio.id, "home");
-    return { context, data };
+    const [data, media] = await Promise.all([
+      getTloraCmsPage(context.studio.id, "home"),
+      listTloraMedia(context.studio.id),
+    ]);
+    return { context, data, media };
   } catch (error) {
     if (error instanceof AuthorizationError) {
       redirect(error.status === 401 ? "/dang-nhap?redirect=/admin/tlora" : "/");
@@ -25,6 +29,6 @@ async function loadCmsPage() {
 }
 
 export default async function TloraCmsPage() {
-  const { context, data } = await loadCmsPage();
-  return <TloraCmsEditor studioName={context.studio.displayName} initialPage={data.page} initialSections={data.sections} />;
+  const { context, data, media } = await loadCmsPage();
+  return <TloraCmsEditor studioName={context.studio.displayName} initialPage={data.page} initialSections={data.sections} initialMedia={media} />;
 }

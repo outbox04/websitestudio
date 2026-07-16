@@ -47,6 +47,8 @@ export async function createTloraMedia(input: {
   fileName: string;
   mimeType: string;
   sizeBytes: number;
+  width?: number;
+  height?: number;
   altText: string;
 }) {
   const admin = createAdminClient();
@@ -57,6 +59,8 @@ export async function createTloraMedia(input: {
     file_name: input.fileName,
     mime_type: input.mimeType,
     size_bytes: input.sizeBytes,
+    width: input.width || null,
+    height: input.height || null,
     alt_text: input.altText || null,
     created_by: input.userId,
   }).select("id,storage_path,public_url,file_name,mime_type,size_bytes,width,height,alt_text,created_at").single();
@@ -78,4 +82,3 @@ export async function deleteTloraMedia(studioId: string, mediaId: string) {
   const { error: deleteError } = await admin.from("tlora_cms_media_assets").delete().eq("id", mediaId).eq("studio_id", studioId);
   if (deleteError) throw deleteError;
 }
-

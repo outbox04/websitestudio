@@ -2,8 +2,9 @@
 
 import { Eye, Laptop, Loader2, Save, Send, Share2, Smartphone, Tablet } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { TloraImagePicker, type ImageTarget } from "@/components/tlora-cms/tlora-image-picker";
 import { updateSectionSchema } from "@/schemas/tlora-cms";
-import type { TloraCmsPage, TloraCmsSection } from "@/types/scope";
+import type { TloraCmsMediaAsset, TloraCmsPage, TloraCmsSection } from "@/types/scope";
 
 type Device = "desktop" | "tablet" | "mobile";
 const deviceWidth: Record<Device, string> = { desktop: "100%", tablet: "768px", mobile: "390px" };
@@ -12,12 +13,16 @@ export function TloraCmsEditor({
   studioName,
   initialPage,
   initialSections,
+  initialMedia,
 }: {
   studioName: string;
   initialPage: TloraCmsPage;
   initialSections: TloraCmsSection[];
+  initialMedia: TloraCmsMediaAsset[];
 }) {
   const [sections, setSections] = useState(initialSections);
+  const [media, setMedia] = useState(initialMedia);
+  const [imageTarget, setImageTarget] = useState<ImageTarget | null>(null);
   const [meta, setMeta] = useState({
     seoTitle: initialPage.seoTitle,
     seoDescription: initialPage.seoDescription,
@@ -46,7 +51,7 @@ export function TloraCmsEditor({
   useEffect(() => {
     function handleReady(event: MessageEvent<unknown>) {
       if (event.origin !== window.location.origin) return;
-      const previewMessage = event.data as { type?: string; sectionKey?: string; field?: string; value?: string } | null;
+      const previewMessage = event.data as { type?: string; sectionKey?: string; field?: string; value?: string; currentUrl?: string } | null;
       if (previewMessage?.type === "tlora:cms-preview-ready") {
         syncPreview();
         return;
@@ -57,15 +62,51 @@ export function TloraCmsEditor({
         && previewMessage.field
         && typeof previewMessage.value === "string"
       ) {
-        setSections((current) => current.map((section) => section.sectionKey === previewMessage.sectionKey
-          ? { ...section, draftContent: { ...section.draftContent, [previewMessage.field!]: previewMessage.value } }
-          : section));
+        updateSectionField(previewMessage.sectionKey, previewMessage.field, previewMessage.value);
+      }
+      if (
+        previewMessage?.type === "tlora:cms-preview-image-select"
+        && previewMessage.sectionKey
+        && previewMessage.field
+      ) {
+        setImageTarget({
+          sectionKey: previewMessage.sectionKey,
+          field: previewMessage.field,
+          currentUrl: previewMessage.currentUrl || "",
+        });
       }
     }
 
     window.addEventListener("message", handleReady);
     return () => window.removeEventListener("message", handleReady);
   }, [syncPreview]);
+
+  function updateSectionField(sectionKey: string, field: string, value: string) {
+    setSections((current) => current.map((section) => {
+      if (section.sectionKey !== sectionKey) return section;
+      if (field.startsWith("text.")) {
+        const key = field.slice(5);
+        const text = (section.draftContent.text || {}) as Record<string, unknown>;
+        return { ...section, draftContent: { ...section.draftContent, text: { ...text, [key]: value } } };
+      }
+      if (field.startsWith("images.")) {
+        const key = field.slice(7);
+        const images = (section.draftContent.images || {}) as Record<string, unknown>;
+        return { ...section, draftContent: { ...section.draftContent, images: { ...images, [key]: value } } };
+      }
+      return { ...section, draftContent: { ...section.draftContent, [field]: value } };
+    }));
+  }
+
+  function applyImage(url: string) {
+    if (!imageTarget) return;
+    if (imageTarget.sectionKey === "__meta") {
+      setMeta((current) => ({ ...current, ogImageUrl: url }));
+    } else {
+      updateSectionField(imageTarget.sectionKey, imageTarget.field, url);
+    }
+    setImageTarget(null);
+  }
 
   async function persistDraft() {
     const sectionPayloads = sections.map((section) => updateSectionSchema.parse({
@@ -159,6 +200,7 @@ export function TloraCmsEditor({
               <p className="mt-1 text-right text-[11px] text-[#8c8174]">{meta.seoDescription.length}/200</p>
             </div>
             <CmsField label="OG image URL" value={meta.ogImageUrl} onChange={(ogImageUrl) => setMeta((current) => ({ ...current, ogImageUrl }))} />
+            <button type="button" onClick={() => setImageTarget({ sectionKey: "__meta", field: "ogImageUrl", currentUrl: meta.ogImageUrl })} className="inline-flex min-h-10 w-full items-center justify-center rounded-md border border-white/15 text-sm font-bold text-[#cbc0b0] hover:border-[#d8b766] hover:text-[#f8f5ee]">Chọn ảnh OG từ thư viện</button>
           </div>
 
           <div className="mt-6 overflow-hidden rounded-lg border border-white/10 bg-[#07080a]">
@@ -197,6 +239,15 @@ export function TloraCmsEditor({
           </div>
         </section>
       </div>
+      {imageTarget && (
+        <TloraImagePicker
+          target={imageTarget}
+          assets={media}
+          onClose={() => setImageTarget(null)}
+          onApply={applyImage}
+          onUploaded={(asset) => setMedia((current) => [asset, ...current])}
+        />
+      )}
     </div>
   );
 }

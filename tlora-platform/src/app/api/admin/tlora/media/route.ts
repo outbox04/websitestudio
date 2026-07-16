@@ -26,6 +26,8 @@ export async function POST(request: Request) {
     if (!allowedMimeTypes.has(file.type)) return NextResponse.json({ error: "Chỉ hỗ trợ JPEG, PNG và WebP." }, { status: 415 });
     if (file.size <= 0 || file.size > maxBytes) return NextResponse.json({ error: "Ảnh phải nhỏ hơn hoặc bằng 8MB." }, { status: 413 });
     const { altText } = cmsMediaMetadataSchema.parse({ altText: form.get("altText") || "" });
+    const width = Math.max(0, Number(form.get("width") || 0));
+    const height = Math.max(0, Number(form.get("height") || 0));
     const extension = file.type === "image/jpeg" ? "jpg" : file.type.split("/")[1];
     const safeBase = file.name.replace(/\.[^.]+$/, "").replace(/[^a-zA-Z0-9_-]+/g, "-").slice(0, 80) || "image";
     const storagePath = `${context.studio.id}/${new Date().getUTCFullYear()}/${crypto.randomUUID()}-${safeBase}.${extension}`;
@@ -46,6 +48,8 @@ export async function POST(request: Request) {
         fileName: file.name,
         mimeType: file.type,
         sizeBytes: file.size,
+        width: width || undefined,
+        height: height || undefined,
         altText,
       });
       return NextResponse.json({ media }, { status: 201 });
@@ -69,4 +73,3 @@ export async function DELETE(request: Request) {
     return tloraApiError(error);
   }
 }
-
