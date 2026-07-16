@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
-import { SectionHeader } from "@/components/ui";
 import { services } from "@/lib/site-data";
+import { getPublishedTloraSection } from "@/repositories/tlora/cms-repository";
 
 export const metadata: Metadata = {
   title: "Dịch vụ chụp ảnh concept",
@@ -12,20 +12,23 @@ export const metadata: Metadata = {
   },
 };
 
-export default function ServicesPage() {
+export const dynamic = "force-dynamic";
+
+export default async function ServicesPage() {
+  const content = await getPublishedTloraSection("home", "services");
+  const text = (key: string, fallback: string) => {
+    const values = content.text as Record<string, unknown> | undefined;
+    return typeof values?.[key] === "string" ? String(values[key]) : fallback;
+  };
   return (
     <section className="px-4 py-16 sm:px-6 lg:px-8">
-      <SectionHeader
-        eyebrow="Dịch vụ"
-        title="Dịch vụ chụp ảnh concept trong studio"
-        description="Thiết kế cho studio cần quy trình rõ ràng từ đặt lịch, chụp, chọn ảnh đến chỉnh sửa."
-      />
+      <header className="mx-auto max-w-4xl text-center"><h1 data-cms-section="services" data-cms-field="text.servicePage.title" className="text-4xl font-black text-white md:text-6xl">{text("servicePage.title", "Dịch vụ chụp ảnh concept trong studio")}</h1><p data-cms-section="services" data-cms-field="text.servicePage.description" className="mx-auto mt-5 max-w-2xl text-base leading-7 text-zinc-400">{text("servicePage.description", "Thiết kế cho studio cần quy trình rõ ràng từ đặt lịch, chụp, chọn ảnh đến chỉnh sửa.")}</p></header>
       <div className="mx-auto mt-10 grid max-w-7xl gap-5 md:grid-cols-2">
-        {services.map((service) => (
+        {services.map((service, index) => (
           <article key={service.title} className="rounded-lg border border-white/10 bg-white/[0.04] p-6 shadow-xl shadow-black/20">
             <service.icon className="text-[#d8b766]" size={30} />
-            <h2 className="mt-5 text-2xl font-bold text-white">{service.title}</h2>
-            <p className="mt-3 leading-7 text-zinc-400">{service.description}</p>
+            <h2 data-cms-section="services" data-cms-field={`text.servicePage.${index}.title`} className="mt-5 text-2xl font-bold text-white">{text(`servicePage.${index}.title`, service.title)}</h2>
+            <p data-cms-section="services" data-cms-field={`text.servicePage.${index}.description`} className="mt-3 leading-7 text-zinc-400">{text(`servicePage.${index}.description`, service.description)}</p>
           </article>
         ))}
       </div>

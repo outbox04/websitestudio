@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { CheckCircle2 } from "lucide-react";
-import { SectionHeader } from "@/components/ui";
 import { pricing } from "@/lib/site-data";
+import { getPublishedTloraSection } from "@/repositories/tlora/cms-repository";
 
 export const metadata: Metadata = {
   title: "Bảng giá chụp ảnh concept",
@@ -13,19 +13,26 @@ export const metadata: Metadata = {
   },
 };
 
-export default function PricingPage() {
+export const dynamic = "force-dynamic";
+
+export default async function PricingPage() {
+  const content = await getPublishedTloraSection("home", "services");
+  const text = (key: string, fallback: string) => {
+    const values = content.text as Record<string, unknown> | undefined;
+    return typeof values?.[key] === "string" ? String(values[key]) : fallback;
+  };
   return (
     <section className="px-4 py-16 sm:px-6 lg:px-8">
-      <SectionHeader eyebrow="Bảng giá" title="Combo chụp ảnh concept" description="Các gói minh bạch quyền lợi, dễ chọn và dễ nâng cấp theo nhu cầu sản xuất." />
+      <header className="mx-auto max-w-4xl text-center"><h1 data-cms-section="services" data-cms-field="text.pricingPage.title" className="text-4xl font-black text-white md:text-6xl">{text("pricingPage.title", "Combo chụp ảnh concept")}</h1><p data-cms-section="services" data-cms-field="text.pricingPage.description" className="mx-auto mt-5 max-w-2xl text-base leading-7 text-zinc-400">{text("pricingPage.description", "Các gói minh bạch quyền lợi, dễ chọn và dễ nâng cấp theo nhu cầu sản xuất.")}</p></header>
       <div className="mx-auto mt-10 grid max-w-6xl gap-5 md:grid-cols-3">
-        {pricing.map((plan) => (
+        {pricing.map((plan, index) => (
           <article key={plan.name} className={`rounded-lg border p-6 shadow-xl shadow-black/20 ${plan.highlighted ? "border-[#d8b766]/50 bg-[#d8b766] text-black" : "border-white/10 bg-white/[0.04] text-white"}`}>
-            <h2 className="text-xl font-bold">{plan.name}</h2>
-            <p className={`mt-2 text-sm leading-6 ${plan.highlighted ? "text-black/70" : "text-zinc-400"}`}>{plan.description}</p>
-            <p className="mt-6 text-3xl font-extrabold">{plan.price}</p>
+            <h2 data-cms-section="services" data-cms-field={`text.pricingPage.${index}.name`} className="text-xl font-bold">{text(`pricingPage.${index}.name`, plan.name)}</h2>
+            <p data-cms-section="services" data-cms-field={`text.pricingPage.${index}.description`} className={`mt-2 text-sm leading-6 ${plan.highlighted ? "text-black/70" : "text-zinc-400"}`}>{text(`pricingPage.${index}.description`, plan.description)}</p>
+            <p data-cms-section="services" data-cms-field={`text.pricingPage.${index}.price`} className="mt-6 text-3xl font-extrabold">{text(`pricingPage.${index}.price`, plan.price)}</p>
             <ul className="mt-6 space-y-3 text-sm">
-              {plan.features.map((feature) => (
-                <li key={feature} className="flex gap-2"><CheckCircle2 size={17} className="shrink-0 text-emerald-400" /> {feature}</li>
+              {plan.features.map((feature, featureIndex) => (
+                <li key={feature} className="flex gap-2"><CheckCircle2 size={17} className="shrink-0 text-emerald-400" /> <span data-cms-section="services" data-cms-field={`text.pricingPage.${index}.feature.${featureIndex}`}>{text(`pricingPage.${index}.feature.${featureIndex}`, feature)}</span></li>
               ))}
             </ul>
           </article>

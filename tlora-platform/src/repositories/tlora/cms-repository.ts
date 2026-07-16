@@ -59,6 +59,22 @@ export async function getTloraCmsPage(studioId: string, pageKey = "home") {
   return { page: mapPage(page as PageRow), sections: (sections || []).map((row) => mapSection(row as SectionRow)) };
 }
 
+export async function getPublishedTloraSection(pageKey: string, sectionKey: string) {
+  const admin = createAdminClient();
+  const { data: studio, error: studioError } = await admin.from("studios").select("id").eq("studio_type", "first_party").eq("system_key", "tlora").single();
+  if (studioError) throw studioError;
+  const { data, error } = await admin
+    .from("tlora_cms_page_sections")
+    .select("published_content,tlora_cms_pages!inner(studio_id,page_key,status)")
+    .eq("section_key", sectionKey)
+    .eq("tlora_cms_pages.studio_id", studio.id)
+    .eq("tlora_cms_pages.page_key", pageKey)
+    .eq("tlora_cms_pages.status", "published")
+    .maybeSingle();
+  if (error) throw error;
+  return (data?.published_content || {}) as Record<string, unknown>;
+}
+
 export async function updateTloraPageMeta(input: {
   studioId: string;
   userId: string;

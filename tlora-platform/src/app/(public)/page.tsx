@@ -3,8 +3,8 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { cache } from "react";
-import { TloraPublicPreviewBridge } from "@/components/tlora-cms/tlora-public-preview-bridge";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { listPublishedTloraConceptAlbums } from "@/repositories/tlora/concept-albums-repository";
 
 const trustItems = [
   "Tư vấn concept trước khi chụp",
@@ -119,15 +119,6 @@ const whyCards = [
   ["Hậu kỳ có kiểm soát", "Retouch giữ nét gương mặt thật, không làm khách cảm thấy ảnh xa lạ với chính mình."],
 ];
 
-const moodCards = [
-  ["Pop Sinh Nhật", "Sinh nhật", "#E8704F", "/concept/concept-02.webp"],
-  ["Vintage Tuổi Mới", "Sinh nhật", "#E8704F", "/concept/concept-03.webp"],
-  ["Clean Beauty", "Beauty", "#C99A5E", "/concept/concept-06.webp"],
-  ["Editorial Beauty", "Beauty", "#C99A5E", "/concept/concept-07.webp"],
-  ["Lookbook Tối Giản", "Concept", "#3E6B5E", "/concept/concept-10.webp"],
-  ["Color Block", "Concept", "#3E6B5E", "/concept/concept-11.webp"],
-];
-
 const faqs = [
   ["Tôi chưa biết chọn concept nào thì sao?", "TLORA tư vấn dựa trên mục đích dùng ảnh và tính cách của bạn trước khi chốt mood, trang phục và bối cảnh. Bạn không cần tự nghĩ ra concept từ đầu."],
   ["Buổi chụp kéo dài bao lâu?", "Tùy dịch vụ: 60-90 phút cho Sinh nhật, 45-60 phút cho Beauty, 90-120 phút cho Concept trang phục có nhiều set bối cảnh."],
@@ -189,7 +180,10 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function HomePage() {
-  const { sections: publishedSections } = await getPublishedHome();
+  const [{ sections: publishedSections }, selectedAlbums] = await Promise.all([
+    getPublishedHome(),
+    listPublishedTloraConceptAlbums(6),
+  ]);
   const publishedHero = publishedSections.hero?.isEnabled ? publishedSections.hero.content : {};
   const publishedAbout = publishedSections.about?.isEnabled ? publishedSections.about.content : {};
   const publishedServices = publishedSections.services?.isEnabled ? publishedSections.services.content : {};
@@ -207,7 +201,6 @@ export default async function HomePage() {
   return (
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }} />
-      <TloraPublicPreviewBridge />
       <div className="bg-[#14110f] text-[#f4ece0]">
       <section hidden={publishedSections.hero?.isEnabled === false} data-cms-section-root="hero" className="relative min-h-[calc(100svh-73px)] overflow-hidden px-4 py-16 sm:px-6 sm:py-20 lg:px-8 lg:py-28">
         <Image
@@ -266,7 +259,6 @@ export default async function HomePage() {
 
       <section hidden={publishedSections.services?.isEnabled === false} id="dich-vu" data-cms-section-root="services" className="px-4 pb-8 pt-14 text-center sm:px-6 sm:pb-10 sm:pt-16 lg:px-8">
         <div className="mx-auto max-w-4xl">
-          <Eyebrow center>Dịch vụ studio</Eyebrow>
           <h2 data-cms-section="services" data-cms-field="title" className="font-heading text-3xl font-extrabold text-[#f4ece0] md:text-5xl">{String(publishedServices.title || "Ba concept, một tiêu chuẩn giá trị")}</h2>
           <p data-cms-section="services" data-cms-field="description" className="mx-auto mt-5 max-w-2xl text-base leading-7 text-[#cbc0b0]">
             {String(publishedServices.description || "Không có gói chụp đại trà. Mỗi dịch vụ được tính đúng theo công sức bỏ vào: tư vấn, set dựng, trang phục, ánh sáng và hậu kỳ.")}
@@ -280,7 +272,6 @@ export default async function HomePage() {
 
       <section className="bg-[#1c1813] px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
         <div className="mx-auto max-w-6xl text-center">
-          <Eyebrow center>Quy trình</Eyebrow>
           <h2 data-cms-section="services" data-cms-field="text.process.title" className="font-heading text-3xl font-extrabold text-[#f4ece0] md:text-5xl">{cmsText(publishedServices, "process.title", "Từ lúc đặt lịch đến khi nhận ảnh")}</h2>
           <p data-cms-section="services" data-cms-field="text.process.description" className="mx-auto mt-5 max-w-2xl text-base leading-7 text-[#cbc0b0]">
             {cmsText(publishedServices, "process.description", "Năm bước, không có công đoạn nào bị giấu đi. Bạn biết mình đang ở đâu trong quy trình tại mọi thời điểm.")}
@@ -299,7 +290,6 @@ export default async function HomePage() {
 
       <section hidden={publishedSections.about?.isEnabled === false} data-cms-section-root="about" className="px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
         <div className="mx-auto max-w-6xl text-center">
-          <Eyebrow center>Khách hàng cần một ekip biết lắng nghe</Eyebrow>
           <h2 data-cms-section="about" data-cms-field="title" className="mx-auto max-w-4xl font-heading text-3xl font-extrabold text-[#f4ece0] md:text-5xl">
             {String(publishedAbout.title || "TLORA giữ buổi chụp riêng tư, rõ ràng và tôn trọng cá tính từng người")}
           </h2>
@@ -319,33 +309,28 @@ export default async function HomePage() {
 
       <section hidden={publishedSections.gallery?.isEnabled === false} id="mood" data-cms-section-root="gallery" className="bg-[#1c1813] px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
         <div className="mx-auto max-w-6xl text-center">
-          <Eyebrow center>Chọn mood trước khi chốt lịch</Eyebrow>
-          <h2 data-cms-section="gallery" data-cms-field="title" className="font-heading text-3xl font-extrabold text-[#f4ece0] md:text-5xl">{String(publishedGallery.title || "Mỗi mood là một phiên bản ánh sáng và màu khác nhau")}</h2>
+          <h2 data-cms-section="gallery" data-cms-field="title" className="font-heading text-3xl font-extrabold text-[#f4ece0] md:text-5xl">{String(publishedGallery.title || "Album chọn lọc")}</h2>
           <p data-cms-section="gallery" data-cms-field="description" className="mx-auto mt-5 max-w-2xl text-base leading-7 text-[#cbc0b0]">
-            {String(publishedGallery.description || "Xem trước không khí của từng mood để chọn đúng cảm xúc bạn muốn mang về, sau đó mới cần quyết định trang phục.")}
+            {String(publishedGallery.description || "Sáu album concept tiêu biểu được tuyển chọn từ thư viện TLORA.")}
           </p>
           <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:mt-12 lg:grid-cols-3">
-            {moodCards.map(([title, type, accent, image], index) => (
-              <article key={title} className="text-left">
+            {selectedAlbums.map((album) => (
+              <Link key={album.id} href={`/album-concept?album=${encodeURIComponent(album.slug)}`} className="group text-left">
                 <div className="relative aspect-3/4 overflow-hidden rounded-[26px] border border-[#f4ece0]/12">
-                  <Image data-cms-section="gallery" data-cms-field={`images.mood.${index}`} data-cms-image-url={cmsImage(publishedGallery, `mood.${index}`, image)} src={cmsImage(publishedGallery, `mood.${index}`, image)} alt={title} fill sizes="(min-width: 1024px) 33vw, 50vw" className="object-cover" />
+                  <Image src={album.coverImageUrl || "/concept/concept-02.webp"} alt={album.title} fill sizes="(min-width: 1024px) 33vw, 50vw" className="object-cover transition duration-700 group-hover:scale-105" />
                   <div className="pointer-events-none absolute inset-0 bg-linear-to-t from-[#14110f]/80 via-transparent to-transparent" />
                 </div>
-                <div className="mt-3 flex items-center justify-between gap-3">
-                  <h3 data-cms-section="gallery" data-cms-field={`text.mood.${index}.title`} className="font-semibold text-[#f4ece0]">{cmsText(publishedGallery, `mood.${index}.title`, title)}</h3>
-                  <span data-cms-section="gallery" data-cms-field={`text.mood.${index}.type`} className="rounded-full px-3 py-1 font-mono text-[10px] uppercase tracking-[0.08em]" style={{ backgroundColor: `${accent}24`, color: accent }}>
-                    {cmsText(publishedGallery, `mood.${index}.type`, type)}
-                  </span>
-                </div>
-              </article>
+                <h3 className="mt-3 font-semibold text-[#f4ece0]">{album.title}</h3>
+                <p className="mt-1 line-clamp-2 text-sm leading-6 text-[#8c8174]">{album.excerpt}</p>
+              </Link>
             ))}
+            {!selectedAlbums.length && <p className="col-span-full rounded-xl border border-dashed border-white/15 p-8 text-[#8c8174]">Chưa có Album Concept được xuất bản.</p>}
           </div>
         </div>
       </section>
 
       <section className="px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
         <div className="mx-auto max-w-6xl text-center">
-          <Eyebrow center>Khách đã chụp tại TLORA</Eyebrow>
           <h2 data-cms-section="about" data-cms-field="text.testimonials.title" className="font-heading text-3xl font-extrabold text-[#f4ece0] md:text-5xl">{cmsText(publishedAbout, "testimonials.title", "Phản hồi sau buổi chụp")}</h2>
           <div className="mt-10 grid gap-5 md:grid-cols-3 lg:mt-12 lg:gap-6">
             {[
@@ -364,7 +349,6 @@ export default async function HomePage() {
 
       <section className="bg-[#1c1813] px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
         <div className="mx-auto max-w-4xl text-center">
-          <Eyebrow center>Câu hỏi thường gặp</Eyebrow>
           <h2 data-cms-section="contact" data-cms-field="text.faq.title" className="font-heading text-3xl font-extrabold text-[#f4ece0] md:text-5xl">{cmsText(publishedContact, "faq.title", "Những điều khách thường hỏi trước khi đặt lịch")}</h2>
           <div className="mt-10 text-left">
             {faqs.map(([question, answer], index) => (
@@ -384,7 +368,6 @@ export default async function HomePage() {
         <div className="relative mx-auto max-w-5xl overflow-hidden rounded-[32px] border border-[#f4ece0]/12 bg-[#1c1813] px-6 py-16 text-center sm:px-10">
           <div className="absolute inset-x-0 top-0 h-56 bg-radial-[ellipse_at_top] from-[#c99a5e]/18 to-transparent" />
           <div className="relative">
-            <Eyebrow center>Đặt lịch TLORA Studio</Eyebrow>
             <h2 data-cms-section="contact" data-cms-field="title" className="mx-auto max-w-3xl font-heading text-3xl font-extrabold text-[#f4ece0] md:text-5xl">
               {String(publishedContact.title || "Sẵn sàng có một bộ ảnh thể hiện đúng cá tính của bạn?")}
             </h2>
@@ -427,8 +410,8 @@ function ServiceSection({ service, content }: { service: (typeof services)[numbe
         </div>
 
         <div>
-          <span className="font-mono text-xs uppercase tracking-[0.12em] text-[#8c8174]">
-            {service.index} - {service.label}
+          <span data-cms-section="services" data-cms-field={`text.service.${service.id}.label`} className="font-mono text-xs uppercase tracking-[0.12em] text-[#8c8174]">
+            {cmsText(content, `service.${service.id}.label`, `${service.index} - ${service.label}`)}
           </span>
           <h3 data-cms-section="services" data-cms-field={`text.service.${service.id}.title`} className="mt-4 font-heading text-3xl font-extrabold leading-tight text-[#f4ece0] md:text-4xl">{cmsText(content, `service.${service.id}.title`, service.title)}</h3>
           <p data-cms-section="services" data-cms-field={`text.service.${service.id}.description`} className="mt-5 text-base leading-8 text-[#cbc0b0]">{cmsText(content, `service.${service.id}.description`, service.description)}</p>
@@ -457,7 +440,7 @@ function Receipt({ service, content }: { service: (typeof services)[number]; con
   return (
     <div className="rounded-t bg-[#f4ece0] px-5 pb-8 pt-7 text-[#241d14] shadow-2xl shadow-black/35 sm:-rotate-1 sm:px-6">
       <div className="flex items-baseline justify-between gap-4 border-b border-dashed border-[#241d14]/35 pb-4">
-        <span className="font-mono text-[11px] uppercase tracking-[0.12em] text-[#7a6b52]">Hóa đơn giá trị</span>
+        <span data-cms-section="services" data-cms-field={`text.service.${service.id}.receiptLabel`} className="font-mono text-[11px] uppercase tracking-[0.12em] text-[#7a6b52]">{cmsText(content, `service.${service.id}.receiptLabel`, "Hóa đơn giá trị")}</span>
         <span data-cms-section="services" data-cms-field={`text.service.${service.id}.receiptName`} className="font-heading text-sm font-bold">{cmsText(content, `service.${service.id}.receiptName`, service.receiptName)}</span>
       </div>
       <ul className="mt-4 space-y-2">
@@ -470,11 +453,11 @@ function Receipt({ service, content }: { service: (typeof services)[number]; con
       </ul>
       <div className="my-4 border-t border-dashed border-[#241d14]/35" />
       <div className="flex justify-between font-mono text-sm text-[#5c4f3c]">
-        <span>Giá trị ước tính</span>
+        <span data-cms-section="services" data-cms-field={`text.service.${service.id}.estimatedLabel`}>{cmsText(content, `service.${service.id}.estimatedLabel`, "Giá trị ước tính")}</span>
         <b data-cms-section="services" data-cms-field={`text.service.${service.id}.value`} className="font-medium">{cmsText(content, `service.${service.id}.value`, service.value)}</b>
       </div>
       <div className="mt-2 flex justify-between text-lg font-bold text-[#241d14]">
-        <span>Bạn trả</span>
+        <span data-cms-section="services" data-cms-field={`text.service.${service.id}.payLabel`}>{cmsText(content, `service.${service.id}.payLabel`, "Bạn trả")}</span>
         <b data-cms-section="services" data-cms-field={`text.service.${service.id}.price`} className="font-mono">{cmsText(content, `service.${service.id}.price`, service.price)}</b>
       </div>
       <div className="mt-5 rounded border px-3 py-2 text-center font-mono text-[11px] uppercase tracking-[0.08em]" style={{ borderColor: service.accent, color: service.accent }}>
@@ -482,15 +465,6 @@ function Receipt({ service, content }: { service: (typeof services)[number]; con
       </div>
       <p className="mt-3 text-center text-[11px] text-[#9a8c72]">*Giá minh họa - cập nhật theo bảng giá thật của studio.</p>
     </div>
-  );
-}
-
-function Eyebrow({ children, center = false, className = "" }: { children: string; center?: boolean; className?: string }) {
-  return (
-    <p className={`mb-5 flex items-center gap-3 font-mono text-xs uppercase tracking-[0.16em] text-[#8c8174] ${center ? "justify-center" : ""} ${className}`}>
-      {!center && <span className="h-px w-5 bg-[#8c8174]" />}
-      {children}
-    </p>
   );
 }
 

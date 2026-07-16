@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { SiteFooter, SiteHeader } from "@/components/site-shell";
+import { TloraPublicPreviewBridge } from "@/components/tlora-cms/tlora-public-preview-bridge";
 import { getFirstPartyStudio } from "@/lib/tenancy/request-context";
 import { getTloraMenu } from "@/repositories/tlora/menus-repository";
 import { getPublishedTloraSiteSettings } from "@/repositories/tlora/settings-repository";
@@ -22,6 +23,7 @@ export default async function PublicLayout({ children }: { children: ReactNode }
   const { navItems, contact } = await getPublishedShell();
   return (
     <>
+      <TloraPublicPreviewBridge />
       <SiteHeader navItems={navItems} />
       <main>{children}</main>
       <SiteFooter contact={contact} />

@@ -135,6 +135,26 @@ export const cmsSiteSettingsSchema = z.object({
   defaultOgImage: imageUrl,
 });
 
+export const conceptAlbumSchema = z.object({
+  id: z.string().uuid().optional(),
+  title: z.string().trim().min(2).max(160),
+  slug: z.string().trim().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/).max(160),
+  excerpt: z.string().trim().max(500),
+  coverImageUrl: imageUrl,
+  images: z.array(imageUrl).max(30),
+  isFeatured: z.boolean(),
+  sortOrder: z.number().int().min(0).max(1000),
+  status: z.enum(["draft", "published", "archived"]),
+});
+
+export const conceptInquirySchema = z.object({
+  albumId: z.string().uuid().nullable().optional(),
+  customerName: z.string().trim().min(2).max(120),
+  phone: z.string().trim().min(8).max(30),
+  email: z.string().trim().email().or(z.literal("")).optional().default(""),
+  note: z.string().trim().max(1000).optional().default(""),
+});
+
 export function parseSectionContent(sectionType: keyof typeof sectionContentSchemas, content: unknown) {
   return sectionContentSchemas[sectionType].parse(content);
 }

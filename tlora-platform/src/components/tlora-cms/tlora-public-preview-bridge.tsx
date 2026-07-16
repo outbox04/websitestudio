@@ -57,13 +57,18 @@ function requestImage(sectionKey: string, field: string, currentUrl: string) {
 function lockPreviewInteractions() {
   if (document.body.dataset.cmsInteractionsLocked === "true") return;
   document.body.dataset.cmsInteractionsLocked = "true";
+  document.querySelectorAll<HTMLDetailsElement>("details").forEach((details) => {
+    details.open = true;
+  });
   document.addEventListener("click", (event) => {
     const target = event.target as HTMLElement | null;
+    if (target?.closest("a[data-cms-preview-navigation]")) return;
     if (target?.closest("a,button,summary,[role='button'],input,select,textarea")) event.preventDefault();
   }, true);
   document.addEventListener("submit", (event) => event.preventDefault(), true);
   document.addEventListener("keydown", (event) => {
     const target = event.target as HTMLElement | null;
+    if (target?.closest("a[data-cms-preview-navigation]")) return;
     if (event.key === "Enter" && target?.closest("a,button,summary,[role='button'],input,select,textarea")) event.preventDefault();
   }, true);
 }

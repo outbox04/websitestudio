@@ -9,6 +9,7 @@ const defaultNav = [
   { href: "/", label: "Trang chủ" },
   { href: "/dich-vu", label: "Dịch vụ" },
   { href: "/bang-gia", label: "Bảng giá" },
+  { href: "/album-concept", label: "Album Concept" },
   { href: "/ai-concept", label: "AI Concept" },
   { href: "/tin-tuc", label: "Tin tức" },
 ];
@@ -22,7 +23,7 @@ export function SiteHeader({ navItems = defaultNav }: { navItems?: Array<{ href:
         </Link>
         <nav className="hidden items-center gap-6 text-sm font-medium text-zinc-300 lg:flex">
           {navItems.map((item) => (
-            <Link key={item.href} href={item.href} className="transition hover:text-[#f3d88e]">
+            <Link key={item.href} href={item.href} data-cms-preview-navigation className="transition hover:text-[#f3d88e]">
               {item.label}
             </Link>
           ))}

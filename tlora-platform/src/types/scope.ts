@@ -79,6 +79,20 @@ export type TloraCmsMediaAsset = {
   createdAt: string;
 };
 
+export type TloraConceptAlbum = {
+  id: string;
+  slug: string;
+  title: string;
+  excerpt: string;
+  coverImageUrl: string;
+  images: string[];
+  isFeatured: boolean;
+  sortOrder: number;
+  status: "draft" | "published" | "archived";
+  publishedAt: string | null;
+  updatedAt: string;
+};
+
 export type TloraCmsMenuItem = {
   id?: string;
   label: string;
