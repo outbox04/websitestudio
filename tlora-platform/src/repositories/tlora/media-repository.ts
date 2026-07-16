@@ -13,6 +13,7 @@ type MediaRow = {
   width: number | null;
   height: number | null;
   alt_text: string | null;
+  metadata: { description?: string } | null;
   created_at: string;
 };
 
@@ -26,13 +27,14 @@ const mapMedia = (row: MediaRow): TloraCmsMediaAsset => ({
   width: row.width,
   height: row.height,
   altText: row.alt_text,
+  description: row.metadata?.description || null,
   createdAt: row.created_at,
 });
 
 export async function listTloraMedia(studioId: string) {
   const { data, error } = await createAdminClient()
     .from("tlora_cms_media_assets")
-    .select("id,storage_path,public_url,file_name,mime_type,size_bytes,width,height,alt_text,created_at")
+    .select("id,storage_path,public_url,file_name,mime_type,size_bytes,width,height,alt_text,metadata,created_at")
     .eq("studio_id", studioId)
     .order("created_at", { ascending: false });
   if (error) throw error;
@@ -63,7 +65,19 @@ export async function createTloraMedia(input: {
     height: input.height || null,
     alt_text: input.altText || null,
     created_by: input.userId,
-  }).select("id,storage_path,public_url,file_name,mime_type,size_bytes,width,height,alt_text,created_at").single();
+  }).select("id,storage_path,public_url,file_name,mime_type,size_bytes,width,height,alt_text,metadata,created_at").single();
+  if (error) throw error;
+  return mapMedia(data as MediaRow);
+}
+
+export async function updateTloraMediaMetadata(studioId: string, mediaId: string, altText: string, description: string) {
+  const { data, error } = await createAdminClient()
+    .from("tlora_cms_media_assets")
+    .update({ alt_text: altText || null, metadata: { description } })
+    .eq("id", mediaId)
+    .eq("studio_id", studioId)
+    .select("id,storage_path,public_url,file_name,mime_type,size_bytes,width,height,alt_text,metadata,created_at")
+    .single();
   if (error) throw error;
   return mapMedia(data as MediaRow);
 }

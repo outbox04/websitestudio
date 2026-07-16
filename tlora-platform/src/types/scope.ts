@@ -76,6 +76,7 @@ export type TloraCmsMediaAsset = {
   width: number | null;
   height: number | null;
   altText: string | null;
+  description: string | null;
   createdAt: string;
 };
 

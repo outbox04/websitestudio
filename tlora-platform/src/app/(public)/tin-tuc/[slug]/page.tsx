@@ -30,9 +30,9 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
       <h1 className="mt-4 text-4xl font-extrabold leading-tight text-white md:text-5xl">{post.title}</h1>
       {post.excerpt && <p className="mt-5 text-lg leading-8 text-zinc-400">{post.excerpt}</p>}
       {post.coverImageUrl && <div className="mt-8 aspect-video rounded-xl bg-zinc-900" style={{ backgroundImage: `url(${post.coverImageUrl})`, backgroundPosition: "center", backgroundSize: "cover" }} />}
-      <div className="mt-10 space-y-5 text-base leading-8 text-zinc-300">
-        {post.body.split(/\n{2,}/).filter(Boolean).map((paragraph, index) => <p key={index} className="whitespace-pre-line">{paragraph}</p>)}
-      </div>
+      {post.body.includes("<")
+        ? <div className="prose prose-invert mt-10 max-w-none text-base leading-8 text-zinc-300 [&_a]:text-[#d8b766] [&_img]:h-auto [&_img]:rounded-xl" dangerouslySetInnerHTML={{ __html: post.body }} />
+        : <div className="mt-10 space-y-5 text-base leading-8 text-zinc-300">{post.body.split(/\n{2,}/).filter(Boolean).map((paragraph, index) => <p key={index} className="whitespace-pre-line">{paragraph}</p>)}</div>}
     </article>
   );
 }

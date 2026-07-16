@@ -18,9 +18,9 @@ export default async function TloraCmsLayout({ children }: { children: ReactNode
     <div className="min-h-screen bg-[#07080a] text-[#f8f5ee] lg:grid lg:grid-cols-[248px_minmax(0,1fr)]">
       <aside className="border-b border-[#2a2722] bg-[#101115] p-4 lg:sticky lg:top-0 lg:min-h-screen lg:border-b-0 lg:border-r">
         <div className="px-2">
-          <p className="text-xs font-bold uppercase tracking-[.14em] text-[#d8b766]">TLORA First-party</p>
+          <p className="text-xs font-bold uppercase tracking-[.14em] text-[#d8b766]">Website CMS</p>
           <p className="mt-2 text-lg font-extrabold">{context.studio.displayName}</p>
-          <p className="mt-1 text-xs text-[#8c8174]">CMS nội bộ · {context.isPlatformAdmin ? "Platform admin" : context.membershipRole}</p>
+          <p className="mt-1 text-xs text-[#8c8174]">{context.isPlatformAdmin ? "Quản trị hệ thống" : "Biên tập nội dung"}</p>
         </div>
         <TloraCmsNavigation />
       </aside>
@@ -28,4 +28,3 @@ export default async function TloraCmsLayout({ children }: { children: ReactNode
     </div>
   );
 }
-

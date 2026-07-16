@@ -1,16 +1,13 @@
 import type { Metadata } from "next";
 import { services } from "@/lib/site-data";
-import { getPublishedTloraSection } from "@/repositories/tlora/cms-repository";
+import { getPublishedTloraPageMeta, getPublishedTloraSection } from "@/repositories/tlora/cms-repository";
 
-export const metadata: Metadata = {
-  title: "Dịch vụ chụp ảnh concept",
-  description: "Khám phá các concept chân dung cá nhân, couple, gia đình và thời trang được chuẩn bị riêng theo phong cách của bạn.",
-  openGraph: {
-    title: "Dịch vụ chụp ảnh concept",
-    description: "Khám phá các concept chân dung cá nhân, couple, gia đình và thời trang được chuẩn bị riêng theo phong cách của bạn.",
-    images: ["/brand/tlora-logo.png"],
-  },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const meta = await getPublishedTloraPageMeta("services");
+  const title = meta.title || "Dịch vụ chụp ảnh concept";
+  const description = meta.description || "Khám phá các concept chân dung cá nhân, couple, gia đình và thời trang.";
+  return { title, description, openGraph: { title, description, images: meta.ogImageUrl ? [meta.ogImageUrl] : ["/brand/tlora-logo.png"] } };
+}
 
 export const dynamic = "force-dynamic";
 

@@ -59,6 +59,35 @@ export async function getTloraCmsPage(studioId: string, pageKey = "home") {
   return { page: mapPage(page as PageRow), sections: (sections || []).map((row) => mapSection(row as SectionRow)) };
 }
 
+export async function listTloraCmsPages(studioId: string) {
+  const { data, error } = await createAdminClient()
+    .from("tlora_cms_pages")
+    .select("id,page_key,slug,title,status,draft_seo_title,draft_seo_description,draft_og_image_url,published_at")
+    .eq("studio_id", studioId)
+    .order("created_at");
+  if (error) throw error;
+  return (data || []).map((row) => mapPage(row as PageRow));
+}
+
+export async function getPublishedTloraPageMeta(pageKey: string) {
+  const admin = createAdminClient();
+  const { data: studio, error: studioError } = await admin.from("studios").select("id").eq("studio_type", "first_party").eq("system_key", "tlora").single();
+  if (studioError) throw studioError;
+  const { data, error } = await admin
+    .from("tlora_cms_pages")
+    .select("seo_title,seo_description,og_image_url")
+    .eq("studio_id", studio.id)
+    .eq("page_key", pageKey)
+    .eq("status", "published")
+    .maybeSingle();
+  if (error) throw error;
+  return {
+    title: data?.seo_title || "",
+    description: data?.seo_description || "",
+    ogImageUrl: data?.og_image_url || "",
+  };
+}
+
 export async function getPublishedTloraSection(pageKey: string, sectionKey: string) {
   const admin = createAdminClient();
   const { data: studio, error: studioError } = await admin.from("studios").select("id").eq("studio_type", "first_party").eq("system_key", "tlora").single();

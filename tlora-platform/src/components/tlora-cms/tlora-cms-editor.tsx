@@ -9,29 +9,37 @@ import type { TloraCmsMediaAsset, TloraCmsPage, TloraCmsSection } from "@/types/
 type Device = "desktop" | "tablet" | "mobile";
 const deviceWidth: Record<Device, string> = { desktop: "100%", tablet: "768px", mobile: "390px" };
 
+function normalizedPreviewPath(pathname: string) {
+  if (pathname.startsWith("/tin-tuc/")) return "/tin-tuc";
+  return pathname || "/";
+}
+
 export function TloraCmsEditor({
   studioName,
   initialPage,
+  initialPages,
   initialSections,
   initialMedia,
 }: {
   studioName: string;
   initialPage: TloraCmsPage;
+  initialPages: TloraCmsPage[];
   initialSections: TloraCmsSection[];
   initialMedia: TloraCmsMediaAsset[];
 }) {
   const [sections, setSections] = useState(initialSections);
   const [media, setMedia] = useState(initialMedia);
   const [imageTarget, setImageTarget] = useState<ImageTarget | null>(null);
-  const [meta, setMeta] = useState({
-    seoTitle: initialPage.seoTitle,
-    seoDescription: initialPage.seoDescription,
-    ogImageUrl: initialPage.ogImageUrl,
-  });
+  const [pageMetas, setPageMetas] = useState(() => Object.fromEntries(initialPages.map((page) => [page.id, {
+    seoTitle: page.seoTitle, seoDescription: page.seoDescription, ogImageUrl: page.ogImageUrl,
+  }])));
+  const [previewPath, setPreviewPath] = useState("/");
   const [device, setDevice] = useState<Device>("desktop");
   const [busy, setBusy] = useState("");
   const [message, setMessage] = useState("");
   const previewRef = useRef<HTMLIFrameElement>(null);
+  const currentPage = initialPages.find((page) => page.slug === normalizedPreviewPath(previewPath)) || initialPage;
+  const meta = pageMetas[currentPage.id] || { seoTitle: "", seoDescription: "", ogImageUrl: "" };
 
   const syncPreview = useCallback(() => {
     previewRef.current?.contentWindow?.postMessage({
@@ -51,8 +59,9 @@ export function TloraCmsEditor({
   useEffect(() => {
     function handleReady(event: MessageEvent<unknown>) {
       if (event.origin !== window.location.origin) return;
-      const previewMessage = event.data as { type?: string; sectionKey?: string; field?: string; value?: string; currentUrl?: string } | null;
+      const previewMessage = event.data as { type?: string; sectionKey?: string; field?: string; value?: string; currentUrl?: string; pathname?: string } | null;
       if (previewMessage?.type === "tlora:cms-preview-ready") {
+        if (previewMessage.pathname) setPreviewPath(previewMessage.pathname);
         syncPreview();
         return;
       }
@@ -101,7 +110,7 @@ export function TloraCmsEditor({
   function applyImage(url: string) {
     if (!imageTarget) return;
     if (imageTarget.sectionKey === "__meta") {
-      setMeta((current) => ({ ...current, ogImageUrl: url }));
+      setPageMetas((current) => ({ ...current, [currentPage.id]: { ...meta, ogImageUrl: url } }));
     } else {
       updateSectionField(imageTarget.sectionKey, imageTarget.field, url);
     }
@@ -121,11 +130,11 @@ export function TloraCmsEditor({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       })),
-      fetch("/api/admin/tlora/pages", {
+      ...initialPages.map((page) => fetch("/api/admin/tlora/pages", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ pageId: initialPage.id, ...meta }),
-      }),
+        body: JSON.stringify({ pageId: page.id, ...(pageMetas[page.id] || { seoTitle: "", seoDescription: "", ogImageUrl: "" }) }),
+      })),
     ]);
     const failed = responses.find((response) => !response.ok);
     if (failed) {
@@ -159,6 +168,14 @@ export function TloraCmsEditor({
       });
       const result = await response.json() as { published?: boolean; error?: string };
       if (!response.ok) throw new Error(result.error || "Không thể xuất bản.");
+      if (currentPage.id !== initialPage.id) {
+        const metaResponse = await fetch("/api/admin/tlora/pages", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ pageId: currentPage.id, changeNote: "Xuất bản metadata trang" }),
+        });
+        if (!metaResponse.ok) throw new Error("Không thể xuất bản metadata của trang hiện tại.");
+      }
       setMessage("Website TLORA đã được xuất bản và tạo một phiên bản khôi phục.");
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Không thể xuất bản.");
@@ -175,7 +192,7 @@ export function TloraCmsEditor({
           <h1 className="mt-1 text-2xl font-extrabold">Trang chủ TLORA</h1>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <span className="rounded-full border border-white/10 px-3 py-2 text-xs text-[#cbc0b0]">{initialPage.status === "published" ? "Đã xuất bản" : "Bản nháp"}</span>
+          <span className="rounded-full border border-white/10 px-3 py-2 text-xs text-[#cbc0b0]">{currentPage.title} · {currentPage.status === "published" ? "Đã xuất bản" : "Bản nháp"}</span>
           <button type="button" onClick={saveDraft} disabled={Boolean(busy)} className="inline-flex min-h-10 items-center gap-2 rounded-md border border-white/15 px-4 text-sm font-bold text-[#f8f5ee] disabled:opacity-50">
             {busy === "save" ? <Loader2 className="animate-spin" size={16} /> : <Save size={16} />} Lưu bản nháp
           </button>
@@ -194,12 +211,12 @@ export function TloraCmsEditor({
           </div>
           <p className="mt-3 px-2 text-xs leading-5 text-[#8c8174]">Thông tin hiển thị khi chia sẻ trang chủ lên Facebook, Zalo và các nền tảng mạng xã hội.</p>
           <div className="mt-5 space-y-4 border-t border-white/10 pt-5">
-            <CmsField label="OG title" value={meta.seoTitle} onChange={(seoTitle) => setMeta((current) => ({ ...current, seoTitle }))} />
+            <CmsField label="OG title" value={meta.seoTitle} onChange={(seoTitle) => setPageMetas((current) => ({ ...current, [currentPage.id]: { ...meta, seoTitle } }))} />
             <div>
-              <CmsField label="OG description" value={meta.seoDescription} onChange={(seoDescription) => setMeta((current) => ({ ...current, seoDescription }))} textarea />
+              <CmsField label="OG description" value={meta.seoDescription} onChange={(seoDescription) => setPageMetas((current) => ({ ...current, [currentPage.id]: { ...meta, seoDescription } }))} textarea />
               <p className="mt-1 text-right text-[11px] text-[#8c8174]">{meta.seoDescription.length}/200</p>
             </div>
-            <CmsField label="OG image URL" value={meta.ogImageUrl} onChange={(ogImageUrl) => setMeta((current) => ({ ...current, ogImageUrl }))} />
+            <CmsField label="OG image URL" value={meta.ogImageUrl} onChange={(ogImageUrl) => setPageMetas((current) => ({ ...current, [currentPage.id]: { ...meta, ogImageUrl } }))} />
             <button type="button" onClick={() => setImageTarget({ sectionKey: "__meta", field: "ogImageUrl", currentUrl: meta.ogImageUrl })} className="inline-flex min-h-10 w-full items-center justify-center rounded-md border border-white/15 text-sm font-bold text-[#cbc0b0] hover:border-[#d8b766] hover:text-[#f8f5ee]">Chọn ảnh OG từ thư viện</button>
           </div>
 

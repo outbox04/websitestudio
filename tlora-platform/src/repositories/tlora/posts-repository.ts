@@ -1,5 +1,6 @@
 import "server-only";
 
+import sanitizeHtml from "sanitize-html";
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { TloraCmsCategory, TloraCmsPost } from "@/types/scope";
 
@@ -102,12 +103,27 @@ export async function saveTloraPost(input: {
   categoryIds: string[];
 }) {
   const admin = createAdminClient();
+  const safeBody = sanitizeHtml(input.body, {
+    allowedTags: ["p", "br", "h1", "h2", "h3", "h4", "blockquote", "strong", "b", "em", "i", "u", "s", "ul", "ol", "li", "a", "img", "figure", "figcaption", "span", "div"],
+    allowedAttributes: {
+      a: ["href", "target", "rel", "title"],
+      img: ["src", "alt", "title", "width", "height", "style"],
+      "*": ["class"],
+    },
+    allowedSchemes: ["http", "https", "mailto"],
+    allowedStyles: {
+      img: { width: [/^\d+%$/], height: [/^auto$/] },
+    },
+    transformTags: {
+      a: sanitizeHtml.simpleTransform("a", { rel: "noopener noreferrer" }, true),
+    },
+  });
   const values = {
     studio_id: input.studioId,
     title: input.title,
     slug: input.slug,
     excerpt: input.excerpt || null,
-    draft_content: { body: input.body },
+    draft_content: { body: safeBody },
     cover_image_url: input.coverImageUrl || null,
     keywords: input.keywords,
     updated_by: input.userId,

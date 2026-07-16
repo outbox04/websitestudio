@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { tloraApiError } from "@/app/api/admin/tlora/_shared";
 import { requireTloraAdmin } from "@/lib/tenancy/request-context";
-import { createTloraMedia, deleteTloraMedia, listTloraMedia } from "@/repositories/tlora/media-repository";
+import { createTloraMedia, deleteTloraMedia, listTloraMedia, updateTloraMediaMetadata } from "@/repositories/tlora/media-repository";
 import { cmsMediaMetadataSchema } from "@/schemas/tlora-cms";
 import { createAdminClient } from "@/lib/supabase/admin";
 
@@ -69,6 +69,18 @@ export async function DELETE(request: Request) {
     if (!mediaId) return NextResponse.json({ error: "Missing media id" }, { status: 400 });
     await deleteTloraMedia(context.studio.id, mediaId);
     return new NextResponse(null, { status: 204 });
+  } catch (error) {
+    return tloraApiError(error);
+  }
+}
+
+export async function PATCH(request: Request) {
+  try {
+    const context = await requireTloraAdmin(request);
+    const body = await request.json() as { id?: string; altText?: string; description?: string };
+    if (!body.id) return NextResponse.json({ error: "Thiếu media id." }, { status: 400 });
+    const media = await updateTloraMediaMetadata(context.studio.id, body.id, String(body.altText || "").slice(0, 300), String(body.description || "").slice(0, 1000));
+    return NextResponse.json({ media });
   } catch (error) {
     return tloraApiError(error);
   }

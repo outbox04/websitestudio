@@ -95,6 +95,12 @@ export type Database = {
         Update: Partial<Database["public"]["Tables"]["tlora_concept_inquiries"]["Insert"]>;
         Relationships: [];
       };
+      tlora_cms_users: {
+        Row: { user_id: string; studio_id: string; username: string; display_name: string; backup_email: string | null; created_by: string | null; created_at: string };
+        Insert: { user_id: string; studio_id: string; username: string; display_name: string; backup_email?: string | null; created_by?: string | null; created_at?: string };
+        Update: Partial<Database["public"]["Tables"]["tlora_cms_users"]["Insert"]>;
+        Relationships: [];
+      };
     };
     Views: Record<string, never>;
     Functions: {

@@ -24,6 +24,8 @@ const emptyForm: AlbumForm = {
 
 export function TloraConceptAlbumsManager({ initialAlbums, media }: { initialAlbums: TloraConceptAlbum[]; media: TloraCmsMediaAsset[] }) {
   const [albums, setAlbums] = useState(initialAlbums);
+  const [pageSize, setPageSize] = useState(10);
+  const [page, setPage] = useState(1);
   const [form, setForm] = useState<AlbumForm>(emptyForm);
   const [message, setMessage] = useState("");
 
@@ -95,14 +97,8 @@ export function TloraConceptAlbumsManager({ initialAlbums, media }: { initialAlb
         </div>
       </section>
 
-      <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-        {albums.map((album) => (
-          <article key={album.id} className="overflow-hidden rounded-xl border border-zinc-200 bg-white">
-            <button type="button" onClick={() => edit(album)} className="block aspect-[16/10] w-full bg-zinc-100 bg-cover bg-center text-left" style={album.coverImageUrl ? { backgroundImage: `url(${album.coverImageUrl})` } : undefined} />
-            <div className="p-4"><div className="flex items-start justify-between gap-3"><div><h2 className="font-bold">{album.title}</h2><p className="mt-1 text-xs text-zinc-500">{album.status} · {album.images.length} ảnh {album.isFeatured ? "· Nổi bật" : ""}</p></div><button type="button" onClick={() => remove(album)} aria-label="Xóa album" className="grid size-9 place-items-center rounded-md border border-red-200 text-red-700"><Trash2 size={15} /></button></div></div>
-          </article>
-        ))}
-      </div>
+      <div className="mt-6 overflow-x-auto rounded-xl border border-zinc-200 bg-white"><table className="w-full min-w-[760px] text-left text-sm"><thead className="bg-zinc-50"><tr><th className="p-3">Ảnh bìa</th><th>Tên</th><th>Slug</th><th>Ngày tạo/cập nhật</th><th>Trạng thái</th><th /></tr></thead><tbody className="divide-y">{albums.slice((page-1)*pageSize,page*pageSize).map(album=><tr key={album.id}><td className="p-3"><button onClick={()=>edit(album)} className="h-14 w-24 rounded bg-zinc-100 bg-cover bg-center" style={album.coverImageUrl?{backgroundImage:`url(${album.coverImageUrl})`}:undefined}/></td><td><button onClick={()=>edit(album)} className="font-bold hover:underline">{album.title}</button></td><td className="font-mono text-xs">/{album.slug}</td><td>{new Date(album.updatedAt).toLocaleDateString("vi-VN")}</td><td>{album.status}{album.isFeatured?" · Nổi bật":""}</td><td><button type="button" onClick={()=>remove(album)} className="text-red-700"><Trash2 size={16}/></button></td></tr>)}</tbody></table></div>
+      <div className="mt-4 flex items-center justify-between"><select value={pageSize} onChange={event=>{setPageSize(Number(event.target.value));setPage(1);}} className="min-h-10 rounded-md border bg-white px-3">{[10,20,50,100].map(size=><option key={size}>{size}</option>)}</select><div className="flex gap-1"><button disabled={page===1} onClick={()=>setPage(value=>value-1)} className="size-9 rounded border disabled:opacity-30">&lt;</button>{Array.from({length:Math.max(1,Math.ceil(albums.length/pageSize))},(_,index)=>index+1).map(value=><button key={value} onClick={()=>setPage(value)} className={`size-9 rounded border ${page===value?"bg-zinc-950 text-white":"bg-white"}`}>{value}</button>)}<button disabled={page>=Math.ceil(albums.length/pageSize)} onClick={()=>setPage(value=>value+1)} className="size-9 rounded border disabled:opacity-30">&gt;</button></div></div>
     </main>
   );
 }

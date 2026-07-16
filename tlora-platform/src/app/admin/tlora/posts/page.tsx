@@ -1,4 +1,5 @@
 import { TloraPostsManager } from "@/components/tlora-cms/tlora-posts-manager";
+import { TloraPostsSubnav } from "@/components/tlora-cms/tlora-posts-subnav";
 import { requireTloraAdmin } from "@/lib/tenancy/request-context";
 import { listTloraCategories, listTloraPosts } from "@/repositories/tlora/posts-repository";
 
@@ -10,6 +11,5 @@ export default async function TloraPostsPage() {
     listTloraPosts(context.studio.id),
     listTloraCategories(context.studio.id),
   ]);
-  return <TloraPostsManager initialPosts={posts} categories={categories} />;
+  return <><TloraPostsSubnav /><TloraPostsManager initialPosts={posts} categories={categories} /></>;
 }
-
