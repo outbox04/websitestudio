@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import { usePathname } from "next/navigation";
 
 type PreviewSection = {
   sectionKey: string;
@@ -55,11 +56,11 @@ function requestImage(sectionKey: string, field: string, currentUrl: string) {
 }
 
 function lockPreviewInteractions() {
-  if (document.body.dataset.cmsInteractionsLocked === "true") return;
-  document.body.dataset.cmsInteractionsLocked = "true";
   document.querySelectorAll<HTMLDetailsElement>("details").forEach((details) => {
     details.open = true;
   });
+  if (document.body.dataset.cmsInteractionsLocked === "true") return;
+  document.body.dataset.cmsInteractionsLocked = "true";
   document.addEventListener("click", (event) => {
     const target = event.target as HTMLElement | null;
     if (target?.closest("a[data-cms-preview-navigation]")) return;
@@ -162,6 +163,8 @@ function applySection(section: PreviewSection) {
 }
 
 export function TloraPublicPreviewBridge() {
+  const pathname = usePathname();
+
   useEffect(() => {
     function handleMessage(event: MessageEvent<unknown>) {
       if (event.origin !== window.location.origin || !isPreviewMessage(event.data)) return;
@@ -173,6 +176,13 @@ export function TloraPublicPreviewBridge() {
     window.parent.postMessage({ type: "tlora:cms-preview-ready" }, window.location.origin);
     return () => window.removeEventListener("message", handleMessage);
   }, []);
+
+  useEffect(() => {
+    window.parent.postMessage({
+      type: "tlora:cms-preview-ready",
+      pathname,
+    }, window.location.origin);
+  }, [pathname]);
 
   return null;
 }
