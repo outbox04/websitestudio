@@ -4,6 +4,7 @@ import { listDriveImages, listPublicDriveImages } from "@/lib/google-drive";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { checkAuthContext } from "@/lib/studio-admin";
 import { getStudioDriveClient, getStudioDriveConnection } from "@/lib/studio-google-drive";
+import { galleryTokenFromUrl } from "@/lib/gallery-access";
 
 export const runtime = "nodejs";
 
@@ -21,6 +22,8 @@ export async function POST(request: Request, { params }: { params: Promise<{ slu
 
   if (context && scoped.studioId === context.studioId) {
     query = query.eq("studio_id", context.studioId);
+  } else if (!canUseStudioConnection) {
+    query = query.eq("share_token", galleryTokenFromUrl(request.url));
   } else if (canUseStudioConnection && !isPlatformAdmin) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }

@@ -10,6 +10,7 @@
     "build:subdomain": "npm run build --prefix tlora-subdomain",
     "lint:platform": "npm run lint --prefix tlora-platform",
     "lint:subdomain": "npm run lint --prefix tlora-subdomain",
-    "check:db-refs": "node --experimental-strip-types scripts/check-legacy-database-references.ts"
+    "check:db-refs": "node --experimental-strip-types scripts/check-legacy-database-references.ts",
+    "test:security": "node --experimental-strip-types --test scripts/security-helpers.test.ts"
   }
 }

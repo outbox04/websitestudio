@@ -1,7 +1,11 @@
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { checkRateLimit, rateLimitHeaders, requestClientKey } from "@/lib/rate-limit";
 
 export async function GET(request: Request) {
+  const rateLimit = checkRateLimit(`registration-availability:${requestClientKey(request)}`, 20, 60 * 1000);
+  if (!rateLimit.allowed) return NextResponse.json({ error: "Too many requests" }, { status: 429, headers: rateLimitHeaders(rateLimit) });
+
   const url = new URL(request.url);
   const email = url.searchParams.get("email")?.trim().toLowerCase();
   const username = url.searchParams.get("username")?.trim().toLowerCase();
@@ -35,7 +39,7 @@ export async function GET(request: Request) {
       phoneTaken: Boolean(profilePhoneResult.data || orderPhoneResult.data),
       domainTaken: Boolean(studioDomainResult.data || orderDomainResult.data),
     });
-  } catch (error) {
-    return NextResponse.json({ error: error instanceof Error ? error.message : "Không kiểm tra được dữ liệu." }, { status: 500 });
+  } catch {
+    return NextResponse.json({ error: "Không kiểm tra được dữ liệu." }, { status: 500 });
   }
 }

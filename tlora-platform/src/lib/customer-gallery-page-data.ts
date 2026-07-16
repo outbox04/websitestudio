@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import { scopedGalleryQuery } from "@/lib/customer-gallery-scope";
 import { createAdminClient } from "@/lib/supabase/admin";
 
-export async function getCustomerGalleryPageData(customerSlug: string, headers: Headers) {
+export async function getCustomerGalleryPageData(customerSlug: string, shareToken: string, headers: Headers) {
   let gallery;
   let photos;
 
@@ -10,7 +10,7 @@ export async function getCustomerGalleryPageData(customerSlug: string, headers: 
     const supabase = createAdminClient();
 
     const { query } = await scopedGalleryQuery(headers, customerSlug);
-    const { data: galleryData } = await query.maybeSingle();
+    const { data: galleryData } = await query.eq("share_token", shareToken).maybeSingle();
 
     if (!galleryData) {
       notFound();

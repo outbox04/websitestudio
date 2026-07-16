@@ -61,11 +61,13 @@ export function CustomerGalleryView({
   gallery,
   rawPhotos,
   editedPhotos,
+  shareToken,
   initialTab = "all",
 }: {
   gallery: Gallery;
   rawPhotos: GalleryPhoto[];
   editedPhotos: GalleryPhoto[];
+  shareToken: string;
   initialTab?: Tab;
 }) {
   const [tab, setTab] = useState<Tab>(initialTab);
@@ -93,9 +95,10 @@ export function CustomerGalleryView({
   const cover = gallery.cover_url || photos[0]?.thumbnail_url || editedPhotos[0]?.thumbnail_url;
   const shootDate = new Date(gallery.shoot_date).toLocaleDateString("vi-VN");
   const remaining = Math.max(gallery.total_cost_vnd - gallery.deposit_paid_vnd, 0);
+  const tokenQuery = `token=${encodeURIComponent(shareToken)}`;
 
   async function payRemaining() {
-    const response = await fetch(`/api/customer-galleries/${gallery.customer_name_slug}/payment`, { method: "POST" });
+    const response = await fetch(`/api/customer-galleries/${gallery.customer_name_slug}/payment?${tokenQuery}`, { method: "POST" });
     const payload = await response.json() as { checkoutUrl?: string; fields?: Record<string, string | number>; error?: string };
     if (!response.ok || !payload.checkoutUrl || !payload.fields) return alert(payload.error || "Không tạo được thanh toán.");
     const form = document.createElement("form"); form.method = "POST"; form.action = payload.checkoutUrl;
@@ -160,12 +163,12 @@ export function CustomerGalleryView({
   useEffect(() => {
     if (gallery.payment_status !== "pending") return;
     const timer = window.setInterval(async () => {
-      const response = await fetch(`/api/customer-galleries/${gallery.customer_name_slug}/payment`, { cache: "no-store" });
+      const response = await fetch(`/api/customer-galleries/${gallery.customer_name_slug}/payment?${tokenQuery}`, { cache: "no-store" });
       const status = await response.json() as { payment_status?: string };
       if (status.payment_status === "paid") window.location.reload();
     }, 60000);
     return () => window.clearInterval(timer);
-  }, [gallery.customer_name_slug, gallery.payment_status]);
+  }, [gallery.customer_name_slug, gallery.payment_status, tokenQuery]);
 
   // Auto-sync intentionally runs once on mount; syncPhotos uses refs to prevent overlap.
   useEffect(() => {
@@ -185,7 +188,7 @@ export function CustomerGalleryView({
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   async function patchPhoto(photoId: string, body: { selected?: boolean; editNote?: string }) {
-    await fetch(`/api/customer-galleries/photos/${photoId}`, {
+    await fetch(`/api/customer-galleries/photos/${photoId}?${tokenQuery}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),
@@ -211,7 +214,7 @@ export function CustomerGalleryView({
     syncInFlight.current = true;
     setSyncing(true);
     try {
-      const response = await fetch(`/api/customer-galleries/${gallery.customer_name_slug}/sync`, { method: "POST" });
+      const response = await fetch(`/api/customer-galleries/${gallery.customer_name_slug}/sync?${tokenQuery}`, { method: "POST" });
       const payload = await response.json().catch(() => ({})) as { rawCount?: number; editedCount?: number; newRawCount?: number; newEditedCount?: number; error?: string };
       if (response.ok) {
         const hasNewPhotos = (payload.newRawCount || 0) > 0 || (payload.newEditedCount || 0) > 0;
@@ -233,14 +236,14 @@ export function CustomerGalleryView({
   const downloadAction =
     tab === "all"
       ? {
-          href: `/api/customer-galleries/${gallery.customer_name_slug}/download?kind=raw`,
+          href: `/api/customer-galleries/${gallery.customer_name_slug}/download?kind=raw&${tokenQuery}`,
           enabled: gallery.raw_download_enabled,
           label: "Tải xuống",
           disabledLabel: "Tải xuống đang khóa",
         }
       : tab === "edited"
         ? {
-            href: `/api/customer-galleries/${gallery.customer_name_slug}/download?kind=edited`,
+            href: `/api/customer-galleries/${gallery.customer_name_slug}/download?kind=edited&${tokenQuery}`,
             enabled: gallery.edited_download_enabled,
             label: "Tải file đã chỉnh",
             disabledLabel: "File đã chỉnh đang khóa",
@@ -334,6 +337,7 @@ export function CustomerGalleryView({
           canDownloadEdited={gallery.edited_download_enabled}
           onPreview={setPreview}
           onToggle={toggleSelected}
+          shareToken={shareToken}
         />
       </main>
 
@@ -350,6 +354,7 @@ export function CustomerGalleryView({
           onNext={showNextPhoto}
           onToggle={toggleSelected}
           onNote={updateNote}
+          shareToken={shareToken}
           setPreview={setPreview}
           canDownloadRaw={gallery.raw_download_enabled}
           canDownloadEdited={gallery.edited_download_enabled}
@@ -377,8 +382,8 @@ function DownloadButton({ href, enabled, label, disabledLabel }: { href: string;
   );
 }
 
-function photoDownloadHref(photoId: string) {
-  return `/api/customer-galleries/photos/${photoId}/download`;
+function photoDownloadHref(photoId: string, shareToken: string) {
+  return `/api/customer-galleries/photos/${photoId}/download?token=${encodeURIComponent(shareToken)}`;
 }
 
 function StatCard({ icon: Icon, value, label, tone }: { icon: typeof ImageIcon; value: number | string; label: string; tone: "violet" | "rose" | "gold" | "green" }) {
@@ -410,6 +415,7 @@ function PhotoGrid({
   canDownloadEdited,
   onPreview,
   onToggle,
+  shareToken,
 }: {
   photos: GalleryPhoto[];
   selectedIds: Set<string>;
@@ -417,6 +423,7 @@ function PhotoGrid({
   canDownloadEdited: boolean;
   onPreview: (photo: GalleryPhoto) => void;
   onToggle: (photo: GalleryPhoto) => void;
+  shareToken: string;
 }) {
   if (photos.length === 0) {
     return <EmptyState text="Chưa có ảnh phù hợp với bộ lọc hiện tại." />;
@@ -427,7 +434,7 @@ function PhotoGrid({
       {photos.map((photo, index) => {
         const selected = selectedIds.has(photo.id);
         const canDownload = photo.kind === "raw" ? canDownloadRaw : canDownloadEdited;
-        const downloadHref = photoDownloadHref(photo.id);
+        const downloadHref = photoDownloadHref(photo.id, shareToken);
         return (
           <article key={photo.id} className="group relative mb-3 break-inside-avoid overflow-hidden rounded-lg border border-white/10 bg-white/[0.04]">
             <button onClick={() => onPreview(photo)} className={`relative block w-full bg-zinc-900 ${index % 5 === 1 ? "aspect-[4/5]" : index % 5 === 3 ? "aspect-[3/4]" : "aspect-[4/3]"}`}>
@@ -492,6 +499,7 @@ function PreviewModal({
   onNext,
   onToggle,
   onNote,
+  shareToken,
   setPreview,
   canDownloadRaw,
   canDownloadEdited,
@@ -507,12 +515,13 @@ function PreviewModal({
   onNext: () => void;
   onToggle: (photo: GalleryPhoto) => void;
   onNote: (photo: GalleryPhoto, note: string) => void;
+  shareToken: string;
   setPreview: (photo: GalleryPhoto | null) => void;
   canDownloadRaw: boolean;
   canDownloadEdited: boolean;
 }) {
   const canDownload = photo.kind === "raw" ? canDownloadRaw : canDownloadEdited;
-  const downloadHref = photoDownloadHref(photo.id);
+  const downloadHref = photoDownloadHref(photo.id, shareToken);
 
   return (
     <div className="fixed inset-0 z-50 grid place-items-center bg-black/90 p-3" role="dialog" aria-modal="true">

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { randomUUID } from "crypto";
+import { randomUUID, timingSafeEqual } from "crypto";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { renewedExpiry } from "@/app/api/license/_shared";
 
@@ -24,8 +24,24 @@ function studioSlug(studioName: string, domain: string | null) {
   return normalized.length >= 3 ? normalized : `studio-${randomUUID().slice(0, 8)}`;
 }
 
+function validSecret(request: Request) {
+  const expected = process.env.SEPAY_IPN_SECRET;
+  const provided = request.headers.get("x-secret-key");
+  if (!expected || !provided) return false;
+  const expectedBuffer = Buffer.from(expected);
+  const providedBuffer = Buffer.from(provided);
+  return expectedBuffer.length === providedBuffer.length && timingSafeEqual(expectedBuffer, providedBuffer);
+}
+
 export async function POST(request: Request) {
   try {
+    if (!process.env.SEPAY_IPN_SECRET) {
+      return NextResponse.json({ error: "Webhook chưa được cấu hình an toàn." }, { status: 503 });
+    }
+    if (!validSecret(request)) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const payload = await request.json() as { notification_type?: string; order?: { order_invoice_number?: string; order_status?: string; order_amount?: string | number }; transaction?: { transaction_id?: string } };
     const orderId = String(payload.order?.order_invoice_number || "").trim();
     const status = String(payload.order?.order_status || "").toLowerCase();
@@ -36,12 +52,12 @@ export async function POST(request: Request) {
     const admin = createAdminClient();
     const { data: gallery, error } = await admin
       .from("customer_galleries")
-      .select("id,total_cost_vnd,deposit_paid_vnd")
+      .select("id,total_cost_vnd,deposit_paid_vnd,payment_status")
       .eq("payment_order_id", orderId)
       .maybeSingle();
     if (error) throw error;
     if (!gallery) {
-      const { data: studioOrder, error: studioOrderError } = await admin.from("studio_payment_orders").select("id,amount_vnd,studio_name,plan,industry,email,phone,address,username,domain,license_key,activation_email_sent_at,studio_id,owner_user_id").eq("order_id", orderId).maybeSingle();
+      const { data: studioOrder, error: studioOrderError } = await admin.from("studio_payment_orders").select("id,amount_vnd,status,studio_name,plan,industry,email,phone,address,username,domain,license_key,activation_email_sent_at,studio_id,owner_user_id").eq("order_id", orderId).maybeSingle();
       if (studioOrderError) throw studioOrderError;
       if (!studioOrder) {
         const { data: renewalOrder, error: renewalOrderError } = await admin
@@ -91,6 +107,7 @@ export async function POST(request: Request) {
 
         return NextResponse.json({ ok: true, orderId, type: "license_renewal", expiresAt: nextExpiresAt });
       }
+      if (studioOrder.status === "paid") return NextResponse.json({ ok: true, orderId, type: "studio", alreadyProcessed: true });
       if (amount && amount !== studioOrder.amount_vnd) return NextResponse.json({ error: "Số tiền IPN không khớp đơn Studio." }, { status: 400 });
       let studioId = studioOrder.studio_id;
       if (!studioId) {
@@ -149,6 +166,7 @@ export async function POST(request: Request) {
       if (updateStudioError) throw updateStudioError;
       return NextResponse.json({ ok: true, orderId, type: "studio" });
     }
+    if (gallery.payment_status === "paid") return NextResponse.json({ ok: true, orderId, alreadyProcessed: true });
     const expectedAmount = Math.max(gallery.total_cost_vnd - gallery.deposit_paid_vnd, 0);
     if (amount && amount !== expectedAmount) return NextResponse.json({ error: "Số tiền IPN không khớp đơn hàng." }, { status: 400 });
 

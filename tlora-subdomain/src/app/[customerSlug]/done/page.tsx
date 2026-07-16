@@ -6,12 +6,19 @@ import { getCustomerGalleryPageData } from "@/lib/customer-gallery-page-data";
 
 export const dynamic = "force-dynamic";
 
-export async function generateMetadata({ params }: { params: Promise<{ customerSlug: string }> }): Promise<Metadata> {
+export async function generateMetadata({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ customerSlug: string }>;
+  searchParams: Promise<{ token?: string }>;
+}): Promise<Metadata> {
   const { customerSlug } = await params;
+  const { token = "" } = await searchParams;
 
   try {
     const { query } = await scopedGalleryQuery(await headers(), customerSlug);
-    const { data } = await query.select("customer_name").maybeSingle();
+    const { data } = await query.select("customer_name").eq("share_token", token).maybeSingle();
 
     const title = data?.customer_name ? `${data.customer_name} - File hoàn thiện` : "File hoàn thiện - TLORA Studio";
     const description = data?.customer_name ? `Album ảnh hoàn thiện chất lượng cao dành riêng cho ${data.customer_name} tại TLORA Studio.` : "Tải ảnh hoàn thiện chất lượng cao tại TLORA Studio.";
@@ -19,6 +26,7 @@ export async function generateMetadata({ params }: { params: Promise<{ customerS
     return {
       title,
       description,
+      robots: { index: false, follow: false },
       openGraph: {
         title,
         description,
@@ -31,6 +39,7 @@ export async function generateMetadata({ params }: { params: Promise<{ customerS
     return {
       title,
       description,
+      robots: { index: false, follow: false },
       openGraph: {
         title,
         description,
@@ -40,9 +49,16 @@ export async function generateMetadata({ params }: { params: Promise<{ customerS
   }
 }
 
-export default async function CustomerGalleryDonePage({ params }: { params: Promise<{ customerSlug: string }> }) {
+export default async function CustomerGalleryDonePage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ customerSlug: string }>;
+  searchParams: Promise<{ token?: string }>;
+}) {
   const { customerSlug } = await params;
-  const { gallery, rawPhotos, editedPhotos } = await getCustomerGalleryPageData(customerSlug, await headers());
+  const { token = "" } = await searchParams;
+  const { gallery, rawPhotos, editedPhotos } = await getCustomerGalleryPageData(customerSlug, token, await headers());
 
-  return <CustomerGalleryView gallery={gallery} rawPhotos={rawPhotos} editedPhotos={editedPhotos} initialTab="edited" />;
+  return <CustomerGalleryView gallery={gallery} rawPhotos={rawPhotos} editedPhotos={editedPhotos} shareToken={token} initialTab="edited" />;
 }

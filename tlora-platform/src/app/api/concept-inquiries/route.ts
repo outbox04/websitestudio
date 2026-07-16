@@ -1,8 +1,14 @@
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { conceptInquirySchema } from "@/schemas/tlora-cms";
+import { checkRateLimit, rateLimitHeaders, requestClientKey } from "@/lib/rate-limit";
 
 export async function POST(request: Request) {
+  const rateLimit = checkRateLimit(`concept-inquiry:${requestClientKey(request)}`, 5, 10 * 60 * 1000);
+  if (!rateLimit.allowed) {
+    return NextResponse.json({ error: "Bạn đã gửi quá nhiều yêu cầu. Vui lòng thử lại sau." }, { status: 429, headers: rateLimitHeaders(rateLimit) });
+  }
+
   try {
     const input = conceptInquirySchema.parse(await request.json());
     const admin = createAdminClient();
@@ -18,8 +24,7 @@ export async function POST(request: Request) {
     });
     if (error) throw error;
     return NextResponse.json({ submitted: true }, { status: 201 });
-  } catch (error) {
-    const message = error instanceof Error ? error.message : "Không thể gửi đăng ký.";
-    return NextResponse.json({ error: message }, { status: 400 });
+  } catch {
+    return NextResponse.json({ error: "Thông tin chưa hợp lệ hoặc chưa thể gửi lúc này." }, { status: 400 });
   }
 }

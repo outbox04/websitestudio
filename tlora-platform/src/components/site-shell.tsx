@@ -1,9 +1,10 @@
 "use client";
 
-import { Menu } from "lucide-react";
+import { Menu, X } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useState } from "react";
 
 const defaultNav = [
   { href: "/", label: "Trang chủ" },
@@ -15,6 +16,9 @@ const defaultNav = [
 ];
 
 export function SiteHeader({ navItems = defaultNav }: { navItems?: Array<{ href: string; label: string }> }) {
+  const pathname = usePathname();
+  const [menuOpen, setMenuOpen] = useState(false);
+
   return (
     <header className="sticky top-0 z-40 border-b border-white/10 bg-[#07080a]/85 backdrop-blur-xl">
       <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 sm:px-6 lg:px-8">
@@ -28,10 +32,36 @@ export function SiteHeader({ navItems = defaultNav }: { navItems?: Array<{ href:
             </Link>
           ))}
         </nav>
-        <button className="grid size-10 place-items-center rounded-md border border-white/10 bg-white/[0.04] text-white lg:hidden" aria-label="Mở menu">
-          <Menu size={20} />
+        <button
+          type="button"
+          onClick={() => setMenuOpen((open) => !open)}
+          className="grid size-11 place-items-center rounded-md border border-white/10 bg-white/[0.04] text-white lg:hidden"
+          aria-label={menuOpen ? "Đóng menu" : "Mở menu"}
+          aria-expanded={menuOpen}
+          aria-controls="mobile-site-navigation"
+        >
+          {menuOpen ? <X size={20} /> : <Menu size={20} />}
         </button>
       </div>
+      {menuOpen && (
+        <nav id="mobile-site-navigation" className="border-t border-white/10 px-4 py-3 lg:hidden" aria-label="Điều hướng chính">
+          <div className="mx-auto grid max-w-7xl gap-1">
+            {navItems.map((item) => (
+              <Link
+                key={item.href}
+                href={item.href}
+                onClick={() => setMenuOpen(false)}
+                data-cms-preview-navigation
+                className={`flex min-h-11 items-center rounded-md px-3 text-sm font-semibold transition ${
+                  pathname === item.href ? "bg-[#d8b766]/15 text-[#f3d88e]" : "text-zinc-300 hover:bg-white/5 hover:text-white"
+                }`}
+              >
+                {item.label}
+              </Link>
+            ))}
+          </div>
+        </nav>
+      )}
     </header>
   );
 }

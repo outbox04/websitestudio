@@ -3,6 +3,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { errorMessage, isAuthorized, json, options, unauthorized } from "@/lib/tlora-api";
 import { uploadDriveImage } from "@/lib/google-drive";
 import { requireTloraStudioId } from "@/lib/tlora-studio";
+import { inspectImageBuffer } from "@/lib/image-upload";
 
 export const runtime = "nodejs";
 
@@ -42,6 +43,9 @@ export async function POST(request: Request) {
 
     if (!(file instanceof File)) {
       return json({ error: "file is required" }, { status: 400 });
+    }
+    if (file.size <= 0 || file.size > 25 * 1024 * 1024) {
+      return json({ error: "Image must be 25MB or smaller" }, { status: 413 });
     }
 
     const supabase = createAdminClient();
@@ -86,7 +90,9 @@ export async function POST(request: Request) {
     }
 
     const buffer = Buffer.from(await file.arrayBuffer());
-    const uploaded = await uploadDriveImage(folderId, file.name, buffer, file.type || "image/jpeg");
+    const inspected = inspectImageBuffer(buffer);
+    if (!inspected) return json({ error: "Only valid JPEG, PNG and WebP images are supported" }, { status: 415 });
+    const uploaded = await uploadDriveImage(folderId, file.name, buffer, inspected.mime);
 
     const { error } = await supabase.from("customer_gallery_photos").upsert(
       {

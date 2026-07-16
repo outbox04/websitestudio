@@ -4,8 +4,8 @@ import { requireTloraAdmin } from "@/lib/tenancy/request-context";
 import { createTloraMedia, deleteTloraMedia, listTloraMedia, updateTloraMediaMetadata } from "@/repositories/tlora/media-repository";
 import { cmsMediaMetadataSchema } from "@/schemas/tlora-cms";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { inspectImageBuffer, safeUploadBaseName } from "@/lib/image-upload";
 
-const allowedMimeTypes = new Set(["image/jpeg", "image/png", "image/webp"]);
 const maxBytes = 8 * 1024 * 1024;
 
 export async function GET(request: Request) {
@@ -23,17 +23,18 @@ export async function POST(request: Request) {
     const form = await request.formData();
     const file = form.get("file");
     if (!(file instanceof File)) return NextResponse.json({ error: "Thiếu file ảnh." }, { status: 400 });
-    if (!allowedMimeTypes.has(file.type)) return NextResponse.json({ error: "Chỉ hỗ trợ JPEG, PNG và WebP." }, { status: 415 });
     if (file.size <= 0 || file.size > maxBytes) return NextResponse.json({ error: "Ảnh phải nhỏ hơn hoặc bằng 8MB." }, { status: 413 });
+    const buffer = Buffer.from(await file.arrayBuffer());
+    const inspected = inspectImageBuffer(buffer);
+    if (!inspected) return NextResponse.json({ error: "Nội dung tệp không phải JPEG, PNG hoặc WebP hợp lệ." }, { status: 415 });
     const { altText } = cmsMediaMetadataSchema.parse({ altText: form.get("altText") || "" });
     const width = Math.max(0, Number(form.get("width") || 0));
     const height = Math.max(0, Number(form.get("height") || 0));
-    const extension = file.type === "image/jpeg" ? "jpg" : file.type.split("/")[1];
-    const safeBase = file.name.replace(/\.[^.]+$/, "").replace(/[^a-zA-Z0-9_-]+/g, "-").slice(0, 80) || "image";
-    const storagePath = `${context.studio.id}/${new Date().getUTCFullYear()}/${crypto.randomUUID()}-${safeBase}.${extension}`;
+    const safeBase = safeUploadBaseName(file.name);
+    const storagePath = `${context.studio.id}/${new Date().getUTCFullYear()}/${crypto.randomUUID()}-${safeBase}.${inspected.extension}`;
     const admin = createAdminClient();
-    const { error: uploadError } = await admin.storage.from("tlora-cms-media").upload(storagePath, await file.arrayBuffer(), {
-      contentType: file.type,
+    const { error: uploadError } = await admin.storage.from("tlora-cms-media").upload(storagePath, buffer, {
+      contentType: inspected.mime,
       cacheControl: "31536000",
       upsert: false,
     });
@@ -46,7 +47,7 @@ export async function POST(request: Request) {
         storagePath,
         publicUrl: publicData.publicUrl,
         fileName: file.name,
-        mimeType: file.type,
+        mimeType: inspected.mime,
         sizeBytes: file.size,
         width: width || undefined,
         height: height || undefined,

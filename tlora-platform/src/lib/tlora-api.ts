@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { timingSafeEqual } from "node:crypto";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -30,13 +31,17 @@ export function unauthorized() {
 export function isAuthorized(request: Request) {
   const expected = process.env.TLORA_API_KEY;
   if (!expected) {
-    return true;
+    return false;
   }
 
   const apiKey = request.headers.get("x-api-key");
   const auth = request.headers.get("authorization");
   const bearer = auth?.startsWith("Bearer ") ? auth.slice("Bearer ".length) : null;
-  return apiKey === expected || bearer === expected;
+  const provided = apiKey || bearer;
+  if (!provided) return false;
+  const expectedBuffer = Buffer.from(expected);
+  const providedBuffer = Buffer.from(provided);
+  return expectedBuffer.length === providedBuffer.length && timingSafeEqual(expectedBuffer, providedBuffer);
 }
 
 export function publicOrigin(request: Request) {

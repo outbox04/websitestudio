@@ -2,6 +2,8 @@ import OpenAI, { toFile } from "openai";
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
+import { inspectImageBuffer } from "@/lib/image-upload";
+import { checkRateLimit, rateLimitHeaders } from "@/lib/rate-limit";
 
 export const runtime = "nodejs";
 
@@ -38,12 +40,15 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "outfit, background and style are required" }, { status: 400 });
   }
 
-  if (!image.type.startsWith("image/")) {
-    return NextResponse.json({ error: "Only image uploads are supported" }, { status: 400 });
-  }
-
   if (image.size > maxUploadBytes) {
     return NextResponse.json({ error: "Image must be under 50MB" }, { status: 400 });
+  }
+  const rateLimit = checkRateLimit(`ai-generate:${user.id}`, 3, 10 * 60 * 1000);
+  if (!rateLimit.allowed) return NextResponse.json({ error: "Vui lòng chờ trước khi tạo thêm ảnh." }, { status: 429, headers: rateLimitHeaders(rateLimit) });
+  const buffer = Buffer.from(await image.arrayBuffer());
+  const inspected = inspectImageBuffer(buffer);
+  if (!inspected) {
+    return NextResponse.json({ error: "Only valid JPEG, PNG and WebP images are supported" }, { status: 415 });
   }
 
   const admin = createAdminClient();
@@ -74,9 +79,8 @@ export async function POST(request: Request) {
 
   try {
     const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-    const buffer = Buffer.from(await image.arrayBuffer());
     const file = await toFile(buffer, image.name || "face-reference.png", {
-      type: image.type || "image/png",
+      type: inspected.mime,
     });
 
     const result = await openai.images.edit({

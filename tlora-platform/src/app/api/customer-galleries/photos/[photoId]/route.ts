@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { studioIdForHeaders } from "@/lib/customer-gallery-scope";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { galleryTokenFromUrl } from "@/lib/gallery-access";
 
 export async function PATCH(request: Request, { params }: { params: Promise<{ photoId: string }> }) {
   const { photoId } = await params;
@@ -27,10 +28,12 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ ph
   const { studioId } = await studioIdForHeaders(request.headers);
   let photoQuery = supabase
     .from("customer_gallery_photos")
-    .select("id,customer_galleries!inner(studio_id)")
+    .select("id,customer_galleries!inner(studio_id,share_token)")
     .eq("id", photoId);
 
-  photoQuery = photoQuery.eq("customer_galleries.studio_id", studioId);
+  photoQuery = photoQuery
+    .eq("customer_galleries.studio_id", studioId)
+    .eq("customer_galleries.share_token", galleryTokenFromUrl(request.url));
 
   const { data: allowedPhoto, error: allowedError } = await photoQuery.maybeSingle();
   if (allowedError || !allowedPhoto) {

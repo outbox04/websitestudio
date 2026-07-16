@@ -1,9 +1,13 @@
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { checkRateLimit, rateLimitHeaders, requestClientKey } from "@/lib/rate-limit";
 
 export const runtime = "nodejs";
 
 export async function GET(request: Request) {
+  const rateLimit = checkRateLimit(`resolve-email:${requestClientKey(request)}`, 10, 60 * 1000);
+  if (!rateLimit.allowed) return NextResponse.json({ error: "Too many requests" }, { status: 429, headers: rateLimitHeaders(rateLimit) });
+
   try {
     const url = new URL(request.url);
     const username = url.searchParams.get("username")?.trim().toLowerCase();
@@ -20,11 +24,11 @@ export async function GET(request: Request) {
       .maybeSingle();
 
     if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      return NextResponse.json({ error: "Không thể xử lý yêu cầu đăng nhập." }, { status: 500 });
     }
 
     return NextResponse.json({ email: data?.email || null });
-  } catch (err) {
-    return NextResponse.json({ error: err instanceof Error ? err.message : "Internal Server Error" }, { status: 500 });
+  } catch {
+    return NextResponse.json({ error: "Không thể xử lý yêu cầu đăng nhập." }, { status: 500 });
   }
 }
