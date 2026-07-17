@@ -86,6 +86,31 @@ export function TloraConceptAlbumsManager({
     setPicker(null);
   }
 
+  async function applyCroppedCover(coverImageUrl: string) {
+    const nextForm = { ...form, coverImageUrl };
+    setForm(nextForm);
+    if (!nextForm.id) {
+      setMessage("Đã căn ảnh bìa. Hãy lưu album để đồng bộ ra website.");
+      return;
+    }
+    const parsed = conceptAlbumSchema.safeParse({ ...nextForm, tags: parseTags(nextForm.tags) });
+    if (!parsed.success) throw new Error(parsed.error.issues[0]?.message || "Album chưa hợp lệ.");
+    setBusy(true);
+    try {
+      const response = await fetch("/api/admin/tlora/concept-albums", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(parsed.data),
+      });
+      const result = await response.json() as { album?: TloraConceptAlbum; error?: string };
+      if (!response.ok || !result.album) throw new Error(result.error || "Không thể đồng bộ ảnh bìa album.");
+      setAlbums((current) => [...current.filter((album) => album.id !== result.album?.id), result.album!].sort((a, b) => a.sortOrder - b.sortOrder));
+      setMessage("Đã lưu và đồng bộ ảnh bìa mới ra trang chủ và Album Concept.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
   return (
     <main className="min-h-screen bg-[#f4f4f2] p-4 text-zinc-950 sm:p-6 lg:p-8">
       <p className="text-xs font-bold uppercase tracking-[.14em] text-[#a57f2c]">Thư viện Concept</p>
@@ -104,7 +129,7 @@ export function TloraConceptAlbumsManager({
         <div className="mt-6 grid gap-6 lg:grid-cols-2">
           <div>
             <div className="flex items-center justify-between gap-3"><div><p className="text-sm font-bold">Ảnh bìa</p><p className="mt-1 text-xs text-zinc-500">Khung chuẩn 16:9. Kéo ảnh và thu phóng để giữ đúng vùng quan trọng.</p></div><button type="button" onClick={() => setPicker("cover")} className="inline-flex min-h-10 shrink-0 items-center gap-2 rounded-md border border-zinc-300 px-3 text-xs font-bold"><ImagePlus size={15} /> {form.coverImageUrl ? "Thay ảnh" : "Chọn hoặc Upload"}</button></div>
-            {form.coverImageUrl ? <TloraImageCropper key={`album-cover:${form.coverImageUrl}`} imageUrl={form.coverImageUrl} filePrefix={`album-cover-${form.slug || "concept"}`} altText={form.title || "Ảnh bìa album"} variant="light" outputWidth={1200} outputHeight={675} saveLabel="Lưu ảnh bìa 16:9" onApplied={(coverImageUrl) => setForm((current) => ({ ...current, coverImageUrl }))} onUploaded={(asset) => setMedia((current) => [asset, ...current])} /> : <button type="button" onClick={() => setPicker("cover")} className="mt-3 grid aspect-video w-full place-items-center rounded-lg border border-dashed border-zinc-300 bg-zinc-100 text-sm font-bold text-zinc-500"><span><ImagePlus className="mx-auto mb-2" />Chọn ảnh bìa từ thư viện hoặc tải lên</span></button>}
+            {form.coverImageUrl ? <TloraImageCropper key={`album-cover:${form.coverImageUrl}`} imageUrl={form.coverImageUrl} filePrefix={`album-cover-${form.slug || "concept"}`} altText={form.title || "Ảnh bìa album"} variant="light" outputWidth={1200} outputHeight={675} saveLabel={form.id ? "Lưu và đồng bộ ảnh bìa 16:9" : "Lưu ảnh bìa 16:9"} onApplied={applyCroppedCover} onUploaded={(asset) => setMedia((current) => [asset, ...current])} /> : <button type="button" onClick={() => setPicker("cover")} className="mt-3 grid aspect-video w-full place-items-center rounded-lg border border-dashed border-zinc-300 bg-zinc-100 text-sm font-bold text-zinc-500"><span><ImagePlus className="mx-auto mb-2" />Chọn ảnh bìa từ thư viện hoặc tải lên</span></button>}
           </div>
 
           <div>
