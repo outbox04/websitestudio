@@ -48,7 +48,7 @@ export function ConceptAlbumsView({
 
       {visible.length ? (
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {visible.map((album, index) => <ConceptAlbumCard key={album.id} album={album} order={(page - 1) * pageSize + index + 1} total={filtered.length} priority={page === 1 && index === 0} onOpen={() => setSelected(album)} onConsult={() => setConsulting(album)} />)}
+          {visible.map((album, index) => <ConceptAlbumCard key={album.id} album={album} order={(page - 1) * pageSize + index + 1} priority={page === 1 && index === 0} onOpen={() => setSelected(album)} />)}
         </div>
       ) : (
         <p className="rounded-xl border border-dashed border-white/15 p-10 text-center text-[#8c8174]">Danh mục này chưa có album.</p>

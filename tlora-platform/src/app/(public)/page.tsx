@@ -255,7 +255,7 @@ export default async function HomePage() {
           <div className="mx-auto max-w-7xl">
             <div className="max-w-3xl"><p className="home-eyebrow">Selected collections</p><h2 data-cms-section="gallery" data-cms-field="title" className="home-editorial-title mt-4 text-[clamp(2.5rem,10vw,4.8rem)] leading-none">{String(publishedGallery.title || "Album chọn lọc")}</h2><p data-cms-section="gallery" data-cms-field="description" className="mt-5 text-base leading-7 text-[var(--home-text-secondary)]">{String(publishedGallery.description || "Sáu album concept tiêu biểu được tuyển chọn từ thư viện TLORA.")}</p></div>
             <MobileCarousel label="Album chọn lọc" className="mt-4 lg:mt-10 lg:grid-cols-3 lg:gap-7">
-              {selectedAlbums.map((album, index) => <ConceptAlbumCard key={album.id} album={album} order={index + 1} total={selectedAlbums.length} priority={false} />)}
+              {selectedAlbums.map((album, index) => <ConceptAlbumCard key={album.id} album={album} order={index + 1} priority={false} />)}
               {!selectedAlbums.length && <p className="w-full rounded-xl border border-dashed border-white/15 p-8 text-[var(--home-text-muted)]">Chưa có Album Concept được xuất bản.</p>}
             </MobileCarousel>
           </div>
