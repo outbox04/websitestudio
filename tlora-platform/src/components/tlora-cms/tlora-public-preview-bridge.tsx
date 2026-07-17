@@ -1,8 +1,3 @@
-"use client";
-
-import { useEffect } from "react";
-import { usePathname } from "next/navigation";
-
 type PreviewSection = {
   sectionKey: string;
   isEnabled: boolean;
@@ -252,29 +247,23 @@ function applySection(section: PreviewSection) {
   });
 }
 
-export function TloraPublicPreviewBridge() {
-  const pathname = usePathname();
-
-  useEffect(() => {
-    function handleMessage(event: MessageEvent<unknown>) {
-      if (event.origin !== window.location.origin || !isPreviewMessage(event.data)) return;
-      lockPreviewInteractions();
-      event.data.sections.forEach(applySection);
-      requestAnimationFrame(sendPageContent);
-    }
-
-    window.addEventListener("message", handleMessage);
-    window.parent.postMessage({ type: "tlora:cms-preview-ready" }, window.location.origin);
-    return () => window.removeEventListener("message", handleMessage);
-  }, []);
-
-  useEffect(() => {
-    window.parent.postMessage({
-      type: "tlora:cms-preview-ready",
-      pathname,
-    }, window.location.origin);
+export function startTloraPublicPreviewBridge() {
+  function handleMessage(event: MessageEvent<unknown>) {
+    if (event.origin !== window.location.origin || !isPreviewMessage(event.data)) return;
+    lockPreviewInteractions();
+    event.data.sections.forEach(applySection);
     requestAnimationFrame(sendPageContent);
-  }, [pathname]);
+  }
 
-  return null;
+  window.addEventListener("message", handleMessage);
+  window.parent.postMessage({ type: "tlora:cms-preview-ready" }, window.location.origin);
+  return () => window.removeEventListener("message", handleMessage);
+}
+
+export function notifyTloraPublicPreviewPathname(pathname: string) {
+  window.parent.postMessage({
+    type: "tlora:cms-preview-ready",
+    pathname,
+  }, window.location.origin);
+  requestAnimationFrame(sendPageContent);
 }

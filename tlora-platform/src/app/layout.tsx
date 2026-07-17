@@ -1,13 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Inter } from "next/font/google";
 import "./globals.css";
-
-const body = Inter({
-  variable: "--font-body",
-  subsets: ["vietnamese"],
-  weight: "variable",
-  style: ["normal", "italic"],
-});
 
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"),
@@ -45,7 +37,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="vi" className={`${body.variable} h-full scroll-smooth`}>
+    <html lang="vi" className="h-full scroll-smooth">
       <body className="min-h-full bg-[#07080a] text-[#f8f5ee] antialiased">{children}</body>
     </html>
   );

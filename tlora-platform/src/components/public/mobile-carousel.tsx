@@ -11,33 +11,23 @@ export function MobileCarousel({ children, className = "", label }: { children: 
   useEffect(() => {
     const track = trackRef.current;
     if (!track) return;
-    let frame = 0;
+    const cards = Array.from(track.children) as HTMLElement[];
+    const visibility = new Map<Element, number>();
+    cards.forEach((card, index) => { card.dataset.carouselActive = String(index === 0); });
 
-    const updateActiveCard = () => {
-      cancelAnimationFrame(frame);
-      frame = requestAnimationFrame(() => {
-        const center = track.scrollLeft + track.clientWidth / 2;
-        const cards = Array.from(track.children) as HTMLElement[];
-        let active: HTMLElement | undefined;
-        let closest = Number.POSITIVE_INFINITY;
-        for (const card of cards) {
-          const distance = Math.abs(card.offsetLeft + card.offsetWidth / 2 - center);
-          if (distance < closest) {
-            closest = distance;
-            active = card;
-          }
-        }
-        for (const card of cards) card.dataset.carouselActive = String(card === active);
-      });
-    };
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => visibility.set(entry.target, entry.intersectionRatio));
+      const active = cards.reduce<HTMLElement | undefined>((best, card) => {
+        if (!best) return card;
+        return (visibility.get(card) || 0) > (visibility.get(best) || 0) ? card : best;
+      }, undefined);
+      cards.forEach((card) => { card.dataset.carouselActive = String(card === active); });
+    }, { root: track, threshold: [0.25, 0.5, 0.75, 1] });
 
-    updateActiveCard();
-    track.addEventListener("scroll", updateActiveCard, { passive: true });
-    window.addEventListener("resize", updateActiveCard);
+    cards.forEach((card) => observer.observe(card));
     return () => {
-      cancelAnimationFrame(frame);
-      track.removeEventListener("scroll", updateActiveCard);
-      window.removeEventListener("resize", updateActiveCard);
+      observer.disconnect();
+      visibility.clear();
     };
   }, [children]);
 

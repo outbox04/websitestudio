@@ -1,0 +1,17 @@
+# TLORA Studio
+
+TLORA Studio là nền tảng chụp ảnh concept, quản lý album khách hàng và chọn ảnh trực tuyến tại Việt Nam.
+
+## Nội dung chính
+
+- Trang chủ: https://tlora.net/
+- Dịch vụ: https://tlora.net/dich-vu
+- Bảng giá: https://tlora.net/bang-gia
+- Album concept: https://tlora.net/album-concept
+- Tin tức: https://tlora.net/tin-tuc
+- Chính sách bảo mật: https://tlora.net/chinh-sach-bao-mat
+- Điều khoản dịch vụ: https://tlora.net/dieu-khoan-dich-vu
+
+## Liên hệ
+
+Thông tin liên hệ chính thức được công bố trên website TLORA Studio.

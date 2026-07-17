@@ -1,13 +1,13 @@
 import type { ReactNode } from "react";
 import { unstable_cache } from "next/cache";
 import { SiteFooter, SiteHeader } from "@/components/site-shell";
-import { TloraPublicPreviewBridge } from "@/components/tlora-cms/tlora-public-preview-bridge";
+import { TloraPublicPreviewLoader } from "@/components/tlora-cms/tlora-public-preview-loader";
 import { getFirstPartyStudio } from "@/lib/tenancy/request-context";
 import { tloraPublicCacheTags } from "@/lib/tlora-public-cache";
 import { getTloraMenu } from "@/repositories/tlora/menus-repository";
 import { getPublishedTloraSiteSettings } from "@/repositories/tlora/settings-repository";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 300;
 
 const readPublishedShell = unstable_cache(async () => {
   const studio = await getFirstPartyStudio();
@@ -42,7 +42,7 @@ export default async function PublicLayout({ children }: { children: ReactNode }
   const { navItems, contact } = await getPublishedShell();
   return (
     <>
-      <TloraPublicPreviewBridge />
+      <TloraPublicPreviewLoader />
       <SiteHeader navItems={navItems} contact={contact} />
       <main>{children}</main>
       <SiteFooter contact={contact} />

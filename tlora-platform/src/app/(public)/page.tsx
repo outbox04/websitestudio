@@ -176,15 +176,23 @@ const getPublishedHome = unstable_cache(async () => {
   tags: [tloraPublicCacheTags.home, tloraPublicCacheTags.cms],
 });
 
+async function getPublishedHomeSafe() {
+  try {
+    return await getPublishedHome();
+  } catch {
+    return { page: null, sections: {} as Record<string, PublishedSection> };
+  }
+}
+
 export async function generateMetadata(): Promise<Metadata> {
-  const { page } = await getPublishedHome();
+  const { page } = await getPublishedHomeSafe();
   return buildTloraPageMetadata({ title: page?.seo_title || "", description: page?.seo_description || "", ogImageUrl: page?.og_image_url || "" }, "/", { title: "TLORA Studio", description: "TLORA Studio chụp ảnh concept cá nhân, chọn ảnh online và quản lý album riêng." });
 }
 
 export default async function HomePage() {
   const [{ sections: publishedSections }, selectedAlbums] = await Promise.all([
-    getPublishedHome(),
-    listPublishedTloraConceptAlbums(6),
+    getPublishedHomeSafe(),
+    listPublishedTloraConceptAlbums(6).catch(() => []),
   ]);
   const publishedHero = publishedSections.hero?.isEnabled ? publishedSections.hero.content : {};
   const publishedAbout = publishedSections.about?.isEnabled ? publishedSections.about.content : {};

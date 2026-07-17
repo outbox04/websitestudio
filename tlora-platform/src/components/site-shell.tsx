@@ -24,6 +24,7 @@ function BrandLogo({ className, fetchPriority = "auto" }: { className: string; f
         width={1536}
         height={1024}
         fetchPriority={fetchPriority}
+        loading={fetchPriority === "high" ? "eager" : "lazy"}
         sizes="(min-width: 1024px) 150px, (min-width: 640px) 132px, 116px"
         className="absolute left-1/2 top-1/2 h-[240%] w-auto max-w-none -translate-x-1/2 -translate-y-1/2 object-contain"
       />

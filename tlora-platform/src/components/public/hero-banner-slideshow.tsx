@@ -61,6 +61,7 @@ export function HeroBannerSlideshow({ initialSlides, fallbackImage, imagePositio
           alt={index === activeIndex ? "Banner TLORA Studio" : ""}
           fill
           fetchPriority={index === 0 ? "high" : "low"}
+          loading={index === 0 ? "eager" : "lazy"}
           quality={70}
           sizes="100vw"
           aria-hidden={index !== activeIndex}
