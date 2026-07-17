@@ -1,6 +1,6 @@
 "use client";
 
-import { Activity, FileText, Images, LayoutDashboard, Menu, Settings } from "lucide-react";
+import { Activity, FileText, FolderSync, Images, LayoutDashboard, Menu, Settings } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -9,6 +9,7 @@ const links = [
   { href: "/admin/tlora-preview", label: "Trang & Preview", icon: LayoutDashboard },
   { href: "/admin/tlora/posts", label: "Bài viết", icon: FileText },
   { href: "/admin/tlora/library", label: "Thư viện", icon: Images },
+  { href: "/admin/tlora/customer-galleries", label: "Album khách hàng", icon: FolderSync },
   { href: "/admin/tlora/menus", label: "Menu", icon: Menu },
   { href: "/admin/tlora/settings", label: "Thiết lập", icon: Settings },
   { href: "/admin/tlora/activity", label: "Hoạt động", icon: Activity },

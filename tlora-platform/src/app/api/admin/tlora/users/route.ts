@@ -2,6 +2,7 @@ import { randomBytes } from "node:crypto";
 import { NextResponse } from "next/server";
 import { tloraApiError } from "@/app/api/admin/tlora/_shared";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { listTloraCmsUsers } from "@/lib/tlora-cms-users";
 import { requireTloraAdmin } from "@/lib/tenancy/request-context";
 
 function strongPassword() {
@@ -11,13 +12,7 @@ function strongPassword() {
 export async function GET(request: Request) {
   try {
     const context = await requireTloraAdmin(request);
-    const admin = createAdminClient();
-    const [{ data: users, error }, { data: posts }] = await Promise.all([
-      admin.from("tlora_cms_users").select("user_id,username,display_name,backup_email,created_at").eq("studio_id", context.studio.id).order("created_at", { ascending: false }),
-      admin.from("tlora_cms_posts").select("created_by").eq("studio_id", context.studio.id),
-    ]);
-    if (error) throw error;
-    return NextResponse.json({ users: (users || []).map((user) => ({ ...user, postCount: (posts || []).filter((post) => post.created_by === user.user_id).length })) });
+    return NextResponse.json({ users: await listTloraCmsUsers(context.studio.id) });
   } catch (error) { return tloraApiError(error); }
 }
 

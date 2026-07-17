@@ -6,7 +6,7 @@ import { requireTloraStudioId } from "@/lib/tlora-studio";
 export async function PATCH(request: Request, { params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
   
-  const auth = await checkAuthContext(request);
+  const auth = await checkAuthContext(request, { allowTlora: true });
   if (auth.errorResponse) return auth.errorResponse;
   const { isPlatformAdmin, context } = auth;
 

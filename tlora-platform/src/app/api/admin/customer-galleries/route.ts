@@ -74,7 +74,7 @@ function getErrorMessage(error: unknown) {
 
 export async function GET(request: Request) {
   try {
-    const auth = await checkAuthContext(request);
+    const auth = await checkAuthContext(request, { allowTlora: true });
     if (auth.errorResponse) return auth.errorResponse;
     const { context } = auth;
     const targetStudioId = context?.studioId || await requireTloraStudioId();
@@ -157,7 +157,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Tên không hợp lệ để tạo slug" }, { status: 400 });
     }
 
-    const auth = await checkAuthContext(request);
+    const auth = await checkAuthContext(request, { allowTlora: true });
     if (auth.errorResponse) return auth.errorResponse;
     const { context } = auth;
     const targetStudioId = context?.studioId || await requireTloraStudioId();

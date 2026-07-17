@@ -90,7 +90,7 @@ export function AdminStudioWorkspace({
     <DashboardView tenantMode={tenantMode} studioSlug={studioSlug} studioSettings={studioSettings} />
   ), [studioSettings, studioSlug, tenantMode]);
   const albumPanel = useMemo(() => (
-    <AlbumManagerView initialGalleries={galleries} editRequests={editRequests} tenantMode={tenantMode} />
+    <CustomerGalleryManager initialGalleries={galleries} editRequests={editRequests} tenantMode={tenantMode} />
   ), [editRequests, galleries, tenantMode]);
   const cmsPanel = useMemo(() => (
     <section className="rounded-xl border border-[#2a2722] bg-[#101115] p-6 text-[#f8f5ee]">
@@ -265,7 +265,7 @@ function DashboardView({
   );
 }
 
-function AlbumManagerView({
+export function CustomerGalleryManager({
   initialGalleries,
   editRequests,
   tenantMode,

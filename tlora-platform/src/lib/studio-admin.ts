@@ -2,7 +2,7 @@ import "server-only";
 
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
-import { resolveRequestContext } from "@/lib/tenancy/request-context";
+import { requireTloraAdmin, resolveRequestContext } from "@/lib/tenancy/request-context";
 
 export type StudioAdminContext = {
   studioId: string;
@@ -49,21 +49,41 @@ export async function getStudioAdminContext(studioSlug: string): Promise<StudioA
   return { studioId: studio.id, studioSlug: studio.slug, studioName: studio.display_name, userId: user.id, settings: (studio.settings || {}) as Record<string, unknown> };
 }
 
-export async function checkAuthContext(request: Request) {
+export async function checkAuthContext(request: Request, options: { allowTlora?: boolean } = {}) {
   const requestContext = await resolveRequestContext(request);
-  if (requestContext.userId && requestContext.studio?.studioType === "tenant" && ["owner", "admin"].includes(requestContext.membershipRole || "")) {
+  const studio = requestContext.studio;
+  const isAllowedStudio = studio?.studioType === "tenant"
+    || Boolean(options.allowTlora && studio?.studioType === "first_party" && studio.systemKey === "tlora");
+  if (requestContext.userId && studio && isAllowedStudio && ["owner", "admin"].includes(requestContext.membershipRole || "")) {
     return {
       isPlatformAdmin: false,
       context: {
-        studioId: requestContext.studio.id,
-        studioSlug: requestContext.studio.slug,
-        studioName: requestContext.studio.displayName,
+        studioId: studio.id,
+        studioSlug: studio.slug,
+        studioName: studio.displayName,
         userId: requestContext.userId,
-        settings: requestContext.studio.settings,
+        settings: studio.settings,
       },
     };
   }
   if (requestContext.userId && requestContext.isPlatformAdmin) return { isPlatformAdmin: true, context: null };
+  if (options.allowTlora && requestContext.userId) {
+    try {
+      const tloraContext = await requireTloraAdmin(request);
+      return {
+        isPlatformAdmin: false,
+        context: {
+          studioId: tloraContext.studio.id,
+          studioSlug: tloraContext.studio.slug,
+          studioName: tloraContext.studio.displayName,
+          userId: tloraContext.userId!,
+          settings: tloraContext.studio.settings,
+        },
+      };
+    } catch {
+      // Return the standard forbidden response below.
+    }
+  }
 
   const { NextResponse } = await import("next/server");
   return {

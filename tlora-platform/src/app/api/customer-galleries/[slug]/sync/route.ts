@@ -11,7 +11,7 @@ export const runtime = "nodejs";
 export async function POST(request: Request, { params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
 
-  const auth = await checkAuthContext(request);
+  const auth = await checkAuthContext(request, { allowTlora: true });
   const canUseStudioConnection = !auth.errorResponse;
   const { isPlatformAdmin, context } = auth;
 

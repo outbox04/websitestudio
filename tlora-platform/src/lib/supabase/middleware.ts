@@ -8,7 +8,10 @@ export async function updateSession(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
   const isAdmin = adminPrefixes.some((prefix) => pathname.startsWith(prefix));
   const isAdminApi = pathname.startsWith("/api/admin");
-  const isTloraCms = pathname.startsWith("/admin/tlora") || pathname.startsWith("/api/admin/tlora");
+  const isTloraCms = pathname.startsWith("/admin/tlora")
+    || pathname === "/admin-studio"
+    || pathname.startsWith("/api/admin/tlora")
+    || pathname.startsWith("/api/admin/customer-galleries");
   const forwardedHost = request.headers.get("x-forwarded-host")?.split(",")[0]?.trim();
   const hostname = (forwardedHost || request.headers.get("host") || "").split(":")[0].toLowerCase();
   const rootDomain = (process.env.ROOT_DOMAIN || "tlgroup.site").toLowerCase();
