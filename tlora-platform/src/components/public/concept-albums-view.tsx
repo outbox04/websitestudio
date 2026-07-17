@@ -65,14 +65,6 @@ export function ConceptAlbumsView({
       {selected && <AlbumViewer album={selected} onClose={() => setSelected(null)} onConsult={() => { setSelected(null); setConsulting(selected); }} />}
       {consulting && <ConsultationModal album={consulting} onClose={() => setConsulting(null)} />}
 
-      <style jsx global>{`
-        @keyframes concept-card { from { opacity: 0; transform: translateY(22px); } to { opacity: 1; transform: translateY(0); } }
-        @keyframes concept-fade { from { opacity: 0; } to { opacity: 1; } }
-        @keyframes concept-open { from { opacity: 0; transform: scale(.96) translateY(20px); } to { opacity: 1; transform: scale(1) translateY(0); } }
-        @media (prefers-reduced-motion: reduce) {
-          [class*="animation:concept"] { animation: none !important; opacity: 1 !important; }
-        }
-      `}</style>
     </>
   );
 }

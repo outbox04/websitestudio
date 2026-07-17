@@ -1,6 +1,7 @@
 import "server-only";
 
 import { createAdminClient } from "@/lib/supabase/admin";
+import { invalidateTloraPublicShell } from "@/lib/tlora-public-cache";
 
 export type TloraSiteSettings = {
   siteName: string;
@@ -76,5 +77,6 @@ export async function publishTloraSiteSettings(studioId: string, userId: string)
     studio_id: studioId, actor_user_id: userId, action: "settings.published",
     entity_type: "settings", entity_id: current.id, after_value: current.draft_value,
   });
+  invalidateTloraPublicShell();
   return { id: data.id as string, draft: data.draft_value as TloraSiteSettings, published: data.published_value as TloraSiteSettings };
 }

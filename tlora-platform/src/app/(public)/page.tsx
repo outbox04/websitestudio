@@ -2,10 +2,11 @@ import { ArrowRight, ArrowUpRight, Check, Images, Sparkles } from "lucide-react"
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
-import { cache } from "react";
+import { unstable_cache } from "next/cache";
 import { ConceptAlbumCard } from "@/components/public/concept-album-card";
 import { HomeStickyCta } from "@/components/public/home-sticky-cta";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { tloraPublicCacheTags } from "@/lib/tlora-public-cache";
 import { listPublishedTloraConceptAlbums } from "@/repositories/tlora/concept-albums-repository";
 
 const trustItems = [
@@ -144,7 +145,7 @@ function cmsImage(content: Record<string, unknown>, key: string, fallback: strin
   return typeof values?.[key] === "string" && values[key] ? String(values[key]) : fallback;
 }
 
-const getPublishedHome = cache(async () => {
+const getPublishedHome = unstable_cache(async () => {
   const admin = createAdminClient();
   const { data: studio } = await admin.from("studios").select("id").eq("studio_type", "first_party").eq("system_key", "tlora").maybeSingle();
   if (!studio) return { page: null, sections: {} as Record<string, PublishedSection> };
@@ -167,6 +168,9 @@ const getPublishedHome = cache(async () => {
     { isEnabled: section.is_enabled, content: section.published_content as Record<string, unknown> },
   ])) as Record<string, PublishedSection>;
   return { page, sections: sectionMap };
+}, ["tlora-published-home"], {
+  revalidate: 300,
+  tags: [tloraPublicCacheTags.home, tloraPublicCacheTags.cms],
 });
 
 export async function generateMetadata(): Promise<Metadata> {

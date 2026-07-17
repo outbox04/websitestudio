@@ -53,7 +53,7 @@ export function ConceptAlbumCard({ album, order, total, priority = false, onOpen
   );
 
   return (
-    <article className="group/card relative opacity-0 transition-[transform,border-color] duration-500 ease-out [animation:concept-card_.55s_ease-out_forwards] hover:-translate-y-1.5" style={{ animationDelay: `${((order - 1) % 15) * 55}ms` }}>
+    <article className="group/card relative opacity-100 transition-[transform,border-color] duration-500 ease-out [animation:concept-card_.55s_ease-out_forwards] hover:-translate-y-1.5" style={{ animationDelay: `${((order - 1) % 15) * 55}ms` }}>
       <span aria-hidden="true" className="absolute inset-x-5 -top-2 hidden h-16 -rotate-1 rounded-[22px] border border-[var(--album-border)] bg-[var(--surface-raised)] opacity-65 transition-transform duration-500 group-hover/card:-translate-y-1 group-hover/card:-rotate-2 sm:block" />
       <span aria-hidden="true" className="absolute inset-x-3 -top-1 hidden h-16 rotate-1 rounded-[22px] border border-white/8 bg-[var(--surface)] opacity-80 transition-transform duration-500 group-hover/card:-translate-y-0.5 group-hover/card:rotate-2 sm:block" />
 

@@ -1,6 +1,8 @@
 import "server-only";
 
+import { unstable_cache } from "next/cache";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { invalidateTloraPublicCms, tloraPublicCacheTags } from "@/lib/tlora-public-cache";
 import { parseSectionContent } from "@/schemas/tlora-cms";
 import type { TloraCmsPage, TloraCmsSection } from "@/types/scope";
 
@@ -69,7 +71,7 @@ export async function listTloraCmsPages(studioId: string) {
   return (data || []).map((row) => mapPage(row as PageRow));
 }
 
-export async function getPublishedTloraPageMeta(pageKey: string) {
+const readPublishedTloraPageMeta = unstable_cache(async (pageKey: string) => {
   const admin = createAdminClient();
   const { data: studio, error: studioError } = await admin.from("studios").select("id").eq("studio_type", "first_party").eq("system_key", "tlora").single();
   if (studioError) throw studioError;
@@ -86,9 +88,16 @@ export async function getPublishedTloraPageMeta(pageKey: string) {
     description: data?.seo_description || "",
     ogImageUrl: data?.og_image_url || "",
   };
+}, ["tlora-published-page-meta"], {
+  revalidate: 300,
+  tags: [tloraPublicCacheTags.cms],
+});
+
+export async function getPublishedTloraPageMeta(pageKey: string) {
+  return readPublishedTloraPageMeta(pageKey);
 }
 
-export async function getPublishedTloraSection(pageKey: string, sectionKey: string) {
+const readPublishedTloraSection = unstable_cache(async (pageKey: string, sectionKey: string) => {
   const admin = createAdminClient();
   const { data: studio, error: studioError } = await admin.from("studios").select("id").eq("studio_type", "first_party").eq("system_key", "tlora").single();
   if (studioError) throw studioError;
@@ -102,6 +111,13 @@ export async function getPublishedTloraSection(pageKey: string, sectionKey: stri
     .maybeSingle();
   if (error) throw error;
   return (data?.published_content || {}) as Record<string, unknown>;
+}, ["tlora-published-section"], {
+  revalidate: 300,
+  tags: [tloraPublicCacheTags.cms],
+});
+
+export async function getPublishedTloraSection(pageKey: string, sectionKey: string) {
+  return readPublishedTloraSection(pageKey, sectionKey);
 }
 
 export async function updateTloraPageMeta(input: {
@@ -189,4 +205,5 @@ export async function publishTloraPage(studioId: string, userId: string, pageId:
     studio_id: studioId, actor_user_id: userId, action: "page.published",
     entity_type: "page", entity_id: pageId, after_value: { changeNote: changeNote || null },
   });
+  invalidateTloraPublicCms();
 }

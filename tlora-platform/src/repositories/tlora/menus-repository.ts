@@ -1,6 +1,7 @@
 import "server-only";
 
 import { createAdminClient } from "@/lib/supabase/admin";
+import { invalidateTloraPublicShell } from "@/lib/tlora-public-cache";
 import type { TloraCmsMenu, TloraCmsMenuItem } from "@/types/scope";
 
 export async function getTloraMenu(studioId: string, menuKey = "primary"): Promise<TloraCmsMenu> {
@@ -70,6 +71,6 @@ export async function replaceTloraMenuItems(studioId: string, userId: string, me
     entity_id: menuId,
     after_value: items,
   });
+  invalidateTloraPublicShell();
   return getTloraMenu(studioId);
 }
-

@@ -1,6 +1,8 @@
 import "server-only";
 
+import { unstable_cache } from "next/cache";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { invalidateTloraPublicAlbums, tloraPublicCacheTags } from "@/lib/tlora-public-cache";
 import type { TloraConceptAlbum, TloraConceptCategory } from "@/types/scope";
 
 type AlbumRow = {
@@ -61,12 +63,21 @@ export async function listTloraConceptAlbums(studioId: string) {
   return (result.data || []).map((row) => mapAlbum(row as AlbumRow));
 }
 
-export async function listPublishedTloraConceptAlbums(limit?: number) {
+const getTloraPublicStudioId = unstable_cache(async () => {
   const admin = createAdminClient();
   const { data: studio, error: studioError } = await admin.from("studios").select("id").eq("studio_type", "first_party").eq("system_key", "tlora").single();
   if (studioError) throw studioError;
+  return studio.id as string;
+}, ["tlora-first-party-studio-id"], {
+  revalidate: 3600,
+  tags: [tloraPublicCacheTags.studio],
+});
+
+const readPublishedTloraConceptAlbums = unstable_cache(async (limit?: number) => {
+  const admin = createAdminClient();
+  const studioId = await getTloraPublicStudioId();
   const readAlbums = (columns: string) => {
-    let query = admin.from("tlora_concept_albums").select(columns).eq("studio_id", studio.id).eq("status", "published").order("sort_order").order("published_at", { ascending: false });
+    let query = admin.from("tlora_concept_albums").select(columns).eq("studio_id", studioId).eq("status", "published").order("sort_order").order("published_at", { ascending: false });
     if (limit) query = query.limit(limit);
     return query;
   };
@@ -78,6 +89,13 @@ export async function listPublishedTloraConceptAlbums(limit?: number) {
   }
   if (result.error) throw result.error;
   return (result.data || []).map((row) => mapAlbum(row as unknown as AlbumRow));
+}, ["tlora-published-concept-albums"], {
+  revalidate: 300,
+  tags: [tloraPublicCacheTags.albums],
+});
+
+export async function listPublishedTloraConceptAlbums(limit?: number) {
+  return readPublishedTloraConceptAlbums(limit);
 }
 
 export async function saveTloraConceptAlbum(studioId: string, userId: string, input: {
@@ -138,12 +156,14 @@ export async function saveTloraConceptAlbum(studioId: string, userId: string, in
     studio_id: studioId, actor_user_id: userId, action: input.id ? "concept_album.updated" : "concept_album.created",
     entity_type: "concept_album", entity_id: album.id, after_value: savedData,
   });
+  invalidateTloraPublicAlbums();
   return album;
 }
 
 export async function deleteTloraConceptAlbum(studioId: string, albumId: string) {
   const { error } = await createAdminClient().from("tlora_concept_albums").delete().eq("id", albumId).eq("studio_id", studioId);
   if (error) throw error;
+  invalidateTloraPublicAlbums();
 }
 
 type CategoryRow = { id: string; name: string; slug: string };
@@ -166,11 +186,15 @@ export async function listTloraConceptCategories(studioId: string): Promise<Tlor
   });
 }
 
+const readPublishedTloraConceptCategories = unstable_cache(async () => {
+  return listTloraConceptCategories(await getTloraPublicStudioId());
+}, ["tlora-published-concept-categories"], {
+  revalidate: 300,
+  tags: [tloraPublicCacheTags.categories, tloraPublicCacheTags.albums],
+});
+
 export async function listPublishedTloraConceptCategories() {
-  const admin = createAdminClient();
-  const { data: studio, error: studioError } = await admin.from("studios").select("id").eq("studio_type", "first_party").eq("system_key", "tlora").single();
-  if (studioError) throw studioError;
-  return listTloraConceptCategories(studio.id);
+  return readPublishedTloraConceptCategories();
 }
 
 export async function saveTloraConceptCategory(studioId: string, userId: string, input: { id?: string; name: string; slug: string }) {
@@ -181,6 +205,7 @@ export async function saveTloraConceptCategory(studioId: string, userId: string,
     : admin.from("tlora_concept_categories").insert({ ...values, created_by: userId });
   const { data, error } = await query.select("id,name,slug").single();
   if (error) throw error;
+  invalidateTloraPublicAlbums();
   return { ...(data as CategoryRow), albumCount: 0, imageCount: 0 };
 }
 
@@ -191,4 +216,5 @@ export async function deleteTloraConceptCategory(studioId: string, categoryId: s
   if ((count || 0) > 0) throw new Error("Danh mục đang được album sử dụng. Hãy chuyển album sang danh mục khác trước.");
   const { error } = await admin.from("tlora_concept_categories").delete().eq("id", categoryId).eq("studio_id", studioId);
   if (error) throw error;
+  invalidateTloraPublicAlbums();
 }
