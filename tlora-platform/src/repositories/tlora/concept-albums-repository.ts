@@ -10,7 +10,7 @@ type AlbumRow = {
   excerpt: string;
   cover_image_url: string | null;
   images: unknown;
-  tags: unknown;
+  tags?: unknown;
   category_id: string | null;
   tlora_concept_categories: { name: string; slug: string } | Array<{ name: string; slug: string }> | null;
   is_featured: boolean;
@@ -38,23 +38,46 @@ const mapAlbum = (row: AlbumRow): TloraConceptAlbum => ({
   updatedAt: row.updated_at,
 });
 
-const select = "id,slug,title,excerpt,cover_image_url,images,tags,category_id,is_featured,sort_order,status,published_at,updated_at,tlora_concept_categories(name,slug)";
+const legacySelect = "id,slug,title,excerpt,cover_image_url,images,category_id,is_featured,sort_order,status,published_at,updated_at,tlora_concept_categories(name,slug)";
+const selectWithTags = `id,slug,title,excerpt,cover_image_url,images,tags,category_id,is_featured,sort_order,status,published_at,updated_at,tlora_concept_categories(name,slug)`;
+
+function isMissingTagsColumn(error: unknown) {
+  if (!error || typeof error !== "object") return false;
+  const value = error as { code?: unknown; message?: unknown; details?: unknown };
+  const code = String(value.code || "");
+  const description = `${String(value.message || "")} ${String(value.details || "")}`;
+  return (code === "42703" || code === "PGRST204") && /\btags\b/i.test(description);
+}
 
 export async function listTloraConceptAlbums(studioId: string) {
-  const { data, error } = await createAdminClient().from("tlora_concept_albums").select(select).eq("studio_id", studioId).order("sort_order").order("updated_at", { ascending: false });
-  if (error) throw error;
-  return (data || []).map((row) => mapAlbum(row as AlbumRow));
+  const admin = createAdminClient();
+  const result = await admin.from("tlora_concept_albums").select(selectWithTags).eq("studio_id", studioId).order("sort_order").order("updated_at", { ascending: false });
+  if (result.error && isMissingTagsColumn(result.error)) {
+    const legacyResult = await admin.from("tlora_concept_albums").select(legacySelect).eq("studio_id", studioId).order("sort_order").order("updated_at", { ascending: false });
+    if (legacyResult.error) throw legacyResult.error;
+    return (legacyResult.data || []).map((row) => mapAlbum(row as AlbumRow));
+  }
+  if (result.error) throw result.error;
+  return (result.data || []).map((row) => mapAlbum(row as AlbumRow));
 }
 
 export async function listPublishedTloraConceptAlbums(limit?: number) {
   const admin = createAdminClient();
   const { data: studio, error: studioError } = await admin.from("studios").select("id").eq("studio_type", "first_party").eq("system_key", "tlora").single();
   if (studioError) throw studioError;
-  let query = admin.from("tlora_concept_albums").select(select).eq("studio_id", studio.id).eq("status", "published").order("sort_order").order("published_at", { ascending: false });
-  if (limit) query = query.limit(limit);
-  const { data, error } = await query;
-  if (error) throw error;
-  return (data || []).map((row) => mapAlbum(row as AlbumRow));
+  const readAlbums = (columns: string) => {
+    let query = admin.from("tlora_concept_albums").select(columns).eq("studio_id", studio.id).eq("status", "published").order("sort_order").order("published_at", { ascending: false });
+    if (limit) query = query.limit(limit);
+    return query;
+  };
+  const result = await readAlbums(selectWithTags);
+  if (result.error && isMissingTagsColumn(result.error)) {
+    const legacyResult = await readAlbums(legacySelect);
+    if (legacyResult.error) throw legacyResult.error;
+    return (legacyResult.data || []).map((row) => mapAlbum(row as unknown as AlbumRow));
+  }
+  if (result.error) throw result.error;
+  return (result.data || []).map((row) => mapAlbum(row as unknown as AlbumRow));
 }
 
 export async function saveTloraConceptAlbum(studioId: string, userId: string, input: {
@@ -81,7 +104,6 @@ export async function saveTloraConceptAlbum(studioId: string, userId: string, in
     excerpt: input.excerpt,
     cover_image_url: input.coverImageUrl || null,
     images: input.images,
-    tags: input.tags,
     category_id: input.categoryId || null,
     is_featured: false,
     sort_order: current?.sort_order ?? Number(last?.sort_order || 0) + 10,
@@ -89,15 +111,32 @@ export async function saveTloraConceptAlbum(studioId: string, userId: string, in
     published_at: new Date().toISOString(),
     updated_by: userId,
   };
-  const query = input.id
-    ? admin.from("tlora_concept_albums").update(values).eq("id", input.id).eq("studio_id", studioId)
-    : admin.from("tlora_concept_albums").insert({ ...values, created_by: userId });
-  const { data, error } = await query.select(select).single();
-  if (error) throw error;
-  const album = mapAlbum(data as AlbumRow);
+  const persistWithTags = () => {
+    const nextValues = { ...values, tags: input.tags };
+    const query = input.id
+      ? admin.from("tlora_concept_albums").update(nextValues).eq("id", input.id).eq("studio_id", studioId)
+      : admin.from("tlora_concept_albums").insert({ ...nextValues, created_by: userId });
+    return query.select(selectWithTags).single();
+  };
+  const persistLegacy = () => {
+    const query = input.id
+      ? admin.from("tlora_concept_albums").update(values).eq("id", input.id).eq("studio_id", studioId)
+      : admin.from("tlora_concept_albums").insert({ ...values, created_by: userId });
+    return query.select(legacySelect).single();
+  };
+  const result = await persistWithTags();
+  let savedData: unknown = result.data;
+  if (result.error && isMissingTagsColumn(result.error)) {
+    const legacyResult = await persistLegacy();
+    if (legacyResult.error) throw legacyResult.error;
+    savedData = legacyResult.data;
+  } else if (result.error) {
+    throw result.error;
+  }
+  const album = mapAlbum(savedData as AlbumRow);
   await admin.from("tlora_cms_activity_logs").insert({
     studio_id: studioId, actor_user_id: userId, action: input.id ? "concept_album.updated" : "concept_album.created",
-    entity_type: "concept_album", entity_id: album.id, after_value: data,
+    entity_type: "concept_album", entity_id: album.id, after_value: savedData,
   });
   return album;
 }
