@@ -15,6 +15,7 @@ type Form = {
   hero_title: string;
   hero_description: string;
   hero_image_url: string;
+  phone: string;
   facebook_url: string;
   zalo_phone: string;
 };
@@ -30,6 +31,7 @@ export function StudioSiteBuilder({ mode, studioSettings = {}, studioSlug }: Pro
     hero_title: setting("hero_title") || "Lưu giữ cá tính qua từng khung hình nghệ thuật",
     hero_description: setting("hero_description") || "Một không gian nhiếp ảnh được thiết kế theo câu chuyện và cá tính riêng của bạn.",
     hero_image_url: setting("hero_image_url"),
+    phone: setting("phone"),
     facebook_url: setting("facebook_url"),
     zalo_phone: setting("zalo_phone"),
   });
@@ -146,12 +148,16 @@ export function StudioSiteBuilder({ mode, studioSettings = {}, studioSlug }: Pro
           {imageInput("Ảnh bìa OG 16:9", "og_image_url")}
           <div className="grid gap-5 border-t border-zinc-100 pt-6 sm:grid-cols-2">
             <label className="block text-sm font-semibold text-zinc-800">
+              Hotline
+              <input value={form.phone} onChange={(event) => set("phone", event.target.value.replace(/[^0-9+ .()-]/g, ""))} placeholder="0901 234 567" className="mt-2 min-h-11 w-full rounded-md border border-zinc-300 px-3 font-normal" />
+            </label>
+            <label className="block text-sm font-semibold text-zinc-800">
               Facebook
               <input value={form.facebook_url} onChange={(event) => set("facebook_url", event.target.value)} placeholder="https://facebook.com/..." className="mt-2 min-h-11 w-full rounded-md border border-zinc-300 px-3 font-normal" />
             </label>
             <label className="block text-sm font-semibold text-zinc-800">
-              Zalo liên hệ
-              <input value={form.zalo_phone} onChange={(event) => set("zalo_phone", event.target.value.replace(/[^0-9+]/g, ""))} placeholder="0901234567" className="mt-2 min-h-11 w-full rounded-md border border-zinc-300 px-3 font-normal" />
+              Zalo OA
+              <input value={form.zalo_phone} onChange={(event) => set("zalo_phone", event.target.value)} placeholder="https://zalo.me/... hoặc 0901234567" className="mt-2 min-h-11 w-full rounded-md border border-zinc-300 px-3 font-normal" />
             </label>
           </div>
         </div>

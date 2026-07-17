@@ -1,10 +1,10 @@
 "use client";
 
-import { ArrowRight, Menu, X } from "lucide-react";
+import { ArrowRight, BadgeDollarSign, Camera, Home, Images, Newspaper, Phone } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 
 const defaultNav = [
   { href: "/", label: "Trang chủ" },
@@ -30,11 +30,31 @@ function BrandLogo({ className, priority = false }: { className: string; priorit
   );
 }
 
-export function SiteHeader({ navItems = defaultNav }: { navItems?: Array<{ href: string; label: string }> }) {
+export type SiteContact = { siteName?: string; description?: string; email?: string; phone?: string; address?: string; facebookUrl?: string; facebook_url?: string; zalo?: string; zalo_phone?: string };
+
+function externalUrl(value: string) {
+  if (!value) return "";
+  return /^https?:\/\//i.test(value) ? value : `https://${value}`;
+}
+
+function zaloUrl(value: string) {
+  if (!value) return "";
+  if (/^https?:\/\//i.test(value)) return value;
+  const phone = value.replace(/\D/g, "");
+  return phone ? `https://zalo.me/${phone}` : "";
+}
+
+function navIcon(href: string) {
+  if (href === "/") return Home;
+  if (href.includes("bang-gia")) return BadgeDollarSign;
+  if (href.includes("album")) return Images;
+  if (href.includes("tin-tuc")) return Newspaper;
+  return Camera;
+}
+
+export function SiteHeader({ navItems = defaultNav, contact }: { navItems?: Array<{ href: string; label: string }>; contact?: SiteContact }) {
   const pathname = usePathname();
-  const [menuOpen, setMenuOpen] = useState(false);
   const [pastHero, setPastHero] = useState(false);
-  const menuPanelRef = useRef<HTMLDivElement>(null);
   const isHome = pathname === "/";
 
   useEffect(() => {
@@ -46,35 +66,8 @@ export function SiteHeader({ navItems = defaultNav }: { navItems?: Array<{ href:
     return () => observer.disconnect();
   }, [isHome]);
 
-  useEffect(() => {
-    if (!menuOpen) return;
-    const panel = menuPanelRef.current;
-    const focusable = panel?.querySelectorAll<HTMLElement>('a[href], button:not([disabled])');
-    focusable?.[0]?.focus();
-
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
-        setMenuOpen(false);
-        return;
-      }
-      if (event.key !== "Tab" || !focusable?.length) return;
-      const first = focusable[0];
-      const last = focusable[focusable.length - 1];
-      if (event.shiftKey && document.activeElement === first) {
-        event.preventDefault();
-        last.focus();
-      } else if (!event.shiftKey && document.activeElement === last) {
-        event.preventDefault();
-        first.focus();
-      }
-    };
-    document.addEventListener("keydown", onKeyDown);
-    return () => {
-      document.removeEventListener("keydown", onKeyDown);
-    };
-  }, [menuOpen]);
-
   return (
+    <>
     <header className={`${isHome ? "fixed inset-x-0 top-0 z-50 transition-[background-color,border-color] duration-400" : "sticky top-0 z-40 border-b border-white/10 bg-[#07080a]/85 backdrop-blur-xl"} ${isHome && pastHero ? "border-b border-white/10 bg-[#08090b]/88 backdrop-blur-xl" : "border-b border-transparent bg-transparent"}`}>
       <div className={`mx-auto flex max-w-7xl items-center justify-between gap-2 px-3 sm:px-6 lg:px-8 ${isHome && pastHero ? "py-2" : "py-2.5 sm:py-3"}`}>
         <Link href="/" className="flex shrink-0 items-center" aria-label="TLORA Studio — Trang chủ">
@@ -89,47 +82,34 @@ export function SiteHeader({ navItems = defaultNav }: { navItems?: Array<{ href:
         </nav>
         <div className="flex items-center gap-2">
           {isHome && <Link href="/bang-gia" className="home-button-primary min-h-9 whitespace-nowrap px-3 text-xs sm:min-h-10 sm:px-4 sm:text-sm lg:min-h-11">Đặt lịch <ArrowRight className="hidden min-[390px]:block" size={14} aria-hidden="true" /></Link>}
-          <button
-            type="button"
-            onClick={() => setMenuOpen((open) => !open)}
-            className="grid size-9 place-items-center rounded-md border border-[#d8b766]/55 bg-[#08090b]/88 text-[#f3d88e] shadow-lg shadow-black/30 backdrop-blur transition hover:border-[#f3d88e] hover:bg-[#d8b766] hover:text-[#07080a] lg:hidden"
-            aria-label={menuOpen ? "Đóng menu" : "Mở menu"}
-            aria-expanded={menuOpen}
-            aria-controls="mobile-site-navigation"
-          >
-            {menuOpen ? <X size={18} /> : <Menu size={18} />}
-          </button>
         </div>
       </div>
-      {menuOpen && (
-        <div ref={menuPanelRef} id="mobile-site-navigation" className="absolute right-3 top-[calc(100%+6px)] z-[70] w-[min(20rem,calc(100vw-24px))] overflow-hidden rounded-xl border border-[#d8b766]/25 bg-[#0d0e11]/97 p-2 shadow-2xl shadow-black/60 backdrop-blur-xl lg:hidden">
-          <div className="flex items-center justify-between border-b border-white/10 px-2 pb-2">
-            <BrandLogo className="h-10 w-[108px]" />
-            <span className="text-[10px] font-bold uppercase tracking-[.16em] text-[#d8b766]">Điều hướng</span>
-          </div>
-          <nav className="mt-1 grid gap-0.5" aria-label="Điều hướng chính">
-            {navItems.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                onClick={() => setMenuOpen(false)}
-                data-cms-preview-navigation
-                className={`flex min-h-10 items-center justify-between rounded-md px-3 text-sm font-semibold transition ${
-                  pathname === item.href ? "bg-[#d8b766]/15 text-[#f3d88e]" : "text-zinc-300 hover:bg-white/5 hover:text-white"
-                }`}
-              >
-                {item.label}<ArrowRight size={14} className="text-[#d8b766]" aria-hidden="true" />
-              </Link>
-            ))}
-          </nav>
-          <Link href="/bang-gia" onClick={() => setMenuOpen(false)} className="home-button-primary mt-2 min-h-10 w-full px-4 text-sm">Đặt lịch <ArrowRight size={15} aria-hidden="true" /></Link>
-        </div>
-      )}
     </header>
+    <ContactDock contact={contact} />
+    <nav id="mobile-site-navigation" className="fixed inset-x-2 bottom-2 z-[60] grid grid-cols-5 overflow-hidden rounded-2xl border border-white/10 bg-[#f8f5ee]/95 px-1 pt-1.5 text-[#51493f] shadow-[0_18px_60px_rgba(0,0,0,.45)] backdrop-blur-xl lg:hidden" style={{ paddingBottom: "max(6px, env(safe-area-inset-bottom))" }} aria-label="Điều hướng mobile">
+      {navItems.filter((item) => !item.href.includes("ai-concept")).slice(0, 5).map((item) => {
+        const Icon = navIcon(item.href);
+        const active = pathname === item.href;
+        return <Link key={item.href} href={item.href} data-cms-preview-navigation className={`flex min-h-14 min-w-0 flex-col items-center justify-center gap-1 rounded-xl px-1 text-center text-[10px] font-semibold transition ${active ? "bg-[#d8b766]/18 text-[#9b731b]" : "hover:bg-black/5"}`}><Icon size={19} strokeWidth={active ? 2.4 : 1.8} aria-hidden="true" /><span className="w-full truncate">{item.label}</span></Link>;
+      })}
+    </nav>
+    </>
   );
 }
 
-export function SiteFooter({ contact }: { contact?: { siteName?: string; description?: string; email?: string; phone?: string; address?: string } }) {
+function ContactDock({ contact }: { contact?: SiteContact }) {
+  const phone = contact?.phone?.trim() || "";
+  const facebook = externalUrl((contact?.facebookUrl || contact?.facebook_url || "").trim());
+  const zalo = zaloUrl((contact?.zalo || contact?.zalo_phone || "").trim());
+  if (!phone && !facebook && !zalo) return null;
+  return <div className="fixed bottom-24 right-3 z-[55] flex flex-col gap-2 lg:bottom-6 lg:right-5" aria-label="Liên hệ nhanh">
+    {facebook && <a href={facebook} target="_blank" rel="noreferrer" aria-label="Facebook" className="grid size-11 place-items-center rounded-full border-2 border-white bg-[#1877f2] text-xl font-black text-white shadow-lg transition hover:scale-105">f</a>}
+    {zalo && <a href={zalo} target="_blank" rel="noreferrer" aria-label="Zalo OA" className="grid size-11 place-items-center rounded-full border-2 border-white bg-[#0068ff] text-[11px] font-black text-white shadow-lg transition hover:scale-105">Zalo</a>}
+    {phone && <a href={`tel:${phone.replace(/[^\d+]/g, "")}`} aria-label={`Gọi hotline ${phone}`} className="grid size-11 place-items-center rounded-full border-2 border-white bg-[#d8b766] text-[#07080a] shadow-lg transition hover:scale-105"><Phone size={19} aria-hidden="true" /></a>}
+  </div>;
+}
+
+export function SiteFooter({ contact }: { contact?: SiteContact }) {
   const pathname = usePathname();
   const isHome = pathname === "/";
   const isDangKy = pathname === "/dang-ky" || pathname === "/dang-ky-studio";

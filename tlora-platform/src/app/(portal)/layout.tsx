@@ -7,6 +7,7 @@ export default function PortalLayout({ children }: { children: ReactNode }) {
       <SiteHeader />
       <main>{children}</main>
       <SiteFooter />
+      <div className="h-20 lg:hidden" aria-hidden="true" />
     </>
   );
 }

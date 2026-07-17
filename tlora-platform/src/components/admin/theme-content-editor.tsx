@@ -419,7 +419,7 @@ function BrandFields({ contact, update, chooseLogo }: { contact: Contact; update
     <>
       <ImageField label="Logo studio" value={contact.logo_url} onChange={(value) => update("logo_url", value)} onImage={chooseLogo} />
       <Field label="Facebook" value={contact.facebook_url} onChange={(value) => update("facebook_url", value)} />
-      <Field label="Zalo" value={contact.zalo_phone} onChange={(value) => update("zalo_phone", value.replace(/[^0-9+]/g, ""))} />
+      <Field label="Zalo OA (URL hoặc SĐT)" value={contact.zalo_phone} onChange={(value) => update("zalo_phone", value)} />
     </>
   );
 }
@@ -431,7 +431,7 @@ function ContactFields({ contact, update }: { contact: Contact; update: (key: ke
       <Field label="Email" value={contact.email} onChange={(value) => update("email", value)} />
       <Field label="Địa chỉ" value={contact.address} onChange={(value) => update("address", value)} textarea />
       <Field label="Facebook" value={contact.facebook_url} onChange={(value) => update("facebook_url", value)} />
-      <Field label="Zalo" value={contact.zalo_phone} onChange={(value) => update("zalo_phone", value.replace(/[^0-9+]/g, ""))} />
+      <Field label="Zalo OA (URL hoặc SĐT)" value={contact.zalo_phone} onChange={(value) => update("zalo_phone", value)} />
     </>
   );
 }

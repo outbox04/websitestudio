@@ -33,9 +33,10 @@ export default async function PublicLayout({ children }: { children: ReactNode }
   return (
     <>
       <TloraPublicPreviewBridge />
-      <SiteHeader navItems={navItems} />
+      <SiteHeader navItems={navItems} contact={contact} />
       <main>{children}</main>
       <SiteFooter contact={contact} />
+      <div className="h-20 lg:hidden" aria-hidden="true" />
     </>
   );
 }
