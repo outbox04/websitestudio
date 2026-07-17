@@ -171,11 +171,7 @@ export function SiteFooter({ contact }: { contact?: { siteName?: string; descrip
             <p className="home-eyebrow">Trải nghiệm</p>
             <p className="mt-4">Tư vấn concept theo phong cách riêng</p>
             <p>Chọn ảnh trực tuyến và nhận album riêng tư</p>
-            <Link href="#top" className="mt-5 inline-flex min-h-11 items-center gap-2 font-bold text-[#f5f1e8] transition hover:text-[#f0d38a]">Lên đầu trang <ArrowRight className="-rotate-45" size={16} aria-hidden="true" /></Link>
           </div>
-        </div>
-        <div className="mx-auto max-w-7xl overflow-hidden border-t border-white/10 px-5 pt-8 sm:px-8 lg:px-10">
-          <p aria-hidden="true" className="home-editorial-title translate-y-[14%] text-center text-[clamp(5rem,20vw,17rem)] leading-[.72] tracking-[-.07em] text-white/[.055]">TLORA</p>
         </div>
         <div className="mx-auto flex max-w-7xl flex-col gap-4 border-t border-white/10 px-5 py-5 text-xs sm:flex-row sm:items-center sm:justify-between sm:px-8 lg:px-10">
           <p>© {new Date().getFullYear()} {contact?.siteName || "TLORA Studio"}. Bảo lưu mọi quyền.</p>

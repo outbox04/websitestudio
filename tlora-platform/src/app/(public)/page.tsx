@@ -5,6 +5,7 @@ import Link from "next/link";
 import { unstable_cache } from "next/cache";
 import { ConceptAlbumCard } from "@/components/public/concept-album-card";
 import { HomeStickyCta } from "@/components/public/home-sticky-cta";
+import { MobileCarousel } from "@/components/public/mobile-carousel";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { tloraPublicCacheTags } from "@/lib/tlora-public-cache";
 import { listPublishedTloraConceptAlbums } from "@/repositories/tlora/concept-albums-repository";
@@ -259,17 +260,17 @@ export default async function HomePage() {
         <section hidden={publishedSections.gallery?.isEnabled === false} id="mood" data-cms-section-root="gallery" className="bg-[var(--home-background-secondary)] px-5 py-20 sm:px-8 sm:py-28 lg:px-10 lg:py-36">
           <div className="mx-auto max-w-7xl">
             <div className="max-w-3xl"><p className="home-eyebrow">Selected collections</p><h2 data-cms-section="gallery" data-cms-field="title" className="home-editorial-title mt-4 text-[clamp(2.5rem,10vw,4.8rem)] leading-none">{String(publishedGallery.title || "Album chọn lọc")}</h2><p data-cms-section="gallery" data-cms-field="description" className="mt-5 text-base leading-7 text-[var(--home-text-secondary)]">{String(publishedGallery.description || "Sáu album concept tiêu biểu được tuyển chọn từ thư viện TLORA.")}</p></div>
-            <div className="-mx-5 mt-10 flex snap-x snap-mandatory gap-4 overflow-x-auto px-5 pb-6 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:-mx-8 sm:px-8 lg:mx-0 lg:grid lg:grid-cols-3 lg:gap-7 lg:overflow-visible lg:px-0 [&>article]:w-[86vw] [&>article]:max-w-[390px] [&>article]:shrink-0 [&>article]:snap-start lg:[&>article]:w-auto lg:[&>article]:max-w-none">
+            <MobileCarousel label="Album chọn lọc" className="mt-4 lg:mt-10 lg:grid-cols-3 lg:gap-7">
               {selectedAlbums.map((album, index) => <ConceptAlbumCard key={album.id} album={album} order={index + 1} total={selectedAlbums.length} priority={false} />)}
               {!selectedAlbums.length && <p className="w-full rounded-xl border border-dashed border-white/15 p-8 text-[var(--home-text-muted)]">Chưa có Album Concept được xuất bản.</p>}
-            </div>
+            </MobileCarousel>
           </div>
         </section>
 
         <section hidden={publishedSections.services?.isEnabled === false} id="dich-vu" data-cms-section-root="services" className="px-5 py-20 sm:px-8 sm:py-28 lg:px-10 lg:py-36">
           <div className="mx-auto max-w-7xl">
             <div className="grid gap-5 lg:grid-cols-[.75fr_1.25fr] lg:items-end"><div><p className="home-eyebrow">TLORA Services</p><h2 data-cms-section="services" data-cms-field="title" className="home-editorial-title mt-4 text-[clamp(2.5rem,10vw,5rem)] leading-none">{String(publishedServices.title || "Ba concept, một tiêu chuẩn giá trị")}</h2></div><p data-cms-section="services" data-cms-field="description" className="max-w-2xl text-base leading-8 text-[var(--home-text-secondary)] lg:justify-self-end">{String(publishedServices.description || "Không có gói chụp đại trà. Mỗi dịch vụ được tính đúng theo công sức bỏ vào: tư vấn, set dựng, trang phục, ánh sáng và hậu kỳ.")}</p></div>
-            <div className="-mx-5 mt-12 flex snap-x snap-mandatory gap-4 overflow-x-auto px-5 pb-6 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:-mx-8 sm:px-8 lg:mx-0 lg:grid lg:grid-cols-3 lg:gap-6 lg:overflow-visible lg:px-0">{services.map((service) => <ServiceSection key={service.id} service={service} content={publishedServices} />)}</div>
+            <MobileCarousel label="Dịch vụ TLORA" className="mt-4 lg:mt-12 lg:grid-cols-3 lg:gap-6">{services.map((service) => <ServiceSection key={service.id} service={service} content={publishedServices} />)}</MobileCarousel>
           </div>
 
           <div className="mx-auto mt-24 max-w-7xl border-t border-white/10 pt-20 sm:mt-32 sm:pt-24">
@@ -282,7 +283,7 @@ export default async function HomePage() {
 
         <section className="bg-[var(--home-background-secondary)] px-5 py-20 sm:px-8 sm:py-28 lg:px-10 lg:py-36">
           <div className="mx-auto max-w-7xl"><p className="home-eyebrow">Client notes</p><h2 data-cms-section="about" data-cms-field="text.testimonials.title" className="home-editorial-title mt-4 max-w-[12ch] text-[clamp(2.5rem,10vw,4.8rem)] leading-none">{cmsText(publishedAbout, "testimonials.title", "Phản hồi sau buổi chụp")}</h2>
-            <div className="-mx-5 mt-10 flex snap-x snap-mandatory gap-4 overflow-x-auto px-5 pb-5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:-mx-8 sm:px-8 lg:mx-0 lg:grid lg:grid-cols-3 lg:px-0">{[["Mình từng nghĩ ảnh sinh nhật chỉ cần thổi nến cho có. Đến lúc nhận ảnh mới thấy giá trị mình bỏ ra hoàn toàn xứng đáng.", "Khách chụp Sinh nhật, tuổi 22"], ["Ảnh retouch vẫn là mặt mình, chỉ là phiên bản sáng và mịn hơn, không bị lạ như nhiều nơi mình từng chụp.", "Khách chụp Beauty Concept"], ["Ba set bối cảnh trong một buổi giúp mình có đủ ảnh cho cả tháng làm content, không phải đặt lịch lại nhiều lần.", "Khách chụp Concept Trang Phục"]].map(([quote, person], index) => <article key={person} className="flex min-h-[310px] w-[86vw] max-w-[390px] shrink-0 snap-start flex-col justify-between rounded-[20px] border border-white/10 bg-[var(--home-background-elevated)] p-7 lg:w-auto lg:max-w-none"><span className="home-editorial-title text-5xl leading-none text-[var(--home-accent-gold)]">“</span><p data-cms-section="about" data-cms-field={`text.testimonials.${index}.quote`} className="home-editorial-title text-2xl leading-[1.35]">{cmsText(publishedAbout, `testimonials.${index}.quote`, quote)}</p><p data-cms-section="about" data-cms-field={`text.testimonials.${index}.person`} className="mt-7 text-xs font-bold uppercase tracking-[.12em] text-[var(--home-text-muted)]">— {cmsText(publishedAbout, `testimonials.${index}.person`, person)}</p></article>)}</div>
+            <MobileCarousel label="Phản hồi khách hàng" className="mt-4 lg:mt-10 lg:grid-cols-3 lg:gap-4">{[["Mình từng nghĩ ảnh sinh nhật chỉ cần thổi nến cho có. Đến lúc nhận ảnh mới thấy giá trị mình bỏ ra hoàn toàn xứng đáng.", "Khách chụp Sinh nhật, tuổi 22"], ["Ảnh retouch vẫn là mặt mình, chỉ là phiên bản sáng và mịn hơn, không bị lạ như nhiều nơi mình từng chụp.", "Khách chụp Beauty Concept"], ["Ba set bối cảnh trong một buổi giúp mình có đủ ảnh cho cả tháng làm content, không phải đặt lịch lại nhiều lần.", "Khách chụp Concept Trang Phục"]].map(([quote, person], index) => <article key={person} className="flex min-h-[310px] flex-col justify-between rounded-[20px] border border-white/10 bg-[var(--home-background-elevated)] p-7"><span className="home-editorial-title text-5xl leading-none text-[var(--home-accent-gold)]">“</span><p data-cms-section="about" data-cms-field={`text.testimonials.${index}.quote`} className="home-editorial-title text-2xl leading-[1.35]">{cmsText(publishedAbout, `testimonials.${index}.quote`, quote)}</p><p data-cms-section="about" data-cms-field={`text.testimonials.${index}.person`} className="mt-7 text-xs font-bold uppercase tracking-[.12em] text-[var(--home-text-muted)]">— {cmsText(publishedAbout, `testimonials.${index}.person`, person)}</p></article>)}</MobileCarousel>
           </div>
         </section>
 
