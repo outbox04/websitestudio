@@ -1,9 +1,10 @@
-import { ArrowRight, Check, ChevronDown } from "lucide-react";
+import { ArrowRight, ArrowUpRight, Check, Images, Sparkles } from "lucide-react";
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { cache } from "react";
 import { ConceptAlbumCard } from "@/components/public/concept-album-card";
+import { HomeStickyCta } from "@/components/public/home-sticky-cta";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { listPublishedTloraConceptAlbums } from "@/repositories/tlora/concept-albums-repository";
 
@@ -191,6 +192,7 @@ export default async function HomePage() {
   const publishedGallery = publishedSections.gallery?.isEnabled ? publishedSections.gallery.content : {};
   const publishedContact = publishedSections.contact?.isEnabled ? publishedSections.contact.content : {};
   const heroImagePosition = typeof publishedHero.imagePosition === "string" ? publishedHero.imagePosition : "62% 50%";
+  const featuredAlbum = selectedAlbums[0];
   const structuredData = {
     "@context": "https://schema.org",
     "@type": "WebSite",
@@ -203,237 +205,129 @@ export default async function HomePage() {
   return (
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }} />
-      <div className="bg-[#14110f] text-[#f4ece0]">
-      <section hidden={publishedSections.hero?.isEnabled === false} data-cms-section-root="hero" className="relative min-h-[calc(100svh-73px)] overflow-hidden px-4 py-16 sm:px-6 sm:py-20 lg:px-8 lg:py-28">
-        <Image
-          data-cms-section="hero"
-          data-cms-field="image"
-          data-cms-image-url={String(publishedHero.image || "/concept/concept-14.webp")}
-          data-cms-image-position={heroImagePosition}
-          src={String(publishedHero.image || "/concept/concept-14.webp")}
-          alt="Ảnh nền concept studio TLORA"
-          fill
-          priority
-          unoptimized={Boolean(publishedHero.image)}
-          sizes="100vw"
-          className="object-cover"
-          style={{ objectPosition: heroImagePosition }}
-        />
-        <div className="pointer-events-none absolute inset-0 bg-[#14110f]/72 sm:bg-[#14110f]/58" />
-        <div className="pointer-events-none absolute inset-0 bg-linear-to-r from-[#14110f] via-[#14110f]/86 to-[#14110f]/25" />
-        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-48 bg-linear-to-t from-[#14110f] to-transparent" />
-        <div className="pointer-events-none absolute -right-28 -top-28 size-96 rounded-full border border-[#f4ece0]/10 opacity-45 lg:size-[480px]" />
-        <div className="relative mx-auto max-w-6xl">
-          <h1 data-cms-section="hero" data-cms-field="title" className="max-w-4xl pt-10 font-heading text-4xl font-extrabold leading-tight text-[#f4ece0] sm:pt-16 sm:text-5xl lg:pt-24 lg:text-7xl">
-            {String(publishedHero.title || "Mỗi set chụp là một concept dựng riêng cho bạn.")}
-          </h1>
-          <p data-cms-section="hero" data-cms-field="description" className="mt-6 max-w-2xl text-base leading-8 text-[#cbc0b0] sm:text-lg">
-            {String(publishedHero.description || "TLORA không chụp đại trà. Ba dịch vụ, một tiêu chuẩn duy nhất: ảnh nhận về phải xứng đáng với số tiền bạn bỏ ra.")}
-          </p>
-          <div className="mt-8 flex flex-col gap-3 sm:mt-9 sm:flex-row">
-            <Link data-cms-section="hero" data-cms-field="ctaHref" href={String(publishedHero.ctaHref || "/bang-gia")} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-full bg-[#f4ece0] px-5 text-sm font-bold text-[#14110f] transition hover:-translate-y-0.5">
-              <span data-cms-section="hero" data-cms-field="ctaLabel">{String(publishedHero.ctaLabel || "Đặt lịch tư vấn")}</span> <ArrowRight size={16} />
-            </Link>
-            <PillLink href="#mood">Xem mood ảnh mẫu</PillLink>
-          </div>
-          <div className="mt-10 flex flex-wrap items-center gap-3 sm:mt-12">
-            <span className="w-full font-mono text-xs uppercase tracking-[0.14em] text-[#cbc0b0] sm:w-auto">Bạn đang tìm gì?</span>
-            {services.map((service, index) => (
-              <a
-                key={service.id}
-                href={`#${service.id}`}
-                className="rounded-full border border-[#f4ece0]/12 px-4 py-2 text-sm font-semibold text-[#f4ece0] shadow-lg shadow-black/20 transition hover:-translate-y-0.5"
-                style={{ backgroundColor: service.soft, borderColor: service.accent }}
-              >
-                <span className="mr-2 inline-block size-2 rounded-full align-middle" style={{ backgroundColor: service.accent }} />
-                <span data-cms-section="hero" data-cms-field={`text.quickLink.${index}`}>{cmsText(publishedHero, `quickLink.${index}`, service.label === "CONCEPT TRANG PHỤC" ? "Concept trang phục" : service.label.charAt(0) + service.label.slice(1).toLowerCase())}</span>
-              </a>
-            ))}
-          </div>
-          <ul className="mt-8 grid gap-3 border-t border-[#f4ece0]/12 pt-6 sm:mt-9 sm:grid-cols-3">
-            {trustItems.map((item, index) => (
-              <li key={item} className="flex items-center gap-2 text-sm text-[#cbc0b0]">
-                <Check size={16} className="text-[#c99a5e]" />
-                <span data-cms-section="hero" data-cms-field={`text.trust.${index}`}>{cmsText(publishedHero, `trust.${index}`, item)}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
-      </section>
-
-      <section hidden={publishedSections.services?.isEnabled === false} id="dich-vu" data-cms-section-root="services" className="px-4 pb-8 pt-14 text-center sm:px-6 sm:pb-10 sm:pt-16 lg:px-8">
-        <div className="mx-auto max-w-4xl">
-          <h2 data-cms-section="services" data-cms-field="title" className="font-heading text-3xl font-extrabold text-[#f4ece0] md:text-5xl">{String(publishedServices.title || "Ba concept, một tiêu chuẩn giá trị")}</h2>
-          <p data-cms-section="services" data-cms-field="description" className="mx-auto mt-5 max-w-2xl text-base leading-7 text-[#cbc0b0]">
-            {String(publishedServices.description || "Không có gói chụp đại trà. Mỗi dịch vụ được tính đúng theo công sức bỏ vào: tư vấn, set dựng, trang phục, ánh sáng và hậu kỳ.")}
-          </p>
-        </div>
-      </section>
-
-      {services.map((service) => (
-        <ServiceSection key={service.id} service={service} content={publishedServices} />
-      ))}
-
-      <section className="bg-[#1c1813] px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
-        <div className="mx-auto max-w-6xl text-center">
-          <h2 data-cms-section="services" data-cms-field="text.process.title" className="font-heading text-3xl font-extrabold text-[#f4ece0] md:text-5xl">{cmsText(publishedServices, "process.title", "Từ lúc đặt lịch đến khi nhận ảnh")}</h2>
-          <p data-cms-section="services" data-cms-field="text.process.description" className="mx-auto mt-5 max-w-2xl text-base leading-7 text-[#cbc0b0]">
-            {cmsText(publishedServices, "process.description", "Năm bước, không có công đoạn nào bị giấu đi. Bạn biết mình đang ở đâu trong quy trình tại mọi thời điểm.")}
-          </p>
-          <div className="mt-10 grid overflow-hidden rounded-2xl border border-[#f4ece0]/12 bg-[#f4ece0]/12 sm:grid-cols-2 lg:mt-12 lg:grid-cols-5">
-            {processSteps.map(([step, title, description]) => (
-              <article key={step} className="bg-[#14110f] p-6 text-left">
-                <span className="font-mono text-xs text-[#8c8174]">{step}</span>
-                <h3 data-cms-section="services" data-cms-field={`text.process.${step}.title`} className="mt-5 font-heading text-lg font-bold text-[#f4ece0]">{cmsText(publishedServices, `process.${step}.title`, title)}</h3>
-                <p data-cms-section="services" data-cms-field={`text.process.${step}.description`} className="mt-3 text-sm leading-6 text-[#8c8174]">{cmsText(publishedServices, `process.${step}.description`, description)}</p>
-              </article>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <section hidden={publishedSections.about?.isEnabled === false} data-cms-section-root="about" className="px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
-        <div className="mx-auto max-w-6xl text-center">
-          <h2 data-cms-section="about" data-cms-field="title" className="mx-auto max-w-4xl font-heading text-3xl font-extrabold text-[#f4ece0] md:text-5xl">
-            {String(publishedAbout.title || "TLORA giữ buổi chụp riêng tư, rõ ràng và tôn trọng cá tính từng người")}
-          </h2>
-          <p data-cms-section="about" data-cms-field="description" className="mx-auto mt-5 max-w-2xl text-base leading-7 text-[#cbc0b0]">
-            {String(publishedAbout.description || "Trải nghiệm nhiếp ảnh được thiết kế theo cá tính của từng khách hàng.")}
-          </p>
-          <div className="mt-10 grid gap-4 sm:gap-6 md:grid-cols-3 lg:mt-12">
-            {whyCards.map(([title, description], index) => (
-              <article key={title} className="rounded-2xl border border-[#f4ece0]/12 p-8 text-left">
-                <h3 data-cms-section="about" data-cms-field={`text.value.${index}.title`} className="font-heading text-xl font-bold text-[#f4ece0]">{cmsText(publishedAbout, `value.${index}.title`, title)}</h3>
-                <p data-cms-section="about" data-cms-field={`text.value.${index}.description`} className="mt-3 text-sm leading-7 text-[#8c8174]">{cmsText(publishedAbout, `value.${index}.description`, description)}</p>
-              </article>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <section hidden={publishedSections.gallery?.isEnabled === false} id="mood" data-cms-section-root="gallery" className="bg-[#1c1813] px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
-        <div className="mx-auto max-w-6xl text-center">
-          <h2 data-cms-section="gallery" data-cms-field="title" className="font-heading text-3xl font-extrabold text-[#f4ece0] md:text-5xl">{String(publishedGallery.title || "Album chọn lọc")}</h2>
-          <p data-cms-section="gallery" data-cms-field="description" className="mx-auto mt-5 max-w-2xl text-base leading-7 text-[#cbc0b0]">
-            {String(publishedGallery.description || "Sáu album concept tiêu biểu được tuyển chọn từ thư viện TLORA.")}
-          </p>
-          <div className="mt-10 grid gap-7 text-left sm:grid-cols-2 lg:mt-12 lg:grid-cols-3">
-            {selectedAlbums.map((album, index) => <ConceptAlbumCard key={album.id} album={album} order={index + 1} total={selectedAlbums.length} priority={index === 0} />)}
-            {!selectedAlbums.length && <p className="col-span-full rounded-xl border border-dashed border-white/15 p-8 text-[#8c8174]">Chưa có Album Concept được xuất bản.</p>}
-          </div>
-        </div>
-      </section>
-
-      <section className="px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
-        <div className="mx-auto max-w-6xl text-center">
-          <h2 data-cms-section="about" data-cms-field="text.testimonials.title" className="font-heading text-3xl font-extrabold text-[#f4ece0] md:text-5xl">{cmsText(publishedAbout, "testimonials.title", "Phản hồi sau buổi chụp")}</h2>
-          <div className="mt-10 grid gap-5 md:grid-cols-3 lg:mt-12 lg:gap-6">
-            {[
-              ["Mình từng nghĩ ảnh sinh nhật chỉ cần thổi nến cho có. Đến lúc nhận ảnh mới thấy giá trị mình bỏ ra hoàn toàn xứng đáng.", "Khách chụp Sinh nhật, tuổi 22"],
-              ["Ảnh retouch vẫn là mặt mình, chỉ là phiên bản sáng và mịn hơn, không bị lạ như nhiều nơi mình từng chụp.", "Khách chụp Beauty Concept"],
-              ["Ba set bối cảnh trong một buổi giúp mình có đủ ảnh cho cả tháng làm content, không phải đặt lịch lại nhiều lần.", "Khách chụp Concept Trang Phục"],
-            ].map(([quote, person], index) => (
-              <article key={person} className="rounded-2xl border border-[#f4ece0]/12 bg-[#1c1813] p-7 text-left">
-                <p data-cms-section="about" data-cms-field={`text.testimonials.${index}.quote`} className="font-heading text-xl italic leading-8 text-[#f4ece0]">{cmsText(publishedAbout, `testimonials.${index}.quote`, quote)}</p>
-                <p data-cms-section="about" data-cms-field={`text.testimonials.${index}.person`} className="mt-5 font-mono text-xs text-[#8c8174]">- {cmsText(publishedAbout, `testimonials.${index}.person`, person)}</p>
-              </article>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <section className="bg-[#1c1813] px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
-        <div className="mx-auto max-w-4xl text-center">
-          <h2 data-cms-section="contact" data-cms-field="text.faq.title" className="font-heading text-3xl font-extrabold text-[#f4ece0] md:text-5xl">{cmsText(publishedContact, "faq.title", "Những điều khách thường hỏi trước khi đặt lịch")}</h2>
-          <div className="mt-10 text-left">
-            {faqs.map(([question, answer], index) => (
-              <details key={question} open={index === 0} className="group border-b border-[#f4ece0]/12 py-5">
-                <summary className="flex cursor-pointer list-none items-center justify-between gap-4 text-base font-semibold text-[#f4ece0]">
-                  <span data-cms-section="contact" data-cms-field={`text.faq.${index}.question`}>{cmsText(publishedContact, `faq.${index}.question`, question)}</span>
-                  <ChevronDown size={18} className="shrink-0 text-[#8c8174] transition group-open:rotate-180" />
-                </summary>
-                <p data-cms-section="contact" data-cms-field={`text.faq.${index}.answer`} className="mt-4 max-w-2xl text-sm leading-7 text-[#8c8174]">{cmsText(publishedContact, `faq.${index}.answer`, answer)}</p>
-              </details>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <section hidden={publishedSections.contact?.isEnabled === false} data-cms-section-root="contact" className="px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
-        <div className="relative mx-auto max-w-5xl overflow-hidden rounded-[32px] border border-[#f4ece0]/12 bg-[#1c1813] px-6 py-16 text-center sm:px-10">
-          <div className="absolute inset-x-0 top-0 h-56 bg-radial-[ellipse_at_top] from-[#c99a5e]/18 to-transparent" />
-          <div className="relative">
-            <h2 data-cms-section="contact" data-cms-field="title" className="mx-auto max-w-3xl font-heading text-3xl font-extrabold text-[#f4ece0] md:text-5xl">
-              {String(publishedContact.title || "Sẵn sàng có một bộ ảnh thể hiện đúng cá tính của bạn?")}
-            </h2>
-            <p data-cms-section="contact" data-cms-field="description" className="mx-auto mt-5 max-w-2xl text-base leading-7 text-[#cbc0b0]">
-              {String(publishedContact.description || "Xem giá chụp, chuẩn bị lịch trình và để TLORA lo phần concept. Bạn chỉ cần tới đúng giờ.")}
+      <div id="top" className="home-luxury">
+        <section hidden={publishedSections.hero?.isEnabled === false} id="home-hero" data-cms-section-root="hero" className="relative flex min-h-svh items-end overflow-hidden px-5 pb-10 pt-28 sm:px-8 sm:pb-14 lg:px-10 lg:pb-16">
+          <Image data-cms-section="hero" data-cms-field="image" data-cms-image-url={String(publishedHero.image || "/concept/concept-14.webp")} data-cms-image-position={heroImagePosition} src={String(publishedHero.image || "/concept/concept-14.webp")} alt="Chân dung concept tại TLORA Studio" fill priority unoptimized={Boolean(publishedHero.image)} sizes="100vw" className="home-hero-image object-cover" style={{ objectPosition: heroImagePosition }} />
+          <div className="pointer-events-none absolute inset-0 bg-linear-to-b from-[#08090b]/58 via-transparent to-[#08090b]/92" />
+          <div className="pointer-events-none absolute inset-0 bg-linear-to-r from-[#08090b]/78 via-[#08090b]/22 to-transparent lg:via-transparent" />
+          <div className="home-hero-copy relative mx-auto w-full max-w-7xl">
+            <p className="home-eyebrow">TLORA Portrait Studio</p>
+            <h1 data-cms-section="hero" data-cms-field="title" className="home-editorial-title mt-4 max-w-[10ch] text-[clamp(2.65rem,12vw,5rem)] leading-[.98] text-[var(--home-text-primary)] sm:max-w-[12ch] lg:max-w-[13ch] lg:text-[clamp(5rem,7.4vw,7rem)] lg:leading-[.95]">
+              {String(publishedHero.title || "Mỗi set chụp là một concept dựng riêng cho bạn.")}
+            </h1>
+            <p data-cms-section="hero" data-cms-field="description" className="mt-6 max-w-xl text-base leading-7 text-[var(--home-text-secondary)] sm:text-lg sm:leading-8">
+              {String(publishedHero.description || "TLORA không chụp đại trà. Ba dịch vụ, một tiêu chuẩn duy nhất: ảnh nhận về phải xứng đáng với số tiền bạn bỏ ra.")}
             </p>
-            <div className="mt-9 flex flex-col justify-center gap-3 sm:flex-row">
-              <PillLink href="/bang-gia" tone="light">
-                <span data-cms-section="contact" data-cms-field="text.cta.primary">{cmsText(publishedContact, "cta.primary", "Đặt lịch tư vấn")}</span> <ArrowRight size={16} />
-              </PillLink>
-              <PillLink href="#dich-vu"><span data-cms-section="contact" data-cms-field="text.cta.secondary">{cmsText(publishedContact, "cta.secondary", "Xem lại 3 dịch vụ")}</span></PillLink>
+            <div className="mt-7 flex flex-col gap-3 min-[430px]:flex-row">
+              <Link data-cms-section="hero" data-cms-field="ctaHref" href={String(publishedHero.ctaHref || "/bang-gia")} className="home-button-primary px-6">
+                <span data-cms-section="hero" data-cms-field="ctaLabel">{String(publishedHero.ctaLabel || "Đặt lịch tư vấn")}</span><ArrowRight size={17} aria-hidden="true" />
+              </Link>
+              <PillLink href="#mood">Xem mood ảnh mẫu</PillLink>
+            </div>
+            <ul className="mt-8 grid max-w-3xl gap-2 border-t border-white/10 pt-5 sm:grid-cols-3">
+              {trustItems.map((item, index) => <li key={item} className="flex items-center gap-2 text-sm text-[var(--home-text-secondary)]"><Check size={15} className="text-[var(--home-accent-gold)]" aria-hidden="true" /><span data-cms-section="hero" data-cms-field={`text.trust.${index}`}>{cmsText(publishedHero, `trust.${index}`, item)}</span></li>)}
+            </ul>
+          </div>
+        </section>
+
+        <div className="overflow-hidden border-y border-white/10 bg-[var(--home-background-secondary)] py-4" aria-label="Phong cách TLORA">
+          <div className="home-marquee-track flex items-center text-sm font-semibold uppercase tracking-[.2em] text-[var(--home-text-secondary)]">
+            {[0, 1].map((copy) => <div key={copy} aria-hidden={copy === 1} className="flex shrink-0 items-center">{["Fashion", "Beauty", "Portrait", "Personal Story", "TLORA"].map((word) => <span key={`${copy}-${word}`} className="flex items-center"><i className="mx-5 size-1 not-italic bg-[var(--home-accent-gold)]" />{word}</span>)}</div>)}
+          </div>
+        </div>
+
+        <section hidden={publishedSections.about?.isEnabled === false} data-cms-section-root="about" className="px-5 py-20 sm:px-8 sm:py-28 lg:px-10 lg:py-36">
+          <div className="mx-auto grid max-w-7xl gap-12 lg:grid-cols-[.9fr_1.1fr] lg:items-center lg:gap-20">
+            <div className="relative mx-auto w-full max-w-xl pb-12 pr-8 sm:pb-16 sm:pr-14">
+              <div className="relative aspect-[4/5] overflow-hidden rounded-[22px] bg-[var(--home-background-elevated)]"><Image src={cmsImage(publishedServices, "service.beauty", services[1].image)} alt="Chân dung beauty editorial tại TLORA" fill sizes="(min-width: 1024px) 42vw, 90vw" unoptimized={Boolean(cmsImage(publishedServices, "service.beauty", ""))} className="object-cover" /></div>
+              <div className="absolute bottom-0 right-0 aspect-[3/4] w-[38%] overflow-hidden rounded-[18px] border-[6px] border-[var(--home-background-primary)] bg-[var(--home-background-elevated)]"><Image src={cmsImage(publishedServices, "service.concept", services[2].image)} alt="Chi tiết concept thời trang TLORA" fill sizes="25vw" unoptimized={Boolean(cmsImage(publishedServices, "service.concept", ""))} className="object-cover" /></div>
+            </div>
+            <div>
+              <p className="home-eyebrow">We don&apos;t just take photos</p>
+              <h2 data-cms-section="about" data-cms-field="title" className="home-editorial-title mt-5 max-w-[15ch] text-[clamp(2.4rem,9vw,4.4rem)] leading-[1.02]">{String(publishedAbout.title || "TLORA giữ buổi chụp riêng tư, rõ ràng và tôn trọng cá tính từng người")}</h2>
+              <p data-cms-section="about" data-cms-field="description" className="mt-6 max-w-xl text-base leading-8 text-[var(--home-text-secondary)]">{String(publishedAbout.description || "Trải nghiệm nhiếp ảnh được thiết kế theo cá tính của từng khách hàng.")}</p>
+              <div className="mt-10 grid gap-7 border-t border-white/10 pt-8 sm:grid-cols-3 lg:grid-cols-1 xl:grid-cols-3">
+                {whyCards.map(([title, description], index) => <article key={title}><span className="home-eyebrow">0{index + 1}</span><h3 data-cms-section="about" data-cms-field={`text.value.${index}.title`} className="mt-3 text-lg font-bold">{cmsText(publishedAbout, `value.${index}.title`, title)}</h3><p data-cms-section="about" data-cms-field={`text.value.${index}.description`} className="mt-2 text-sm leading-6 text-[var(--home-text-muted)]">{cmsText(publishedAbout, `value.${index}.description`, description)}</p></article>)}
+              </div>
             </div>
           </div>
-        </div>
-      </section>
+        </section>
+
+        <section hidden={publishedSections.gallery?.isEnabled === false} id="mood" data-cms-section-root="gallery" className="bg-[var(--home-background-secondary)] px-5 py-20 sm:px-8 sm:py-28 lg:px-10 lg:py-36">
+          {featuredAlbum && <div className="mx-auto grid max-w-7xl overflow-hidden rounded-[22px] border border-[var(--home-border-default)] bg-[var(--home-background-primary)] lg:grid-cols-[1.35fr_.65fr]">
+            <div className="relative min-h-[62svh] overflow-hidden sm:min-h-[720px] lg:min-h-[760px]">
+              {featuredAlbum.coverImageUrl ? <Image src={featuredAlbum.coverImageUrl} alt={`Ảnh bìa album ${featuredAlbum.title}`} fill priority unoptimized sizes="(min-width: 1024px) 66vw, 100vw" className="object-contain" /> : <div className="absolute inset-0 grid place-items-center bg-[var(--home-background-elevated)] text-[var(--home-text-muted)]"><Images size={40} aria-hidden="true" /></div>}
+              <div className="pointer-events-none absolute inset-0 bg-linear-to-t from-[#08090b]/90 via-transparent to-[#08090b]/10" />
+              <div className="absolute inset-x-0 bottom-0 flex items-end justify-between gap-4 p-5 sm:p-8"><span className="inline-flex items-center gap-2 text-sm font-semibold"><Images size={18} className="text-[var(--home-accent-gold)]" aria-hidden="true" />{featuredAlbum.images.length} ảnh</span><span className="font-serif text-lg text-[var(--home-accent-gold-light)]">01 / {String(selectedAlbums.length).padStart(2, "0")}</span></div>
+            </div>
+            <div className="flex flex-col justify-center p-6 sm:p-10 lg:p-12">
+              <p className="home-eyebrow">{featuredAlbum.categoryName || "Featured Concept"}</p>
+              <h2 className="home-editorial-title mt-5 text-[clamp(2.6rem,9vw,5rem)] uppercase leading-[.95]">{featuredAlbum.title}</h2>
+              {featuredAlbum.excerpt && <p className="mt-6 line-clamp-3 text-base leading-7 text-[var(--home-text-secondary)]">{featuredAlbum.excerpt}</p>}
+              {featuredAlbum.tags.length > 0 && <div className="mt-7 flex flex-wrap gap-2">{featuredAlbum.tags.map((tag) => <span key={tag} className="inline-flex min-h-8 items-center gap-1.5 rounded-full border border-[var(--home-border-subtle)] px-3 text-xs text-[var(--home-accent-gold-light)]"><Sparkles size={11} aria-hidden="true" />{tag}</span>)}</div>}
+              <div className="mt-9 grid gap-3 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2"><Link href={`/album-concept?album=${encodeURIComponent(featuredAlbum.slug)}`} className="home-button-primary px-5">Xem bộ ảnh <ArrowRight size={17} aria-hidden="true" /></Link><Link href={`/album-concept?consult=${encodeURIComponent(featuredAlbum.slug)}`} className="home-button-secondary px-5">Tư vấn <ArrowUpRight size={17} aria-hidden="true" /></Link></div>
+            </div>
+          </div>}
+          <div className="mx-auto mt-20 max-w-7xl sm:mt-24">
+            <div className="max-w-3xl"><p className="home-eyebrow">Selected collections</p><h2 data-cms-section="gallery" data-cms-field="title" className="home-editorial-title mt-4 text-[clamp(2.5rem,10vw,4.8rem)] leading-none">{String(publishedGallery.title || "Album chọn lọc")}</h2><p data-cms-section="gallery" data-cms-field="description" className="mt-5 text-base leading-7 text-[var(--home-text-secondary)]">{String(publishedGallery.description || "Sáu album concept tiêu biểu được tuyển chọn từ thư viện TLORA.")}</p></div>
+            <div className="-mx-5 mt-10 flex snap-x snap-mandatory gap-4 overflow-x-auto px-5 pb-6 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:-mx-8 sm:px-8 lg:mx-0 lg:grid lg:grid-cols-3 lg:gap-7 lg:overflow-visible lg:px-0 [&>article]:w-[86vw] [&>article]:max-w-[390px] [&>article]:shrink-0 [&>article]:snap-start lg:[&>article]:w-auto lg:[&>article]:max-w-none">
+              {selectedAlbums.map((album, index) => <ConceptAlbumCard key={album.id} album={album} order={index + 1} total={selectedAlbums.length} priority={false} />)}
+              {!selectedAlbums.length && <p className="w-full rounded-xl border border-dashed border-white/15 p-8 text-[var(--home-text-muted)]">Chưa có Album Concept được xuất bản.</p>}
+            </div>
+          </div>
+        </section>
+
+        <section hidden={publishedSections.services?.isEnabled === false} id="dich-vu" data-cms-section-root="services" className="px-5 py-20 sm:px-8 sm:py-28 lg:px-10 lg:py-36">
+          <div className="mx-auto max-w-7xl">
+            <div className="grid gap-5 lg:grid-cols-[.75fr_1.25fr] lg:items-end"><div><p className="home-eyebrow">TLORA Services</p><h2 data-cms-section="services" data-cms-field="title" className="home-editorial-title mt-4 text-[clamp(2.5rem,10vw,5rem)] leading-none">{String(publishedServices.title || "Ba concept, một tiêu chuẩn giá trị")}</h2></div><p data-cms-section="services" data-cms-field="description" className="max-w-2xl text-base leading-8 text-[var(--home-text-secondary)] lg:justify-self-end">{String(publishedServices.description || "Không có gói chụp đại trà. Mỗi dịch vụ được tính đúng theo công sức bỏ vào: tư vấn, set dựng, trang phục, ánh sáng và hậu kỳ.")}</p></div>
+            <div className="-mx-5 mt-12 flex snap-x snap-mandatory gap-4 overflow-x-auto px-5 pb-6 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:-mx-8 sm:px-8 lg:mx-0 lg:grid lg:grid-cols-3 lg:gap-6 lg:overflow-visible lg:px-0">{services.map((service) => <ServiceSection key={service.id} service={service} content={publishedServices} />)}</div>
+          </div>
+
+          <div className="mx-auto mt-24 max-w-7xl border-t border-white/10 pt-20 sm:mt-32 sm:pt-24">
+            <div className="max-w-3xl"><p className="home-eyebrow">The experience</p><h2 data-cms-section="services" data-cms-field="text.process.title" className="home-editorial-title mt-4 text-[clamp(2.5rem,10vw,4.8rem)] leading-none">{cmsText(publishedServices, "process.title", "Từ lúc đặt lịch đến khi nhận ảnh")}</h2><p data-cms-section="services" data-cms-field="text.process.description" className="mt-5 text-base leading-7 text-[var(--home-text-secondary)]">{cmsText(publishedServices, "process.description", "Năm bước, không có công đoạn nào bị giấu đi. Bạn biết mình đang ở đâu trong quy trình tại mọi thời điểm.")}</p></div>
+            <ol className="relative mt-12 border-l border-[var(--home-border-subtle)] pl-7 sm:pl-10 lg:grid lg:grid-cols-5 lg:border-l-0 lg:border-t lg:pl-0 lg:pt-10">
+              {processSteps.map(([step, title, description]) => <li key={step} className="relative pb-10 last:pb-0 lg:px-5 lg:pb-0 first:lg:pl-0"><span className="absolute -left-[2.18rem] top-0 grid size-4 place-items-center rounded-full border-4 border-[var(--home-background-primary)] bg-[var(--home-accent-gold)] sm:-left-[2.68rem] lg:-top-12 lg:left-5 lg:size-5 first:lg:left-0" aria-hidden="true" /><span className="home-eyebrow">{step}</span><h3 data-cms-section="services" data-cms-field={`text.process.${step}.title`} className="mt-3 text-lg font-bold">{cmsText(publishedServices, `process.${step}.title`, title)}</h3><p data-cms-section="services" data-cms-field={`text.process.${step}.description`} className="mt-3 text-sm leading-6 text-[var(--home-text-muted)]">{cmsText(publishedServices, `process.${step}.description`, description)}</p></li>)}
+            </ol>
+          </div>
+        </section>
+
+        <section className="bg-[var(--home-background-secondary)] px-5 py-20 sm:px-8 sm:py-28 lg:px-10 lg:py-36">
+          <div className="mx-auto max-w-7xl"><p className="home-eyebrow">Client notes</p><h2 data-cms-section="about" data-cms-field="text.testimonials.title" className="home-editorial-title mt-4 max-w-[12ch] text-[clamp(2.5rem,10vw,4.8rem)] leading-none">{cmsText(publishedAbout, "testimonials.title", "Phản hồi sau buổi chụp")}</h2>
+            <div className="-mx-5 mt-10 flex snap-x snap-mandatory gap-4 overflow-x-auto px-5 pb-5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:-mx-8 sm:px-8 lg:mx-0 lg:grid lg:grid-cols-3 lg:px-0">{[["Mình từng nghĩ ảnh sinh nhật chỉ cần thổi nến cho có. Đến lúc nhận ảnh mới thấy giá trị mình bỏ ra hoàn toàn xứng đáng.", "Khách chụp Sinh nhật, tuổi 22"], ["Ảnh retouch vẫn là mặt mình, chỉ là phiên bản sáng và mịn hơn, không bị lạ như nhiều nơi mình từng chụp.", "Khách chụp Beauty Concept"], ["Ba set bối cảnh trong một buổi giúp mình có đủ ảnh cho cả tháng làm content, không phải đặt lịch lại nhiều lần.", "Khách chụp Concept Trang Phục"]].map(([quote, person], index) => <article key={person} className="flex min-h-[310px] w-[86vw] max-w-[390px] shrink-0 snap-start flex-col justify-between rounded-[20px] border border-white/10 bg-[var(--home-background-elevated)] p-7 lg:w-auto lg:max-w-none"><span className="home-editorial-title text-5xl leading-none text-[var(--home-accent-gold)]">“</span><p data-cms-section="about" data-cms-field={`text.testimonials.${index}.quote`} className="home-editorial-title text-2xl leading-[1.35]">{cmsText(publishedAbout, `testimonials.${index}.quote`, quote)}</p><p data-cms-section="about" data-cms-field={`text.testimonials.${index}.person`} className="mt-7 text-xs font-bold uppercase tracking-[.12em] text-[var(--home-text-muted)]">— {cmsText(publishedAbout, `testimonials.${index}.person`, person)}</p></article>)}</div>
+          </div>
+        </section>
+
+        <section className="px-5 py-20 sm:px-8 sm:py-28 lg:px-10 lg:py-36">
+          <div className="mx-auto grid max-w-7xl gap-10 lg:grid-cols-[.75fr_1.25fr] lg:gap-20"><div><p className="home-eyebrow">Before your session</p><h2 data-cms-section="contact" data-cms-field="text.faq.title" className="home-editorial-title mt-4 text-[clamp(2.5rem,10vw,4.8rem)] leading-none">{cmsText(publishedContact, "faq.title", "Những điều khách thường hỏi trước khi đặt lịch")}</h2></div><div>{faqs.map(([question, answer], index) => <details key={question} open={index === 0} className="group border-b border-white/10"><summary className="flex min-h-20 cursor-pointer list-none items-center justify-between gap-5 py-5 text-base font-semibold focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--home-accent-gold)]"><span data-cms-section="contact" data-cms-field={`text.faq.${index}.question`}>{cmsText(publishedContact, `faq.${index}.question`, question)}</span><span aria-hidden="true" className="grid size-10 shrink-0 place-items-center rounded-full border border-white/10 text-xl font-light text-[var(--home-accent-gold)] transition duration-[var(--motion-normal)] group-open:rotate-45">+</span></summary><p data-cms-section="contact" data-cms-field={`text.faq.${index}.answer`} className="max-w-2xl pb-6 pr-14 text-sm leading-7 text-[var(--home-text-muted)]">{cmsText(publishedContact, `faq.${index}.answer`, answer)}</p></details>)}</div></div>
+        </section>
+
+        <section hidden={publishedSections.contact?.isEnabled === false} id="home-final-cta" data-cms-section-root="contact" className="px-5 pb-20 sm:px-8 sm:pb-28 lg:px-10 lg:pb-36">
+          <div className="relative mx-auto min-h-[520px] max-w-7xl overflow-hidden rounded-[22px] border border-white/10 px-6 py-16 sm:px-10 lg:flex lg:items-center lg:px-16">
+            <Image src={cmsImage(publishedServices, "service.sinh-nhat", services[0].image)} alt="Concept chân dung TLORA" fill sizes="100vw" unoptimized={Boolean(cmsImage(publishedServices, "service.sinh-nhat", ""))} className="object-cover" />
+            <div className="absolute inset-0 bg-linear-to-r from-[#08090b]/95 via-[#08090b]/78 to-[#08090b]/28" />
+            <div className="relative max-w-3xl"><p className="home-eyebrow">Create your story</p><h2 data-cms-section="contact" data-cms-field="title" className="home-editorial-title mt-5 text-[clamp(2.7rem,11vw,5.4rem)] leading-[.95]">{String(publishedContact.title || "Sẵn sàng có một bộ ảnh thể hiện đúng cá tính của bạn?")}</h2><p data-cms-section="contact" data-cms-field="description" className="mt-6 max-w-xl text-base leading-7 text-[var(--home-text-secondary)]">{String(publishedContact.description || "Xem giá chụp, chuẩn bị lịch trình và để TLORA lo phần concept. Bạn chỉ cần tới đúng giờ.")}</p><div className="mt-8 flex flex-col gap-3 min-[430px]:flex-row"><PillLink href="/bang-gia" tone="light"><span data-cms-section="contact" data-cms-field="text.cta.primary">{cmsText(publishedContact, "cta.primary", "Đặt lịch tư vấn")}</span><ArrowRight size={16} aria-hidden="true" /></PillLink><PillLink href="#dich-vu"><span data-cms-section="contact" data-cms-field="text.cta.secondary">{cmsText(publishedContact, "cta.secondary", "Xem lại 3 dịch vụ")}</span></PillLink></div></div>
+          </div>
+        </section>
       </div>
+      <HomeStickyCta bookingHref={String(publishedHero.ctaHref || "/bang-gia")} />
     </>
   );
 }
 
 function ServiceSection({ service, content }: { service: (typeof services)[number]; content: Record<string, unknown> }) {
   return (
-    <section id={service.id} className="border-t border-[#f4ece0]/12 px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
-      <div className="mx-auto grid max-w-6xl gap-8 md:grid-cols-2 lg:grid-cols-[0.85fr_1fr_1fr] lg:items-start">
-        <div className="lg:sticky lg:top-28">
-          <div className="relative aspect-4/5 overflow-hidden rounded-[26px] border border-[#f4ece0]/12">
-            <Image data-cms-section="services" data-cms-field={`images.service.${service.id}`} data-cms-image-url={cmsImage(content, `service.${service.id}`, service.image)} src={cmsImage(content, `service.${service.id}`, service.image)} alt={service.title} fill unoptimized={Boolean(cmsImage(content, `service.${service.id}`, ""))} sizes="(min-width: 1024px) 30vw, 100vw" className="object-cover" />
-            <div className="pointer-events-none absolute inset-0 bg-linear-to-t from-[#14110f]/70 via-transparent to-transparent" />
-            <span data-cms-section="services" data-cms-field={`text.service.${service.id}.mood`} className="absolute bottom-5 left-5 rounded-full border border-[#f4ece0]/20 bg-[#14110f]/55 px-4 py-2 font-mono text-xs tracking-[0.04em] text-[#f4ece0] backdrop-blur">
-              {cmsText(content, `service.${service.id}.mood`, service.mood)}
-            </span>
-          </div>
-          <div className="mt-4 flex flex-wrap gap-2">
-            {service.chips.map((chip, index) => (
-              <span key={chip} data-cms-section="services" data-cms-field={`text.service.${service.id}.chip.${index}`} className="rounded-full border border-[#f4ece0]/12 px-3 py-1 font-mono text-[11px] text-[#8c8174]">
-                {cmsText(content, `service.${service.id}.chip.${index}`, chip)}
-              </span>
-            ))}
-          </div>
-        </div>
-
-        <div>
-          <span data-cms-section="services" data-cms-field={`text.service.${service.id}.label`} className="font-mono text-xs uppercase tracking-[0.12em] text-[#8c8174]">
-            {cmsText(content, `service.${service.id}.label`, `${service.index} - ${service.label}`)}
-          </span>
-          <h3 data-cms-section="services" data-cms-field={`text.service.${service.id}.title`} className="mt-4 font-heading text-3xl font-extrabold leading-tight text-[#f4ece0] md:text-4xl">{cmsText(content, `service.${service.id}.title`, service.title)}</h3>
-          <p data-cms-section="services" data-cms-field={`text.service.${service.id}.description`} className="mt-5 text-base leading-8 text-[#cbc0b0]">{cmsText(content, `service.${service.id}.description`, service.description)}</p>
-          <p data-cms-section="services" data-cms-field={`text.service.${service.id}.who`} className="mt-6 border-l-2 pl-4 text-sm leading-7 text-[#8c8174]" style={{ borderColor: service.accent }}>
-            {cmsText(content, `service.${service.id}.who`, service.who)}
-          </p>
-          <ul className="mt-7 space-y-3">
-            {service.features.map((feature, index) => (
-              <li key={feature} className="flex gap-3 text-sm leading-6 text-[#cbc0b0]">
-                <span className="mt-2 size-1.5 shrink-0 rounded-full" style={{ backgroundColor: service.accent }} />
-                <span data-cms-section="services" data-cms-field={`text.service.${service.id}.feature.${index}`}>{cmsText(content, `service.${service.id}.feature.${index}`, feature)}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
-
-        <div className="md:col-span-2 lg:col-span-1">
-          <Receipt service={service} content={content} />
-        </div>
+    <article id={service.id} className="w-[86vw] max-w-[390px] shrink-0 snap-start overflow-hidden rounded-[20px] border border-white/10 bg-[var(--home-background-elevated)] lg:w-auto lg:max-w-none">
+      <div className="relative aspect-[4/5] overflow-hidden"><Image data-cms-section="services" data-cms-field={`images.service.${service.id}`} data-cms-image-url={cmsImage(content, `service.${service.id}`, service.image)} src={cmsImage(content, `service.${service.id}`, service.image)} alt={service.title} fill unoptimized={Boolean(cmsImage(content, `service.${service.id}`, ""))} sizes="(min-width: 1024px) 31vw, 86vw" className="object-cover transition duration-700 hover:scale-[1.025]" /><div className="pointer-events-none absolute inset-0 bg-linear-to-t from-[#08090b]/92 via-transparent to-transparent" /><span className="home-eyebrow absolute left-5 top-5">{service.index}</span><div className="absolute inset-x-0 bottom-0 p-5"><span data-cms-section="services" data-cms-field={`text.service.${service.id}.label`} className="home-eyebrow">{cmsText(content, `service.${service.id}.label`, service.label)}</span><h3 data-cms-section="services" data-cms-field={`text.service.${service.id}.title`} className="home-editorial-title mt-3 line-clamp-3 text-3xl leading-[1.05]">{cmsText(content, `service.${service.id}.title`, service.title)}</h3></div></div>
+      <div className="p-5"><p data-cms-section="services" data-cms-field={`text.service.${service.id}.description`} className="line-clamp-3 text-sm leading-6 text-[var(--home-text-secondary)]">{cmsText(content, `service.${service.id}.description`, service.description)}</p><ul className="mt-5 space-y-2">{service.features.map((feature, index) => <li key={feature} className="flex gap-2 text-sm leading-6 text-[var(--home-text-secondary)]"><Check size={14} className="mt-1 shrink-0 text-[var(--home-accent-gold)]" aria-hidden="true" /><span data-cms-section="services" data-cms-field={`text.service.${service.id}.feature.${index}`}>{cmsText(content, `service.${service.id}.feature.${index}`, feature)}</span></li>)}</ul><div className="mt-6 flex items-end justify-between gap-4 border-t border-white/10 pt-5"><div><span data-cms-section="services" data-cms-field={`text.service.${service.id}.payLabel`} className="text-xs text-[var(--home-text-muted)]">{cmsText(content, `service.${service.id}.payLabel`, "Bạn trả")}</span><p data-cms-section="services" data-cms-field={`text.service.${service.id}.price`} className="mt-1 text-xl font-bold text-[var(--home-accent-gold-light)]">{cmsText(content, `service.${service.id}.price`, service.price)}</p></div><Link href="/bang-gia" className="grid size-12 place-items-center rounded-md bg-[var(--home-accent-gold)] text-[var(--home-background-primary)]" aria-label={`Đặt lịch ${service.title}`}><ArrowUpRight size={19} aria-hidden="true" /></Link></div>
+        <details className="group mt-5 border-t border-white/10 pt-1"><summary className="flex min-h-12 cursor-pointer list-none items-center justify-between text-sm font-bold focus-visible:outline-2 focus-visible:outline-[var(--home-accent-gold)]">Xem đầy đủ quyền lợi <span aria-hidden="true" className="text-xl font-light text-[var(--home-accent-gold)] transition group-open:rotate-45">+</span></summary><div className="pb-1"><p data-cms-section="services" data-cms-field={`text.service.${service.id}.who`} className="mb-5 text-sm leading-6 text-[var(--home-text-muted)]">{cmsText(content, `service.${service.id}.who`, service.who)}</p><Receipt service={service} content={content} /></div></details>
       </div>
-    </section>
+    </article>
   );
 }
 
 function Receipt({ service, content }: { service: (typeof services)[number]; content: Record<string, unknown> }) {
   return (
-    <div className="rounded-t bg-[#f4ece0] px-5 pb-8 pt-7 text-[#241d14] shadow-2xl shadow-black/35 sm:-rotate-1 sm:px-6">
+    <div className="rounded-xl bg-[#f5f1e8] px-5 pb-7 pt-6 text-[#241d14] shadow-xl shadow-black/25">
       <div className="flex items-baseline justify-between gap-4 border-b border-dashed border-[#241d14]/35 pb-4">
         <span data-cms-section="services" data-cms-field={`text.service.${service.id}.receiptLabel`} className="font-mono text-[11px] uppercase tracking-[0.12em] text-[#7a6b52]">{cmsText(content, `service.${service.id}.receiptLabel`, "Hóa đơn giá trị")}</span>
         <span data-cms-section="services" data-cms-field={`text.service.${service.id}.receiptName`} className="font-heading text-sm font-bold">{cmsText(content, `service.${service.id}.receiptName`, service.receiptName)}</span>
@@ -467,10 +361,10 @@ function PillLink({ href, children, tone = "ghost" }: { href: string; children: 
   return (
     <Link
       href={href}
-      className={`inline-flex min-h-12 items-center justify-center gap-2 rounded-full px-6 text-sm font-bold transition hover:-translate-y-0.5 ${
+      className={`inline-flex min-h-12 items-center justify-center gap-2 rounded-md px-6 text-sm font-bold transition active:scale-[.98] focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-[#f0d38a] ${
         tone === "light"
-          ? "bg-[#f4ece0] text-[#14110f] hover:bg-[#e7dac4]"
-          : "border border-[#f4ece0]/30 text-[#f4ece0] hover:bg-[#f4ece0]/6"
+          ? "bg-[var(--home-accent-gold)] text-[var(--home-background-primary)] hover:bg-[var(--home-accent-gold-light)]"
+          : "border border-white/20 text-[var(--home-text-primary)] hover:border-[var(--home-border-subtle)] hover:text-[var(--home-accent-gold-light)]"
       }`}
     >
       {children}

@@ -10,6 +10,23 @@
   --muted: #8c8174;
   --album-border: rgb(216 183 102 / 22%);
   --font-heading: var(--font-body);
+  --home-background-primary: #08090b;
+  --home-background-secondary: #101114;
+  --home-background-elevated: #151619;
+  --home-surface-soft: #1a1b1f;
+  --home-text-primary: #f5f1e8;
+  --home-text-secondary: #aaa297;
+  --home-text-muted: #756f66;
+  --home-accent-gold: #dfbb63;
+  --home-accent-gold-light: #f0d38a;
+  --home-accent-gold-dark: #a98639;
+  --home-border-subtle: rgb(223 187 99 / 16%);
+  --home-border-default: rgb(255 255 255 / 10%);
+  --motion-fast: 180ms;
+  --motion-normal: 400ms;
+  --motion-slow: 700ms;
+  --motion-reveal-distance: 20px;
+  --motion-editorial: cubic-bezier(.22, 1, .36, 1);
 }
 
 @theme inline {
@@ -65,6 +82,107 @@ img {
 ::selection {
   background: color-mix(in srgb, var(--brand-gold) 55%, transparent);
   color: #07080a;
+}
+
+.home-luxury {
+  background: var(--home-background-primary);
+  color: var(--home-text-primary);
+  overflow: clip;
+}
+
+.home-editorial-title {
+  font-family: Georgia, "Times New Roman", serif;
+  font-weight: 400;
+  letter-spacing: -.035em;
+}
+
+.home-eyebrow {
+  color: var(--home-accent-gold);
+  font-family: var(--font-code), monospace;
+  font-size: .72rem;
+  font-weight: 700;
+  letter-spacing: .18em;
+  line-height: 1.4;
+  text-transform: uppercase;
+}
+
+.home-button-primary,
+.home-button-secondary {
+  align-items: center;
+  border-radius: 8px;
+  display: inline-flex;
+  font-size: .875rem;
+  font-weight: 700;
+  gap: .55rem;
+  justify-content: center;
+  min-height: 48px;
+  transition: transform var(--motion-fast) var(--motion-editorial), background-color var(--motion-fast), border-color var(--motion-fast), color var(--motion-fast);
+}
+
+.home-button-primary {
+  background: var(--home-accent-gold);
+  color: var(--home-background-primary);
+}
+
+.home-button-primary:hover { background: var(--home-accent-gold-light); }
+
+.home-button-secondary {
+  border: 1px solid var(--home-border-default);
+  color: var(--home-text-primary);
+}
+
+.home-button-secondary:hover {
+  border-color: var(--home-border-subtle);
+  color: var(--home-accent-gold-light);
+}
+
+.home-button-primary:active,
+.home-button-secondary:active { transform: scale(.98); }
+
+.home-button-primary:focus-visible,
+.home-button-secondary:focus-visible {
+  outline: 2px solid var(--home-accent-gold-light);
+  outline-offset: 3px;
+}
+
+.home-hero-image { animation: home-hero-image 1.35s var(--motion-editorial) both; }
+.home-hero-copy > * { animation: home-hero-copy .75s var(--motion-editorial) both; }
+.home-hero-copy > :nth-child(2) { animation-delay: 100ms; }
+.home-hero-copy > :nth-child(3) { animation-delay: 190ms; }
+.home-hero-copy > :nth-child(4) { animation-delay: 280ms; }
+.home-hero-copy > :nth-child(5) { animation-delay: 360ms; }
+
+@keyframes home-hero-image {
+  from { opacity: .35; transform: scale(1.04); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes home-hero-copy {
+  from { opacity: 0; transform: translateY(var(--motion-reveal-distance)); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.home-marquee-track { animation: home-marquee 28s linear infinite; width: max-content; }
+
+@keyframes home-marquee {
+  to { transform: translateX(-50%); }
+}
+
+body:has(#mobile-site-navigation) .home-sticky-cta,
+body:has([role="dialog"]) .home-sticky-cta { display: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  .home-luxury *,
+  .home-luxury *::before,
+  .home-luxury *::after,
+  .home-sticky-cta {
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: .01ms !important;
+  }
+
+  .home-marquee-track { transform: none; }
 }
 
 /* SePay is the sole checkout channel for Studio Platform registrations. */
