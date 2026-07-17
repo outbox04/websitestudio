@@ -3,7 +3,7 @@
 import { Eye, Laptop, Loader2, Save, Send, Share2, Smartphone, Tablet } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { TloraImagePicker, type ImageTarget } from "@/components/tlora-cms/tlora-image-picker";
-import { TloraOgImageCropper } from "@/components/tlora-cms/tlora-og-image-cropper";
+import { TloraImageCropper } from "@/components/tlora-cms/tlora-og-image-cropper";
 import { updateSectionSchema } from "@/schemas/tlora-cms";
 import type { TloraCmsMediaAsset, TloraCmsPage, TloraCmsSection } from "@/types/scope";
 
@@ -267,7 +267,7 @@ export function TloraCmsEditor({
             <button type="button" disabled={!currentPage} onClick={() => setImageTarget({ sectionKey: "__meta", field: "ogImageUrl", currentUrl: meta.ogImageUrl })} className="inline-flex min-h-10 w-full items-center justify-center rounded-md border border-white/15 text-sm font-bold text-[#cbc0b0] hover:border-[#d8b766] hover:text-[#f8f5ee] disabled:cursor-not-allowed disabled:opacity-40">Chọn ảnh OG từ thư viện</button>
           </div>
 
-          {currentPage && <TloraOgImageCropper key={`${currentPage.id}:${meta.ogImageUrl}`} imageUrl={meta.ogImageUrl} pageKey={currentPage.pageKey} pageTitle={meta.seoTitle || currentPage.title} onApplied={(ogImageUrl) => updateCurrentMeta({ ogImageUrl })} onUploaded={(asset) => setMedia((current) => [asset, ...current])} />}
+          {currentPage && <TloraImageCropper key={`${currentPage.id}:${meta.ogImageUrl}`} imageUrl={meta.ogImageUrl} filePrefix={`og-${currentPage.pageKey}`} altText={meta.seoTitle || currentPage.title} onApplied={(ogImageUrl) => updateCurrentMeta({ ogImageUrl })} onUploaded={(asset) => setMedia((current) => [asset, ...current])} />}
 
           <div className="mt-6 overflow-hidden rounded-lg border border-white/10 bg-[#07080a]">
             <div className="aspect-video bg-[#1c1813] bg-cover bg-center" style={meta.ogImageUrl ? { backgroundImage: `url(${meta.ogImageUrl})` } : undefined} />

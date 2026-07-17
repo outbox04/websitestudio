@@ -3,6 +3,7 @@
 import { ImagePlus, Pencil, Save, Trash2, X } from "lucide-react";
 import { useMemo, useState } from "react";
 import { TloraImagePicker } from "@/components/tlora-cms/tlora-image-picker";
+import { TloraImageCropper } from "@/components/tlora-cms/tlora-og-image-cropper";
 import { conceptAlbumSchema } from "@/schemas/tlora-cms";
 import type { TloraCmsMediaAsset, TloraConceptAlbum, TloraConceptCategory } from "@/types/scope";
 
@@ -102,8 +103,8 @@ export function TloraConceptAlbumsManager({
 
         <div className="mt-6 grid gap-6 lg:grid-cols-2">
           <div>
-            <div className="flex items-center justify-between gap-3"><div><p className="text-sm font-bold">Ảnh bìa</p><p className="mt-1 text-xs text-zinc-500">Ưu tiên ảnh dọc 4:5; ảnh ngang vẫn được giữ trọn khung.</p></div><button type="button" onClick={() => setPicker("cover")} className="inline-flex min-h-10 items-center gap-2 rounded-md border border-zinc-300 px-3 text-xs font-bold"><ImagePlus size={15} /> {form.coverImageUrl ? "Thay ảnh" : "Chọn hoặc Upload"}</button></div>
-            <button type="button" onClick={() => setPicker("cover")} className="mt-3 grid aspect-[4/5] max-h-[420px] w-full place-items-center overflow-hidden rounded-lg border border-dashed border-zinc-300 bg-zinc-100 bg-contain bg-center bg-no-repeat text-sm font-bold text-zinc-500" style={form.coverImageUrl ? { backgroundImage: `url(${form.coverImageUrl})` } : undefined}>{!form.coverImageUrl && "Chọn ảnh bìa từ thư viện hoặc tải lên"}</button>
+            <div className="flex items-center justify-between gap-3"><div><p className="text-sm font-bold">Ảnh bìa</p><p className="mt-1 text-xs text-zinc-500">Khung chuẩn 16:9. Kéo ảnh và thu phóng để giữ đúng vùng quan trọng.</p></div><button type="button" onClick={() => setPicker("cover")} className="inline-flex min-h-10 shrink-0 items-center gap-2 rounded-md border border-zinc-300 px-3 text-xs font-bold"><ImagePlus size={15} /> {form.coverImageUrl ? "Thay ảnh" : "Chọn hoặc Upload"}</button></div>
+            {form.coverImageUrl ? <TloraImageCropper key={`album-cover:${form.coverImageUrl}`} imageUrl={form.coverImageUrl} filePrefix={`album-cover-${form.slug || "concept"}`} altText={form.title || "Ảnh bìa album"} variant="light" outputWidth={1200} outputHeight={675} saveLabel="Lưu ảnh bìa 16:9" onApplied={(coverImageUrl) => setForm((current) => ({ ...current, coverImageUrl }))} onUploaded={(asset) => setMedia((current) => [asset, ...current])} /> : <button type="button" onClick={() => setPicker("cover")} className="mt-3 grid aspect-video w-full place-items-center rounded-lg border border-dashed border-zinc-300 bg-zinc-100 text-sm font-bold text-zinc-500"><span><ImagePlus className="mx-auto mb-2" />Chọn ảnh bìa từ thư viện hoặc tải lên</span></button>}
           </div>
 
           <div>
