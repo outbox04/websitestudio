@@ -27,13 +27,13 @@ export function HeroBannerSlideshow({ initialSlides, fallbackImage, imagePositio
   }, [fallbackImage]);
 
   useEffect(() => {
-    if (slides.length < 2 || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    if (slides.length < 2) return;
     const timer = window.setInterval(() => setActiveIndex((current) => (current + 1) % slides.length), 2000);
     return () => window.clearInterval(timer);
   }, [slides.length]);
 
   return (
-    <div className="absolute inset-0" data-cms-hero-slideshow>
+    <div className="home-hero-slideshow absolute inset-0" data-cms-hero-slideshow>
       {slides.map((src, index) => (
         <Image
           key={`${src}-${index}`}
@@ -48,7 +48,7 @@ export function HeroBannerSlideshow({ initialSlides, fallbackImage, imagePositio
           unoptimized={src.startsWith("http")}
           sizes="100vw"
           aria-hidden={index !== activeIndex}
-          className={`home-hero-image object-cover transition-opacity duration-700 ease-out ${index === activeIndex ? "opacity-100" : "pointer-events-none opacity-0"}`}
+          className={`home-hero-slide object-cover transition-opacity duration-700 ease-out ${index === activeIndex ? "opacity-100" : "pointer-events-none opacity-0"}`}
           style={{ objectPosition: position }}
         />
       ))}
