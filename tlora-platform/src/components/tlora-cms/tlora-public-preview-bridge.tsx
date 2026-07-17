@@ -55,6 +55,16 @@ function setImagePosition(sectionKey: string, value: unknown) {
     });
 }
 
+function setHeroSlides(slides: unknown, fallbackImage: unknown, imagePosition: unknown) {
+  window.dispatchEvent(new CustomEvent("tlora:cms-hero-slides", {
+    detail: {
+      slides: Array.isArray(slides) ? slides : [],
+      fallbackImage: typeof fallbackImage === "string" ? fallbackImage : "",
+      imagePosition: typeof imagePosition === "string" ? imagePosition : "62% 50%",
+    },
+  }));
+}
+
 function parseImagePosition(value: string | undefined) {
   const match = value?.match(/(-?\d+(?:\.\d+)?)%\s+(-?\d+(?:\.\d+)?)%/);
   return match ? { x: Number(match[1]), y: Number(match[2]) } : { x: 50, y: 50 };
@@ -122,14 +132,15 @@ function makeEditable(element: HTMLElement) {
   if (!sectionKey || !field) return;
 
   if (element instanceof HTMLImageElement) {
+    const pickerField = sectionKey === "hero" && field === "image" ? "__hero_slide_add" : field;
     const openPicker = () => {
-      requestImage(sectionKey, field, element.dataset.cmsImageUrl || element.currentSrc || element.src);
+      requestImage(sectionKey, pickerField, element.dataset.cmsImageUrl || element.currentSrc || element.src);
     };
     const parent = element.parentElement;
     if (parent && !parent.querySelector(`[data-cms-image-badge="${field}"]`)) {
       const badge = document.createElement("span");
       badge.dataset.cmsImageBadge = field;
-      badge.textContent = "Thay ảnh";
+      badge.textContent = pickerField === "__hero_slide_add" ? "Thêm ảnh banner" : "Thay ảnh";
       badge.setAttribute("role", "button");
       badge.style.cssText = "position:absolute;right:12px;top:12px;z-index:30;border-radius:6px;background:#d8b766;color:#07080a;padding:8px 12px;font:700 12px/1 sans-serif;cursor:pointer;box-shadow:0 8px 24px #0008";
       badge.addEventListener("click", openPicker);
@@ -230,11 +241,15 @@ function applySection(section: PreviewSection) {
   });
 
   setLink(section.sectionKey, "ctaHref", section.draftContent.ctaHref);
-  setImage(section.sectionKey, "image", section.draftContent.image);
+  if (section.sectionKey === "hero") setHeroSlides(section.draftContent.slides, section.draftContent.image, section.draftContent.imagePosition);
+  else setImage(section.sectionKey, "image", section.draftContent.image);
   setImagePosition(section.sectionKey, section.draftContent.imagePosition);
 
   document.querySelectorAll<HTMLElement>(`[data-cms-section="${section.sectionKey}"][data-cms-field]`)
     .forEach(makeEditable);
+  if (section.sectionKey === "hero") requestAnimationFrame(() => {
+    document.querySelectorAll<HTMLElement>('[data-cms-section="hero"][data-cms-field]').forEach(makeEditable);
+  });
 }
 
 export function TloraPublicPreviewBridge() {

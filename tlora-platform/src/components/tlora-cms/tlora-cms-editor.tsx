@@ -1,6 +1,7 @@
 "use client";
 
-import { Eye, Laptop, Loader2, Save, Send, Share2, Smartphone, Tablet } from "lucide-react";
+import { ArrowLeft, Eye, ImagePlus, Laptop, Loader2, Save, Send, Share2, Smartphone, Tablet, X } from "lucide-react";
+import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { TloraImagePicker, type ImageTarget } from "@/components/tlora-cms/tlora-image-picker";
 import { TloraImageCropper } from "@/components/tlora-cms/tlora-og-image-cropper";
@@ -33,6 +34,13 @@ function resolvePreviewPage(pages: TloraCmsPage[], pathname: string) {
 type PageMeta = { seoTitle: string; seoDescription: string; ogImageUrl: string };
 type PreviewContent = { title: string; description: string; imageUrl: string };
 
+function sectionHeroSlides(section: TloraCmsSection | undefined) {
+  if (!section) return [];
+  const slides = Array.isArray(section.draftContent.slides) ? section.draftContent.slides.filter((value): value is string => typeof value === "string" && Boolean(value)) : [];
+  const legacyImage = typeof section.draftContent.image === "string" ? section.draftContent.image : "";
+  return slides.length ? slides : legacyImage ? [legacyImage] : [];
+}
+
 export function TloraCmsEditor({
   studioName,
   initialPage,
@@ -59,6 +67,8 @@ export function TloraCmsEditor({
   const previewRef = useRef<HTMLIFrameElement>(null);
   const previewContentRef = useRef<Record<string, PreviewContent>>({});
   const currentPage = resolvePreviewPage(initialPages, previewPath);
+  const heroSection = sections.find((section) => section.sectionKey === "hero");
+  const heroSlides = sectionHeroSlides(heroSection);
   const meta = currentPage ? pageMetas[currentPage.id] || { seoTitle: "", seoDescription: "", ogImageUrl: "" } : { seoTitle: "", seoDescription: "", ogImageUrl: "" };
 
   const syncPreview = useCallback(() => {
@@ -151,10 +161,25 @@ export function TloraCmsEditor({
     if (!imageTarget) return;
     if (imageTarget.sectionKey === "__meta" && currentPage) {
       setPageMetas((current) => ({ ...current, [currentPage.id]: { ...meta, ogImageUrl: url } }));
+    } else if (imageTarget.sectionKey === "hero" && imageTarget.field === "__hero_slide_add") {
+      setSections((current) => current.map((section) => {
+        if (section.sectionKey !== "hero") return section;
+        const slides = sectionHeroSlides(section);
+        const nextSlides = slides.includes(url) ? slides : [...slides, url];
+        return { ...section, draftContent: { ...section.draftContent, image: nextSlides[0] || "", slides: nextSlides } };
+      }));
     } else {
       updateSectionField(imageTarget.sectionKey, imageTarget.field, url);
     }
     setImageTarget(null);
+  }
+
+  function removeHeroSlide(index: number) {
+    setSections((current) => current.map((section) => {
+      if (section.sectionKey !== "hero") return section;
+      const nextSlides = sectionHeroSlides(section).filter((_, slideIndex) => slideIndex !== index);
+      return { ...section, draftContent: { ...section.draftContent, image: nextSlides[0] || "", slides: nextSlides } };
+    }));
   }
 
   async function persistDraft() {
@@ -235,6 +260,7 @@ export function TloraCmsEditor({
     <div className="min-h-screen bg-[#07080a] text-[#f8f5ee]">
       <header className="flex flex-col justify-between gap-4 border-b border-[#2a2722] bg-[#101115] px-5 py-4 lg:flex-row lg:items-center">
         <div>
+          <Link href="/admin/tlora" className="mb-3 inline-flex min-h-9 items-center gap-2 rounded-md border border-white/10 px-3 text-xs font-bold text-[#cbc0b0] transition hover:border-[#d8b766] hover:text-[#f8f5ee]"><ArrowLeft size={15} /> Quay lại Website CMS</Link>
           <p className="text-xs font-bold uppercase tracking-[.14em] text-[#d8b766]">First-party CMS · {studioName}</p>
           <h1 className="mt-1 text-2xl font-extrabold">{currentPage ? `${currentPage.title} · Live Preview` : "Trang chưa cấu hình OG"}</h1>
         </div>
@@ -253,6 +279,11 @@ export function TloraCmsEditor({
 
       <div className="grid min-h-[calc(100vh-73px)] xl:grid-cols-[320px_minmax(0,1fr)]">
         <aside className="border-r border-[#2a2722] bg-[#101115] p-4">
+          {currentPage?.pageKey === "home" && heroSection && <div className="mb-6 border-b border-white/10 pb-6">
+            <div className="flex items-center justify-between gap-3"><div><p className="text-xs font-bold uppercase tracking-[.14em] text-[#d8b766]">Banner trang chủ</p><p className="mt-2 text-xs leading-5 text-[#8c8174]">Tự chuyển ảnh sau mỗi 2 giây. Có thể thêm không giới hạn.</p></div><button type="button" onClick={() => setImageTarget({ sectionKey: "hero", field: "__hero_slide_add", currentUrl: "" })} className="grid size-10 shrink-0 place-items-center rounded-md border border-white/15 text-[#cbc0b0] hover:border-[#d8b766] hover:text-white" aria-label="Thêm ảnh banner"><ImagePlus size={17} /></button></div>
+            {heroSlides.length ? <div className="mt-4 grid grid-cols-3 gap-2">{heroSlides.map((url, index) => <div key={`${url}-${index}`} className="relative aspect-video overflow-hidden rounded-md border border-white/10 bg-cover bg-center" style={{ backgroundImage: `url(${url})` }}><span className="absolute bottom-1 left-1 rounded bg-black/70 px-1.5 py-0.5 text-[9px] font-bold text-white">{index + 1}</span><button type="button" onClick={() => removeHeroSlide(index)} className="absolute right-1 top-1 grid size-6 place-items-center rounded-full bg-black/75 text-white hover:bg-red-600" aria-label={`Xóa ảnh banner ${index + 1}`}><X size={12} /></button></div>)}</div> : <button type="button" onClick={() => setImageTarget({ sectionKey: "hero", field: "__hero_slide_add", currentUrl: "" })} className="mt-4 inline-flex min-h-20 w-full items-center justify-center gap-2 rounded-md border border-dashed border-white/15 text-xs font-bold text-[#8c8174]"><ImagePlus size={16} /> Thêm ảnh banner</button>}
+            <button type="button" onClick={() => setImageTarget({ sectionKey: "hero", field: "__hero_slide_add", currentUrl: "" })} className="mt-3 inline-flex min-h-10 w-full items-center justify-center gap-2 rounded-md border border-white/15 text-xs font-bold text-[#cbc0b0] hover:border-[#d8b766] hover:text-white"><ImagePlus size={15} /> Thêm ảnh ({heroSlides.length})</button>
+          </div>}
           <div className="flex items-center gap-2 px-2 text-xs font-bold uppercase tracking-[.14em] text-[#d8b766]">
             <Share2 size={15} /> OG Meta Tag
           </div>

@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { unstable_cache } from "next/cache";
 import { ConceptAlbumCard } from "@/components/public/concept-album-card";
+import { HeroBannerSlideshow } from "@/components/public/hero-banner-slideshow";
 import { HomeStickyCta } from "@/components/public/home-sticky-cta";
 import { MobileCarousel } from "@/components/public/mobile-carousel";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -191,6 +192,8 @@ export default async function HomePage() {
   const publishedGallery = publishedSections.gallery?.isEnabled ? publishedSections.gallery.content : {};
   const publishedContact = publishedSections.contact?.isEnabled ? publishedSections.contact.content : {};
   const heroImagePosition = typeof publishedHero.imagePosition === "string" ? publishedHero.imagePosition : "62% 50%";
+  const heroFallbackImage = String(publishedHero.image || "/concept/concept-14.webp");
+  const heroSlides = Array.isArray(publishedHero.slides) ? publishedHero.slides.filter((value): value is string => typeof value === "string" && Boolean(value)) : [];
   const structuredData = {
     "@context": "https://schema.org",
     "@type": "WebSite",
@@ -205,7 +208,7 @@ export default async function HomePage() {
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }} />
       <div id="top" className="home-luxury">
         <section hidden={publishedSections.hero?.isEnabled === false} id="home-hero" data-cms-section-root="hero" className="relative flex min-h-svh items-end overflow-hidden px-5 pb-10 pt-28 sm:px-8 sm:pb-14 lg:px-10 lg:pb-16">
-          <Image data-cms-section="hero" data-cms-field="image" data-cms-image-url={String(publishedHero.image || "/concept/concept-14.webp")} data-cms-image-position={heroImagePosition} src={String(publishedHero.image || "/concept/concept-14.webp")} alt="Chân dung concept tại TLORA Studio" fill priority unoptimized={Boolean(publishedHero.image)} sizes="100vw" className="home-hero-image object-cover" style={{ objectPosition: heroImagePosition }} />
+          <HeroBannerSlideshow initialSlides={heroSlides} fallbackImage={heroFallbackImage} imagePosition={heroImagePosition} />
           <div className="pointer-events-none absolute inset-0 bg-linear-to-b from-[#08090b]/58 via-transparent to-[#08090b]/92" />
           <div className="pointer-events-none absolute inset-0 bg-linear-to-r from-[#08090b]/78 via-[#08090b]/22 to-transparent lg:via-transparent" />
           <div className="home-hero-copy relative mx-auto w-full max-w-7xl">
