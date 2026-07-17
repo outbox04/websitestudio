@@ -86,6 +86,11 @@ export function TloraConceptAlbumsManager({
     setPicker(null);
   }
 
+  function applyPickedImages(urls: string[]) {
+    setForm((current) => ({ ...current, images: [...new Set([...current.images, ...urls])].slice(0, 60) }));
+    setPicker(null);
+  }
+
   async function applyCroppedCover(coverImageUrl: string) {
     const nextForm = { ...form, coverImageUrl };
     setForm(nextForm);
@@ -154,7 +159,7 @@ export function TloraConceptAlbumsManager({
 
       <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"><select value={pageSize} onChange={(event) => { setPageSize(Number(event.target.value)); setPage(1); }} className="min-h-10 rounded-md border bg-white px-3">{[10, 20, 50, 100].map((size) => <option key={size}>{size}</option>)}</select><div className="flex flex-wrap gap-1"><button disabled={page === 1} onClick={() => setPage((value) => value - 1)} className="size-9 rounded border bg-white disabled:opacity-30">&lt;</button>{Array.from({ length: pages }, (_, index) => index + 1).map((value) => <button key={value} onClick={() => setPage(value)} className={`size-9 rounded border ${page === value ? "bg-zinc-950 text-white" : "bg-white"}`}>{value}</button>)}<button disabled={page >= pages} onClick={() => setPage((value) => value + 1)} className="size-9 rounded border bg-white disabled:opacity-30">&gt;</button></div></div>
 
-      {picker && <TloraImagePicker target={{ sectionKey: "concept-album", field: picker, currentUrl: picker === "cover" ? form.coverImageUrl : "" }} assets={media} onClose={() => setPicker(null)} onApply={applyPickedImage} onUploaded={(asset) => setMedia((current) => [asset, ...current])} />}
+      {picker && <TloraImagePicker target={{ sectionKey: "concept-album", field: picker, currentUrl: picker === "cover" ? form.coverImageUrl : "" }} assets={media} multiple={picker === "content"} onClose={() => setPicker(null)} onApply={applyPickedImage} onApplyMany={applyPickedImages} onUploaded={(asset) => setMedia((current) => [asset, ...current])} />}
     </main>
   );
 }
