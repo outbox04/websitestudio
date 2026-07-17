@@ -189,6 +189,7 @@ export default async function HomePage() {
   const publishedServices = publishedSections.services?.isEnabled ? publishedSections.services.content : {};
   const publishedGallery = publishedSections.gallery?.isEnabled ? publishedSections.gallery.content : {};
   const publishedContact = publishedSections.contact?.isEnabled ? publishedSections.contact.content : {};
+  const heroImagePosition = typeof publishedHero.imagePosition === "string" ? publishedHero.imagePosition : "62% 50%";
   const structuredData = {
     "@context": "https://schema.org",
     "@type": "WebSite",
@@ -207,13 +208,15 @@ export default async function HomePage() {
           data-cms-section="hero"
           data-cms-field="image"
           data-cms-image-url={String(publishedHero.image || "/concept/concept-14.webp")}
+          data-cms-image-position={heroImagePosition}
           src={String(publishedHero.image || "/concept/concept-14.webp")}
           alt="Ảnh nền concept studio TLORA"
           fill
           priority
           unoptimized={Boolean(publishedHero.image)}
           sizes="100vw"
-          className="object-cover object-[62%_center]"
+          className="object-cover"
+          style={{ objectPosition: heroImagePosition }}
         />
         <div className="pointer-events-none absolute inset-0 bg-[#14110f]/72 sm:bg-[#14110f]/58" />
         <div className="pointer-events-none absolute inset-0 bg-linear-to-r from-[#14110f] via-[#14110f]/86 to-[#14110f]/25" />
@@ -316,9 +319,11 @@ export default async function HomePage() {
           <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:mt-12 lg:grid-cols-3">
             {selectedAlbums.map((album) => (
               <Link key={album.id} href={`/album-concept?album=${encodeURIComponent(album.slug)}`} className="group text-left">
-                <div className="relative aspect-3/4 overflow-hidden rounded-[26px] border border-[#f4ece0]/12">
-                  <Image src={album.coverImageUrl || "/concept/concept-02.webp"} alt={album.title} fill sizes="(min-width: 1024px) 33vw, 50vw" className="object-cover transition duration-700 group-hover:scale-105" />
-                  <div className="pointer-events-none absolute inset-0 bg-linear-to-t from-[#14110f]/80 via-transparent to-transparent" />
+                <div className="relative aspect-3/4 overflow-hidden rounded-[26px] border border-[#f4ece0]/12 bg-[#14110f]">
+                  <Image src={album.coverImageUrl || "/concept/concept-02.webp"} alt="" fill unoptimized={Boolean(album.coverImageUrl)} sizes="(min-width: 1024px) 33vw, 50vw" className="scale-110 object-cover opacity-40 blur-2xl" aria-hidden="true" />
+                  <div className="pointer-events-none absolute inset-0 bg-[#14110f]/20" />
+                  <Image src={album.coverImageUrl || "/concept/concept-02.webp"} alt={album.title} fill unoptimized={Boolean(album.coverImageUrl)} sizes="(min-width: 1024px) 33vw, 50vw" className="object-contain p-3 transition duration-700 group-hover:scale-[1.02]" />
+                  <div className="pointer-events-none absolute inset-0 bg-linear-to-t from-[#14110f]/65 via-transparent to-transparent" />
                 </div>
                 <h3 className="mt-3 font-semibold text-[#f4ece0]">{album.title}</h3>
                 <p className="mt-1 line-clamp-2 text-sm leading-6 text-[#8c8174]">{album.excerpt}</p>
@@ -394,7 +399,7 @@ function ServiceSection({ service, content }: { service: (typeof services)[numbe
       <div className="mx-auto grid max-w-6xl gap-8 md:grid-cols-2 lg:grid-cols-[0.85fr_1fr_1fr] lg:items-start">
         <div className="lg:sticky lg:top-28">
           <div className="relative aspect-4/5 overflow-hidden rounded-[26px] border border-[#f4ece0]/12">
-            <Image data-cms-section="services" data-cms-field={`images.service.${service.id}`} data-cms-image-url={cmsImage(content, `service.${service.id}`, service.image)} src={cmsImage(content, `service.${service.id}`, service.image)} alt={service.title} fill sizes="(min-width: 1024px) 30vw, 100vw" className="object-cover" />
+            <Image data-cms-section="services" data-cms-field={`images.service.${service.id}`} data-cms-image-url={cmsImage(content, `service.${service.id}`, service.image)} src={cmsImage(content, `service.${service.id}`, service.image)} alt={service.title} fill unoptimized={Boolean(cmsImage(content, `service.${service.id}`, ""))} sizes="(min-width: 1024px) 30vw, 100vw" className="object-cover" />
             <div className="pointer-events-none absolute inset-0 bg-linear-to-t from-[#14110f]/70 via-transparent to-transparent" />
             <span data-cms-section="services" data-cms-field={`text.service.${service.id}.mood`} className="absolute bottom-5 left-5 rounded-full border border-[#f4ece0]/20 bg-[#14110f]/55 px-4 py-2 font-mono text-xs tracking-[0.04em] text-[#f4ece0] backdrop-blur">
               {cmsText(content, `service.${service.id}.mood`, service.mood)}

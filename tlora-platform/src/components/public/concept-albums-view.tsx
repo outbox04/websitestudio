@@ -79,16 +79,20 @@ function FilterButton({ active, onClick, children }: { active: boolean; onClick:
 }
 
 function ConceptCard({ album, index, onOpen, onConsult }: { album: TloraConceptAlbum; index: number; onOpen: () => void; onConsult: () => void }) {
-  const previewImages = album.images.slice(0, 2);
   return (
     <article className="group opacity-0 [animation:concept-card_.55s_ease-out_forwards]" style={{ animationDelay: `${(index % pageSize) * 55}ms` }}>
-      <div className="relative mx-3 h-8">
-        {previewImages.map((image, imageIndex) => <span key={image} className={`absolute inset-x-4 top-3 h-40 rounded-xl border border-white/10 bg-cover bg-center transition duration-500 ${imageIndex === 0 ? "group-hover:-translate-y-2 group-hover:-rotate-3" : "group-hover:-translate-y-4 group-hover:rotate-3"}`} style={{ backgroundImage: `url(${image})`, zIndex: imageIndex }} />)}
+      <div aria-hidden="true" className="relative mx-5 h-5">
+        <span className="absolute inset-x-3 top-2 h-8 -rotate-2 rounded-t-xl border border-white/10 bg-[#1c1813] transition-transform duration-500 group-hover:-translate-y-1 group-hover:-rotate-3" />
+        <span className="absolute inset-x-1 top-3 h-8 rotate-2 rounded-t-xl border border-white/10 bg-[#14110f] transition-transform duration-500 group-hover:-translate-y-0.5 group-hover:rotate-3" />
       </div>
-      <div className="relative overflow-hidden rounded-xl border border-white/10 bg-[#101115] shadow-2xl shadow-black/20">
+      <div className="relative z-10 overflow-hidden rounded-xl border border-white/10 bg-[#101115] shadow-2xl shadow-black/20">
         <button type="button" onClick={onOpen} className="relative block aspect-[4/3] w-full overflow-hidden bg-[#1c1813] text-left">
-          {album.coverImageUrl && <Image src={album.coverImageUrl} alt={album.title} fill sizes="(min-width:1280px) 33vw, (min-width:768px) 50vw, 100vw" unoptimized className="object-cover transition duration-700 group-hover:scale-105" />}
-          <span className="absolute inset-0 bg-linear-to-t from-black/85 via-black/5 to-transparent" />
+          {album.coverImageUrl && <>
+            <Image src={album.coverImageUrl} alt="" fill sizes="(min-width:1280px) 33vw, (min-width:768px) 50vw, 100vw" unoptimized className="scale-110 object-cover opacity-45 blur-xl" aria-hidden="true" />
+            <span className="absolute inset-0 bg-black/25" />
+            <Image src={album.coverImageUrl} alt={album.title} fill sizes="(min-width:1280px) 33vw, (min-width:768px) 50vw, 100vw" unoptimized className="object-contain p-3 transition duration-700 group-hover:scale-[1.02]" />
+          </>}
+          <span className="absolute inset-0 bg-linear-to-t from-black/90 via-black/10 to-transparent" />
           <span className="absolute bottom-4 left-4 right-4 flex items-center justify-between text-sm font-bold text-white"><span className="inline-flex items-center gap-2"><Images size={17} /> {album.images.length} ảnh</span><span className="inline-flex items-center gap-2">Xem album <ArrowRight size={17} /></span></span>
         </button>
         <div className="p-5">

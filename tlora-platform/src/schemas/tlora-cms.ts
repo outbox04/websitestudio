@@ -17,6 +17,7 @@ const heroContent = z.object({
   title: shortText,
   description: text,
   image: imageUrl.optional().default(""),
+  imagePosition: z.string().trim().regex(/^\d{1,3}(?:\.\d+)?%\s+\d{1,3}(?:\.\d+)?%$/).optional().default("62% 50%"),
   ctaLabel: shortText.optional().default(""),
   ctaHref: safeHref.optional().default("#"),
   text: textOverrides,

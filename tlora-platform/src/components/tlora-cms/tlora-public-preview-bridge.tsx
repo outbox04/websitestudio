@@ -46,6 +46,24 @@ function setImage(sectionKey: string, field: string, value: unknown) {
     });
 }
 
+function setImagePosition(sectionKey: string, value: unknown) {
+  if (typeof value !== "string" || !value) return;
+  document.querySelectorAll<HTMLImageElement>(`img[data-cms-section="${sectionKey}"][data-cms-field="image"]`)
+    .forEach((element) => {
+      element.style.objectPosition = value;
+      element.dataset.cmsImagePosition = value;
+    });
+}
+
+function parseImagePosition(value: string | undefined) {
+  const match = value?.match(/(-?\d+(?:\.\d+)?)%\s+(-?\d+(?:\.\d+)?)%/);
+  return match ? { x: Number(match[1]), y: Number(match[2]) } : { x: 50, y: 50 };
+}
+
+function clampPosition(value: number) {
+  return Math.min(100, Math.max(0, value));
+}
+
 function requestImage(sectionKey: string, field: string, currentUrl: string) {
   window.parent.postMessage({
     type: "tlora:cms-preview-image-select",
@@ -91,12 +109,9 @@ function makeEditable(element: HTMLElement) {
   if (!sectionKey || !field) return;
 
   if (element instanceof HTMLImageElement) {
-    element.title = "Nhấp để thay ảnh";
-    element.style.cursor = "pointer";
     const openPicker = () => {
       requestImage(sectionKey, field, element.dataset.cmsImageUrl || element.currentSrc || element.src);
     };
-    element.addEventListener("click", openPicker);
     const parent = element.parentElement;
     if (parent && !parent.querySelector(`[data-cms-image-badge="${field}"]`)) {
       const badge = document.createElement("span");
@@ -106,6 +121,51 @@ function makeEditable(element: HTMLElement) {
       badge.style.cssText = "position:absolute;right:12px;top:12px;z-index:30;border-radius:6px;background:#d8b766;color:#07080a;padding:8px 12px;font:700 12px/1 sans-serif;cursor:pointer;box-shadow:0 8px 24px #0008";
       badge.addEventListener("click", openPicker);
       parent.appendChild(badge);
+    }
+
+    if (sectionKey === "hero" && field === "image") {
+      element.title = "Kéo ảnh để căn chỉnh vị trí";
+      element.style.cursor = "move";
+      element.style.touchAction = "none";
+      element.draggable = false;
+
+      element.addEventListener("pointerdown", (event) => {
+        if (event.button !== 0 || !element.naturalWidth || !element.naturalHeight) return;
+        event.preventDefault();
+        element.setPointerCapture(event.pointerId);
+        element.style.cursor = "grabbing";
+        const start = { x: event.clientX, y: event.clientY };
+        const initial = parseImagePosition(element.dataset.cmsImagePosition || element.style.objectPosition);
+        const scale = Math.max(element.clientWidth / element.naturalWidth, element.clientHeight / element.naturalHeight);
+        const overflowX = Math.max(0, element.naturalWidth * scale - element.clientWidth);
+        const overflowY = Math.max(0, element.naturalHeight * scale - element.clientHeight);
+        let position = initial;
+
+        const move = (moveEvent: PointerEvent) => {
+          const x = overflowX > 0 ? initial.x - ((moveEvent.clientX - start.x) / overflowX) * 100 : initial.x;
+          const y = overflowY > 0 ? initial.y - ((moveEvent.clientY - start.y) / overflowY) * 100 : initial.y;
+          position = { x: clampPosition(x), y: clampPosition(y) };
+          const value = `${position.x.toFixed(1)}% ${position.y.toFixed(1)}%`;
+          element.style.objectPosition = value;
+          element.dataset.cmsImagePosition = value;
+        };
+
+        const finish = () => {
+          element.style.cursor = "move";
+          element.removeEventListener("pointermove", move);
+          element.removeEventListener("pointerup", finish);
+          element.removeEventListener("pointercancel", finish);
+          sendChange(sectionKey, "imagePosition", `${position.x.toFixed(1)}% ${position.y.toFixed(1)}%`);
+        };
+
+        element.addEventListener("pointermove", move);
+        element.addEventListener("pointerup", finish);
+        element.addEventListener("pointercancel", finish);
+      });
+    } else {
+      element.title = "Nhấp để thay ảnh";
+      element.style.cursor = "pointer";
+      element.addEventListener("click", openPicker);
     }
     return;
   }
@@ -157,6 +217,7 @@ function applySection(section: PreviewSection) {
 
   setLink(section.sectionKey, "ctaHref", section.draftContent.ctaHref);
   setImage(section.sectionKey, "image", section.draftContent.image);
+  setImagePosition(section.sectionKey, section.draftContent.imagePosition);
 
   document.querySelectorAll<HTMLElement>(`[data-cms-section="${section.sectionKey}"][data-cms-field]`)
     .forEach(makeEditable);
