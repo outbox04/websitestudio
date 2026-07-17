@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { checkAuthContext, getStudioAdminContext } from "@/lib/studio-admin";
+import { invalidateTloraPublicShell } from "@/lib/tlora-public-cache";
 
 export async function PUT(request: Request) {
   const body = await request.json() as { settings?: Record<string, unknown>; studioSlug?: string };
@@ -43,5 +44,6 @@ export async function PUT(request: Request) {
   };
   const { data, error } = await createAdminClient().from("studios").update({ settings }).eq("id", context.studioId).select("settings").single();
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  invalidateTloraPublicShell();
   return NextResponse.json({ settings: data.settings });
 }

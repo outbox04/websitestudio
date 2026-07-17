@@ -12,8 +12,18 @@ export const dynamic = "force-dynamic";
 const readPublishedShell = unstable_cache(async () => {
   const studio = await getFirstPartyStudio();
   if (!studio) return {};
-  const [menu, contact] = await Promise.all([getTloraMenu(studio.id), getPublishedTloraSiteSettings(studio.id)]);
+  const [menu, publishedContact] = await Promise.all([getTloraMenu(studio.id), getPublishedTloraSiteSettings(studio.id)]);
   const items = menu.items.filter((item) => item.isEnabled).map((item) => ({ href: item.href, label: item.label }));
+  const legacySettings = studio.settings || {};
+  const legacyValue = (key: string) => typeof legacySettings[key] === "string" ? legacySettings[key].trim() : "";
+  const contact = {
+    ...publishedContact,
+    phone: publishedContact.phone.trim() || legacyValue("phone"),
+    email: publishedContact.email.trim() || legacyValue("email"),
+    address: publishedContact.address.trim() || legacyValue("address"),
+    facebookUrl: publishedContact.facebookUrl.trim() || legacyValue("facebook_url"),
+    zalo: publishedContact.zalo.trim() || legacyValue("zalo_phone"),
+  };
   return { navItems: items.length ? items : undefined, contact };
 }, ["tlora-published-shell"], {
   revalidate: 300,
