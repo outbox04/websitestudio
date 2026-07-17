@@ -13,10 +13,11 @@ type AlbumForm = {
   excerpt: string;
   coverImageUrl: string;
   images: string[];
+  tags: string;
   categoryId: string | null;
 };
 
-const emptyForm: AlbumForm = { title: "", slug: "", excerpt: "", coverImageUrl: "", images: [], categoryId: null };
+const emptyForm: AlbumForm = { title: "", slug: "", excerpt: "", coverImageUrl: "", images: [], tags: "", categoryId: null };
 
 export function TloraConceptAlbumsManager({
   initialAlbums,
@@ -46,6 +47,7 @@ export function TloraConceptAlbumsManager({
       excerpt: album.excerpt,
       coverImageUrl: album.coverImageUrl,
       images: album.images,
+      tags: album.tags.join(", "),
       categoryId: album.categoryId,
     });
     setMessage(`Đang chỉnh sửa “${album.title}”.`);
@@ -53,7 +55,7 @@ export function TloraConceptAlbumsManager({
   }
 
   async function save() {
-    const parsed = conceptAlbumSchema.safeParse(form);
+    const parsed = conceptAlbumSchema.safeParse({ ...form, tags: parseTags(form.tags) });
     if (!parsed.success) return setMessage(parsed.error.issues[0]?.message || "Album chưa hợp lệ.");
     setBusy(true);
     const response = await fetch("/api/admin/tlora/concept-albums", {
@@ -94,13 +96,14 @@ export function TloraConceptAlbumsManager({
           <Field label="Tên Album" value={form.title} onChange={(title) => setForm((current) => ({ ...current, title, slug: albumSlug(title) }))} />
           <Field label="Tên đường dẫn" value={form.slug} onChange={(slug) => setForm((current) => ({ ...current, slug: albumSlug(slug.replace(/^album-/, "")) }))} helper="Tự động theo mẫu album-ten-album" />
           <div className="md:col-span-2"><Field label="Mô tả ngắn" value={form.excerpt} onChange={(excerpt) => setForm((current) => ({ ...current, excerpt }))} textarea /></div>
+          <div className="md:col-span-2"><Field label="Tags phong cách" value={form.tags} onChange={(tags) => setForm((current) => ({ ...current, tags }))} helper="Tối đa 6 tags, ngăn cách bằng dấu phẩy. Ví dụ: Bridal Editorial, Soft Luxury, Studio" /></div>
           <label className="block text-sm font-bold">Danh mục Concept<select value={form.categoryId || ""} onChange={(event) => setForm((current) => ({ ...current, categoryId: event.target.value || null }))} className="mt-2 min-h-11 w-full rounded-md border border-zinc-300 bg-white px-3 font-normal outline-none focus:border-[#a57f2c]"><option value="">Chưa phân loại</option>{categories.map((category) => <option key={category.id} value={category.id}>{category.name}</option>)}</select></label>
         </div>
 
         <div className="mt-6 grid gap-6 lg:grid-cols-2">
           <div>
-            <div className="flex items-center justify-between gap-3"><div><p className="text-sm font-bold">Ảnh bìa</p><p className="mt-1 text-xs text-zinc-500">Nên dùng ảnh ngang 16:9.</p></div><button type="button" onClick={() => setPicker("cover")} className="inline-flex min-h-10 items-center gap-2 rounded-md border border-zinc-300 px-3 text-xs font-bold"><ImagePlus size={15} /> {form.coverImageUrl ? "Thay ảnh" : "Chọn hoặc Upload"}</button></div>
-            <button type="button" onClick={() => setPicker("cover")} className="mt-3 grid aspect-video w-full place-items-center overflow-hidden rounded-lg border border-dashed border-zinc-300 bg-zinc-100 bg-cover bg-center text-sm font-bold text-zinc-500" style={form.coverImageUrl ? { backgroundImage: `url(${form.coverImageUrl})` } : undefined}>{!form.coverImageUrl && "Chọn ảnh bìa từ thư viện hoặc tải lên"}</button>
+            <div className="flex items-center justify-between gap-3"><div><p className="text-sm font-bold">Ảnh bìa</p><p className="mt-1 text-xs text-zinc-500">Ưu tiên ảnh dọc 4:5; ảnh ngang vẫn được giữ trọn khung.</p></div><button type="button" onClick={() => setPicker("cover")} className="inline-flex min-h-10 items-center gap-2 rounded-md border border-zinc-300 px-3 text-xs font-bold"><ImagePlus size={15} /> {form.coverImageUrl ? "Thay ảnh" : "Chọn hoặc Upload"}</button></div>
+            <button type="button" onClick={() => setPicker("cover")} className="mt-3 grid aspect-[4/5] max-h-[420px] w-full place-items-center overflow-hidden rounded-lg border border-dashed border-zinc-300 bg-zinc-100 bg-contain bg-center bg-no-repeat text-sm font-bold text-zinc-500" style={form.coverImageUrl ? { backgroundImage: `url(${form.coverImageUrl})` } : undefined}>{!form.coverImageUrl && "Chọn ảnh bìa từ thư viện hoặc tải lên"}</button>
           </div>
 
           <div>
@@ -137,4 +140,8 @@ function Field({ label, value, onChange, textarea = false, helper }: { label: st
 function albumSlug(value: string) {
   const normalized = value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/đ/g, "d").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
   return normalized ? `album-${normalized}` : "";
+}
+
+function parseTags(value: string) {
+  return [...new Set(value.split(",").map((tag) => tag.trim()).filter(Boolean))].slice(0, 6);
 }

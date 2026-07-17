@@ -143,6 +143,7 @@ export const conceptAlbumSchema = z.object({
   excerpt: z.string().trim().min(1, "Cần nhập mô tả ngắn.").max(500),
   coverImageUrl: imageUrl.refine((value) => Boolean(value), "Cần chọn ảnh bìa."),
   images: z.array(imageUrl).min(1, "Album cần ít nhất một ảnh nội dung.").max(60),
+  tags: z.array(z.string().trim().min(1).max(40)).max(6).optional().default([]),
   categoryId: z.string().uuid().nullable().optional().default(null),
 });
 

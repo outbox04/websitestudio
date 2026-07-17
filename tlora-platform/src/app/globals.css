@@ -6,6 +6,9 @@
   --brand-gold: #d8b766;
   --brand-gold-soft: #f3d88e;
   --surface: #101115;
+  --surface-raised: #1c1813;
+  --muted: #8c8174;
+  --album-border: rgb(216 183 102 / 22%);
   --font-heading: var(--font-body);
 }
 

@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { cache } from "react";
+import { ConceptAlbumCard } from "@/components/public/concept-album-card";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { listPublishedTloraConceptAlbums } from "@/repositories/tlora/concept-albums-repository";
 
@@ -316,19 +317,8 @@ export default async function HomePage() {
           <p data-cms-section="gallery" data-cms-field="description" className="mx-auto mt-5 max-w-2xl text-base leading-7 text-[#cbc0b0]">
             {String(publishedGallery.description || "Sáu album concept tiêu biểu được tuyển chọn từ thư viện TLORA.")}
           </p>
-          <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:mt-12 lg:grid-cols-3">
-            {selectedAlbums.map((album) => (
-              <Link key={album.id} href={`/album-concept?album=${encodeURIComponent(album.slug)}`} className="group text-left">
-                <div className="relative aspect-3/4 overflow-hidden rounded-[26px] border border-[#f4ece0]/12 bg-[#14110f]">
-                  <Image src={album.coverImageUrl || "/concept/concept-02.webp"} alt="" fill unoptimized={Boolean(album.coverImageUrl)} sizes="(min-width: 1024px) 33vw, 50vw" className="scale-110 object-cover opacity-40 blur-2xl" aria-hidden="true" />
-                  <div className="pointer-events-none absolute inset-0 bg-[#14110f]/20" />
-                  <Image src={album.coverImageUrl || "/concept/concept-02.webp"} alt={album.title} fill unoptimized={Boolean(album.coverImageUrl)} sizes="(min-width: 1024px) 33vw, 50vw" className="object-contain p-3 transition duration-700 group-hover:scale-[1.02]" />
-                  <div className="pointer-events-none absolute inset-0 bg-linear-to-t from-[#14110f]/65 via-transparent to-transparent" />
-                </div>
-                <h3 className="mt-3 font-semibold text-[#f4ece0]">{album.title}</h3>
-                <p className="mt-1 line-clamp-2 text-sm leading-6 text-[#8c8174]">{album.excerpt}</p>
-              </Link>
-            ))}
+          <div className="mt-10 grid gap-7 text-left sm:grid-cols-2 lg:mt-12 lg:grid-cols-3">
+            {selectedAlbums.map((album, index) => <ConceptAlbumCard key={album.id} album={album} order={index + 1} total={selectedAlbums.length} priority={index === 0} />)}
             {!selectedAlbums.length && <p className="col-span-full rounded-xl border border-dashed border-white/15 p-8 text-[#8c8174]">Chưa có Album Concept được xuất bản.</p>}
           </div>
         </div>

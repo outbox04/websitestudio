@@ -87,6 +87,7 @@ export type TloraConceptAlbum = {
   excerpt: string;
   coverImageUrl: string;
   images: string[];
+  tags: string[];
   categoryId: string | null;
   categoryName: string | null;
   categorySlug: string | null;

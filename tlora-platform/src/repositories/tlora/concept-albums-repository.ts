@@ -10,6 +10,7 @@ type AlbumRow = {
   excerpt: string;
   cover_image_url: string | null;
   images: unknown;
+  tags: unknown;
   category_id: string | null;
   tlora_concept_categories: { name: string; slug: string } | Array<{ name: string; slug: string }> | null;
   is_featured: boolean;
@@ -26,6 +27,7 @@ const mapAlbum = (row: AlbumRow): TloraConceptAlbum => ({
   excerpt: row.excerpt,
   coverImageUrl: row.cover_image_url || "",
   images: Array.isArray(row.images) ? row.images.filter((value): value is string => typeof value === "string") : [],
+  tags: Array.isArray(row.tags) ? row.tags.filter((value): value is string => typeof value === "string") : [],
   categoryId: row.category_id,
   categoryName: (Array.isArray(row.tlora_concept_categories) ? row.tlora_concept_categories[0]?.name : row.tlora_concept_categories?.name) || null,
   categorySlug: (Array.isArray(row.tlora_concept_categories) ? row.tlora_concept_categories[0]?.slug : row.tlora_concept_categories?.slug) || null,
@@ -36,7 +38,7 @@ const mapAlbum = (row: AlbumRow): TloraConceptAlbum => ({
   updatedAt: row.updated_at,
 });
 
-const select = "id,slug,title,excerpt,cover_image_url,images,category_id,is_featured,sort_order,status,published_at,updated_at,tlora_concept_categories(name,slug)";
+const select = "id,slug,title,excerpt,cover_image_url,images,tags,category_id,is_featured,sort_order,status,published_at,updated_at,tlora_concept_categories(name,slug)";
 
 export async function listTloraConceptAlbums(studioId: string) {
   const { data, error } = await createAdminClient().from("tlora_concept_albums").select(select).eq("studio_id", studioId).order("sort_order").order("updated_at", { ascending: false });
@@ -62,6 +64,7 @@ export async function saveTloraConceptAlbum(studioId: string, userId: string, in
   excerpt: string;
   coverImageUrl: string;
   images: string[];
+  tags: string[];
   categoryId?: string | null;
 }) {
   const admin = createAdminClient();
@@ -78,6 +81,7 @@ export async function saveTloraConceptAlbum(studioId: string, userId: string, in
     excerpt: input.excerpt,
     cover_image_url: input.coverImageUrl || null,
     images: input.images,
+    tags: input.tags,
     category_id: input.categoryId || null,
     is_featured: false,
     sort_order: current?.sort_order ?? Number(last?.sort_order || 0) + 10,

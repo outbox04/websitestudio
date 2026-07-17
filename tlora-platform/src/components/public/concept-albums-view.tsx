@@ -1,8 +1,9 @@
 "use client";
 
-import { ArrowLeft, ArrowRight, Check, ChevronLeft, ChevronRight, Images, Loader2, MessageCircle, X } from "lucide-react";
+import { ArrowLeft, Check, ChevronLeft, ChevronRight, Loader2, MessageCircle, X } from "lucide-react";
 import Image from "next/image";
 import { useEffect, useMemo, useState } from "react";
+import { ConceptAlbumCard } from "@/components/public/concept-album-card";
 import type { TloraConceptAlbum, TloraConceptCategory } from "@/types/scope";
 
 const pageSize = 15;
@@ -11,13 +12,15 @@ export function ConceptAlbumsView({
   albums,
   categories,
   initialSlug,
+  initialConsult,
 }: {
   albums: TloraConceptAlbum[];
   categories: TloraConceptCategory[];
   initialSlug?: string;
+  initialConsult?: string;
 }) {
   const [selected, setSelected] = useState<TloraConceptAlbum | null>(() => albums.find((album) => album.slug === initialSlug) || null);
-  const [consulting, setConsulting] = useState<TloraConceptAlbum | null>(null);
+  const [consulting, setConsulting] = useState<TloraConceptAlbum | null>(() => albums.find((album) => album.slug === initialConsult) || null);
   const [category, setCategory] = useState("all");
   const [page, setPage] = useState(1);
   const filtered = useMemo(() => category === "all" ? albums : albums.filter((album) => album.categorySlug === category), [albums, category]);
@@ -45,7 +48,7 @@ export function ConceptAlbumsView({
 
       {visible.length ? (
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {visible.map((album, index) => <ConceptCard key={album.id} album={album} index={index} onOpen={() => setSelected(album)} onConsult={() => setConsulting(album)} />)}
+          {visible.map((album, index) => <ConceptAlbumCard key={album.id} album={album} order={(page - 1) * pageSize + index + 1} total={filtered.length} priority={page === 1 && index === 0} onOpen={() => setSelected(album)} onConsult={() => setConsulting(album)} />)}
         </div>
       ) : (
         <p className="rounded-xl border border-dashed border-white/15 p-10 text-center text-[#8c8174]">Danh mục này chưa có album.</p>
@@ -76,34 +79,6 @@ export function ConceptAlbumsView({
 
 function FilterButton({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) {
   return <button type="button" onClick={onClick} className={`inline-flex min-h-11 shrink-0 items-center gap-2 rounded-full border px-4 text-sm font-bold transition ${active ? "border-[#d8b766] bg-[#d8b766] text-[#07080a]" : "border-white/15 bg-white/[.03] text-[#cbc0b0] hover:border-[#d8b766]/60 hover:text-white"} [&_span]:text-xs [&_span]:opacity-70`}>{children}</button>;
-}
-
-function ConceptCard({ album, index, onOpen, onConsult }: { album: TloraConceptAlbum; index: number; onOpen: () => void; onConsult: () => void }) {
-  return (
-    <article className="group opacity-0 [animation:concept-card_.55s_ease-out_forwards]" style={{ animationDelay: `${(index % pageSize) * 55}ms` }}>
-      <div aria-hidden="true" className="relative mx-5 h-5">
-        <span className="absolute inset-x-3 top-2 h-8 -rotate-2 rounded-t-xl border border-white/10 bg-[#1c1813] transition-transform duration-500 group-hover:-translate-y-1 group-hover:-rotate-3" />
-        <span className="absolute inset-x-1 top-3 h-8 rotate-2 rounded-t-xl border border-white/10 bg-[#14110f] transition-transform duration-500 group-hover:-translate-y-0.5 group-hover:rotate-3" />
-      </div>
-      <div className="relative z-10 overflow-hidden rounded-xl border border-white/10 bg-[#101115] shadow-2xl shadow-black/20">
-        <button type="button" onClick={onOpen} className="relative block aspect-[4/3] w-full overflow-hidden bg-[#1c1813] text-left">
-          {album.coverImageUrl && <>
-            <Image src={album.coverImageUrl} alt="" fill sizes="(min-width:1280px) 33vw, (min-width:768px) 50vw, 100vw" unoptimized className="scale-110 object-cover opacity-45 blur-xl" aria-hidden="true" />
-            <span className="absolute inset-0 bg-black/25" />
-            <Image src={album.coverImageUrl} alt={album.title} fill sizes="(min-width:1280px) 33vw, (min-width:768px) 50vw, 100vw" unoptimized className="object-contain p-3 transition duration-700 group-hover:scale-[1.02]" />
-          </>}
-          <span className="absolute inset-0 bg-linear-to-t from-black/90 via-black/10 to-transparent" />
-          <span className="absolute bottom-4 left-4 right-4 flex items-center justify-between text-sm font-bold text-white"><span className="inline-flex items-center gap-2"><Images size={17} /> {album.images.length} ảnh</span><span className="inline-flex items-center gap-2">Xem album <ArrowRight size={17} /></span></span>
-        </button>
-        <div className="p-5">
-          {album.categoryName && <p className="text-xs font-bold uppercase tracking-[.12em] text-[#d8b766]">{album.categoryName}</p>}
-          <h2 className="mt-2 text-xl font-extrabold text-[#f8f5ee]">{album.title}</h2>
-          <p className="mt-2 line-clamp-3 text-sm leading-6 text-[#8c8174]">{album.excerpt}</p>
-          <button type="button" onClick={onConsult} className="mt-5 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-md bg-[#d8b766] px-4 text-sm font-bold text-[#07080a]"><MessageCircle size={16} /> Liên hệ tư vấn</button>
-        </div>
-      </div>
-    </article>
-  );
 }
 
 function AlbumViewer({ album, onClose, onConsult }: { album: TloraConceptAlbum; onClose: () => void; onConsult: () => void }) {
