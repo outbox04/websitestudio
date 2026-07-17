@@ -101,6 +101,19 @@ function sendChange(sectionKey: string, field: string, value: string) {
   }, window.location.origin);
 }
 
+function sendPageContent() {
+  const title = document.querySelector<HTMLElement>("h1")?.innerText.trim() || "";
+  const description = document.querySelector<HTMLElement>('[data-cms-field$="description"]')?.innerText.trim() || "";
+  const image = document.querySelector<HTMLImageElement>('[data-cms-section-root] img, main img');
+  window.parent.postMessage({
+    type: "tlora:cms-preview-page-content",
+    pathname: window.location.pathname,
+    title,
+    description,
+    imageUrl: image?.dataset.cmsImageUrl || image?.currentSrc || image?.src || "",
+  }, window.location.origin);
+}
+
 function makeEditable(element: HTMLElement) {
   if (element.dataset.cmsEditorBound === "true") return;
   element.dataset.cmsEditorBound = "true";
@@ -189,6 +202,7 @@ function makeEditable(element: HTMLElement) {
   });
   element.addEventListener("input", () => {
     sendChange(sectionKey, field, element.innerText);
+    requestAnimationFrame(sendPageContent);
   });
 }
 
@@ -231,6 +245,7 @@ export function TloraPublicPreviewBridge() {
       if (event.origin !== window.location.origin || !isPreviewMessage(event.data)) return;
       lockPreviewInteractions();
       event.data.sections.forEach(applySection);
+      requestAnimationFrame(sendPageContent);
     }
 
     window.addEventListener("message", handleMessage);
@@ -243,6 +258,7 @@ export function TloraPublicPreviewBridge() {
       type: "tlora:cms-preview-ready",
       pathname,
     }, window.location.origin);
+    requestAnimationFrame(sendPageContent);
   }, [pathname]);
 
   return null;

@@ -1,13 +1,12 @@
 import type { Metadata } from "next";
 import { ConceptAlbumsView } from "@/components/public/concept-albums-view";
+import { buildTloraPageMetadata } from "@/lib/tlora-metadata";
 import { listPublishedTloraConceptAlbums, listPublishedTloraConceptCategories } from "@/repositories/tlora/concept-albums-repository";
 import { getPublishedTloraPageMeta, getPublishedTloraSection } from "@/repositories/tlora/cms-repository";
 
 export async function generateMetadata(): Promise<Metadata> {
   const meta = await getPublishedTloraPageMeta("albums");
-  const title = meta.title || "Album Concept | TLORA Studio";
-  const description = meta.description || "Khám phá các album concept tiêu biểu và đăng ký tư vấn.";
-  return { title, description, openGraph: { title, description, images: meta.ogImageUrl ? [meta.ogImageUrl] : ["/brand/tlora-logo.png"] } };
+  return buildTloraPageMetadata(meta, "/album-concept", { title: "Album Concept | TLORA Studio", description: "Khám phá các album concept tiêu biểu và đăng ký tư vấn." });
 }
 
 export const dynamic = "force-dynamic";

@@ -8,6 +8,7 @@ import { HomeStickyCta } from "@/components/public/home-sticky-cta";
 import { MobileCarousel } from "@/components/public/mobile-carousel";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { tloraPublicCacheTags } from "@/lib/tlora-public-cache";
+import { buildTloraPageMetadata } from "@/lib/tlora-metadata";
 import { listPublishedTloraConceptAlbums } from "@/repositories/tlora/concept-albums-repository";
 
 const trustItems = [
@@ -176,14 +177,7 @@ const getPublishedHome = unstable_cache(async () => {
 
 export async function generateMetadata(): Promise<Metadata> {
   const { page } = await getPublishedHome();
-  const title = page?.seo_title || "TLORA Studio";
-  const description = page?.seo_description || "TLORA Studio chụp ảnh concept cá nhân, chọn ảnh online và quản lý album riêng.";
-  const images = page?.og_image_url ? [page.og_image_url] : undefined;
-  return {
-    title,
-    description,
-    openGraph: { title, description, type: "website", images },
-  };
+  return buildTloraPageMetadata({ title: page?.seo_title || "", description: page?.seo_description || "", ogImageUrl: page?.og_image_url || "" }, "/", { title: "TLORA Studio", description: "TLORA Studio chụp ảnh concept cá nhân, chọn ảnh online và quản lý album riêng." });
 }
 
 export default async function HomePage() {

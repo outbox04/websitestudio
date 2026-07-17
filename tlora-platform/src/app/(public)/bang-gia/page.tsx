@@ -1,13 +1,12 @@
 import type { Metadata } from "next";
 import { CheckCircle2 } from "lucide-react";
 import { pricing } from "@/lib/site-data";
+import { buildTloraPageMetadata } from "@/lib/tlora-metadata";
 import { getPublishedTloraPageMeta, getPublishedTloraSection } from "@/repositories/tlora/cms-repository";
 
 export async function generateMetadata(): Promise<Metadata> {
   const meta = await getPublishedTloraPageMeta("pricing");
-  const title = meta.title || "Bảng giá chụp ảnh concept";
-  const description = meta.description || "Chọn gói chụp phù hợp với số concept, thời lượng và số ảnh mong muốn.";
-  return { title, description, openGraph: { title, description, images: meta.ogImageUrl ? [meta.ogImageUrl] : ["/brand/tlora-logo.png"] } };
+  return buildTloraPageMetadata(meta, "/bang-gia", { title: "Bảng giá chụp ảnh concept", description: "Chọn gói chụp phù hợp với số concept, thời lượng và số ảnh mong muốn." });
 }
 
 export const dynamic = "force-dynamic";

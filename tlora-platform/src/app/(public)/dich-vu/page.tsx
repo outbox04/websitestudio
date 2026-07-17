@@ -1,12 +1,11 @@
 import type { Metadata } from "next";
 import { services } from "@/lib/site-data";
+import { buildTloraPageMetadata } from "@/lib/tlora-metadata";
 import { getPublishedTloraPageMeta, getPublishedTloraSection } from "@/repositories/tlora/cms-repository";
 
 export async function generateMetadata(): Promise<Metadata> {
   const meta = await getPublishedTloraPageMeta("services");
-  const title = meta.title || "Dịch vụ chụp ảnh concept";
-  const description = meta.description || "Khám phá các concept chân dung cá nhân, couple, gia đình và thời trang.";
-  return { title, description, openGraph: { title, description, images: meta.ogImageUrl ? [meta.ogImageUrl] : ["/brand/tlora-logo.png"] } };
+  return buildTloraPageMetadata(meta, "/dich-vu", { title: "Dịch vụ chụp ảnh concept", description: "Khám phá các concept chân dung cá nhân, couple, gia đình và thời trang." });
 }
 
 export const dynamic = "force-dynamic";

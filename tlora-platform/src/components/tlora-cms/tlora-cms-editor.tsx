@@ -3,6 +3,7 @@
 import { Eye, Laptop, Loader2, Save, Send, Share2, Smartphone, Tablet } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { TloraImagePicker, type ImageTarget } from "@/components/tlora-cms/tlora-image-picker";
+import { TloraOgImageCropper } from "@/components/tlora-cms/tlora-og-image-cropper";
 import { updateSectionSchema } from "@/schemas/tlora-cms";
 import type { TloraCmsMediaAsset, TloraCmsPage, TloraCmsSection } from "@/types/scope";
 
@@ -13,6 +14,24 @@ function normalizedPreviewPath(pathname: string) {
   if (pathname.startsWith("/tin-tuc/")) return "/tin-tuc";
   return pathname || "/";
 }
+
+const pageKeyByPath: Record<string, string> = {
+  "/": "home",
+  "/dich-vu": "services",
+  "/dich-vu-tlora": "services",
+  "/bang-gia": "pricing",
+  "/album-concept": "albums",
+  "/tin-tuc": "news",
+};
+
+function resolvePreviewPage(pages: TloraCmsPage[], pathname: string) {
+  const normalized = normalizedPreviewPath(pathname);
+  return pages.find((page) => page.slug === normalized)
+    || pages.find((page) => page.pageKey === pageKeyByPath[normalized]);
+}
+
+type PageMeta = { seoTitle: string; seoDescription: string; ogImageUrl: string };
+type PreviewContent = { title: string; description: string; imageUrl: string };
 
 export function TloraCmsEditor({
   studioName,
@@ -32,14 +51,15 @@ export function TloraCmsEditor({
   const [imageTarget, setImageTarget] = useState<ImageTarget | null>(null);
   const [pageMetas, setPageMetas] = useState(() => Object.fromEntries(initialPages.map((page) => [page.id, {
     seoTitle: page.seoTitle, seoDescription: page.seoDescription, ogImageUrl: page.ogImageUrl,
-  }])));
+  }])) as Record<string, PageMeta>);
   const [previewPath, setPreviewPath] = useState("/");
   const [device, setDevice] = useState<Device>("desktop");
   const [busy, setBusy] = useState("");
   const [message, setMessage] = useState("");
   const previewRef = useRef<HTMLIFrameElement>(null);
-  const currentPage = initialPages.find((page) => page.slug === normalizedPreviewPath(previewPath)) || initialPage;
-  const meta = pageMetas[currentPage.id] || { seoTitle: "", seoDescription: "", ogImageUrl: "" };
+  const previewContentRef = useRef<Record<string, PreviewContent>>({});
+  const currentPage = resolvePreviewPage(initialPages, previewPath);
+  const meta = currentPage ? pageMetas[currentPage.id] || { seoTitle: "", seoDescription: "", ogImageUrl: "" } : { seoTitle: "", seoDescription: "", ogImageUrl: "" };
 
   const syncPreview = useCallback(() => {
     previewRef.current?.contentWindow?.postMessage({
@@ -59,10 +79,30 @@ export function TloraCmsEditor({
   useEffect(() => {
     function handleReady(event: MessageEvent<unknown>) {
       if (event.origin !== window.location.origin) return;
-      const previewMessage = event.data as { type?: string; sectionKey?: string; field?: string; value?: string; currentUrl?: string; pathname?: string } | null;
+      const previewMessage = event.data as { type?: string; sectionKey?: string; field?: string; value?: string; currentUrl?: string; pathname?: string; title?: string; description?: string; imageUrl?: string } | null;
       if (previewMessage?.type === "tlora:cms-preview-ready") {
         if (previewMessage.pathname) setPreviewPath(previewMessage.pathname);
         syncPreview();
+        return;
+      }
+      if (previewMessage?.type === "tlora:cms-preview-page-content" && previewMessage.pathname) {
+        const page = resolvePreviewPage(initialPages, previewMessage.pathname);
+        if (!page) return;
+        const previous = previewContentRef.current[page.id];
+        const next = {
+          title: previewMessage.title || "",
+          description: previewMessage.description || "",
+          imageUrl: previewMessage.imageUrl || "",
+        };
+        setPageMetas((current) => {
+          const existing = current[page.id] || { seoTitle: "", seoDescription: "", ogImageUrl: "" };
+          return { ...current, [page.id]: {
+            seoTitle: !existing.seoTitle || existing.seoTitle === previous?.title ? next.title : existing.seoTitle,
+            seoDescription: !existing.seoDescription || existing.seoDescription === previous?.description ? next.description : existing.seoDescription,
+            ogImageUrl: !existing.ogImageUrl || existing.ogImageUrl === previous?.imageUrl ? next.imageUrl : existing.ogImageUrl,
+          } };
+        });
+        previewContentRef.current[page.id] = next;
         return;
       }
       if (
@@ -88,7 +128,7 @@ export function TloraCmsEditor({
 
     window.addEventListener("message", handleReady);
     return () => window.removeEventListener("message", handleReady);
-  }, [syncPreview]);
+  }, [initialPages, syncPreview]);
 
   function updateSectionField(sectionKey: string, field: string, value: string) {
     setSections((current) => current.map((section) => {
@@ -109,7 +149,7 @@ export function TloraCmsEditor({
 
   function applyImage(url: string) {
     if (!imageTarget) return;
-    if (imageTarget.sectionKey === "__meta") {
+    if (imageTarget.sectionKey === "__meta" && currentPage) {
       setPageMetas((current) => ({ ...current, [currentPage.id]: { ...meta, ogImageUrl: url } }));
     } else {
       updateSectionField(imageTarget.sectionKey, imageTarget.field, url);
@@ -160,6 +200,8 @@ export function TloraCmsEditor({
     setBusy("publish");
     setMessage("");
     try {
+      if (!currentPage) throw new Error("Trang Live Preview này chưa được cấu hình trong CMS.");
+      if (!meta.seoTitle.trim() || !meta.seoDescription.trim() || !meta.ogImageUrl.trim()) throw new Error("Cần điền đầy đủ OG title, OG description và ảnh OG trước khi xuất bản trang này.");
       await persistDraft();
       const response = await fetch("/api/admin/tlora/pages", {
         method: "POST",
@@ -184,15 +226,20 @@ export function TloraCmsEditor({
     }
   }
 
+  function updateCurrentMeta(value: Partial<PageMeta>) {
+    if (!currentPage) return;
+    setPageMetas((current) => ({ ...current, [currentPage.id]: { ...meta, ...value } }));
+  }
+
   return (
     <div className="min-h-screen bg-[#07080a] text-[#f8f5ee]">
       <header className="flex flex-col justify-between gap-4 border-b border-[#2a2722] bg-[#101115] px-5 py-4 lg:flex-row lg:items-center">
         <div>
           <p className="text-xs font-bold uppercase tracking-[.14em] text-[#d8b766]">First-party CMS · {studioName}</p>
-          <h1 className="mt-1 text-2xl font-extrabold">Trang chủ TLORA</h1>
+          <h1 className="mt-1 text-2xl font-extrabold">{currentPage ? `${currentPage.title} · Live Preview` : "Trang chưa cấu hình OG"}</h1>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <span className="rounded-full border border-white/10 px-3 py-2 text-xs text-[#cbc0b0]">{currentPage.title} · {currentPage.status === "published" ? "Đã xuất bản" : "Bản nháp"}</span>
+          <span className="rounded-full border border-white/10 px-3 py-2 text-xs text-[#cbc0b0]">{currentPage ? `${currentPage.title} · ${currentPage.status === "published" ? "Đã xuất bản" : "Bản nháp"}` : previewPath}</span>
           <button type="button" onClick={saveDraft} disabled={Boolean(busy)} className="inline-flex min-h-10 items-center gap-2 rounded-md border border-white/15 px-4 text-sm font-bold text-[#f8f5ee] disabled:opacity-50">
             {busy === "save" ? <Loader2 className="animate-spin" size={16} /> : <Save size={16} />} Lưu bản nháp
           </button>
@@ -209,22 +256,24 @@ export function TloraCmsEditor({
           <div className="flex items-center gap-2 px-2 text-xs font-bold uppercase tracking-[.14em] text-[#d8b766]">
             <Share2 size={15} /> OG Meta Tag
           </div>
-          <p className="mt-3 px-2 text-xs leading-5 text-[#8c8174]">Thông tin hiển thị khi chia sẻ trang chủ lên Facebook, Zalo và các nền tảng mạng xã hội.</p>
+          <p className="mt-3 px-2 text-xs leading-5 text-[#8c8174]">Metadata của đúng trang đang mở trong Live Preview. Nội dung trang sẽ tự đồng bộ vào trường còn trống; bạn vẫn có thể nhập nội dung OG riêng.</p>
           <div className="mt-5 space-y-4 border-t border-white/10 pt-5">
-            <CmsField label="OG title" value={meta.seoTitle} onChange={(seoTitle) => setPageMetas((current) => ({ ...current, [currentPage.id]: { ...meta, seoTitle } }))} />
+            <div><CmsField label="OG title" value={meta.seoTitle} disabled={!currentPage} onChange={(seoTitle) => updateCurrentMeta({ seoTitle })} /><p className="mt-1 text-right text-[11px] text-[#8c8174]">{meta.seoTitle.length}/70</p></div>
             <div>
-              <CmsField label="OG description" value={meta.seoDescription} onChange={(seoDescription) => setPageMetas((current) => ({ ...current, [currentPage.id]: { ...meta, seoDescription } }))} textarea />
+              <CmsField label="OG description" value={meta.seoDescription} disabled={!currentPage} onChange={(seoDescription) => updateCurrentMeta({ seoDescription })} textarea />
               <p className="mt-1 text-right text-[11px] text-[#8c8174]">{meta.seoDescription.length}/200</p>
             </div>
-            <CmsField label="OG image URL" value={meta.ogImageUrl} onChange={(ogImageUrl) => setPageMetas((current) => ({ ...current, [currentPage.id]: { ...meta, ogImageUrl } }))} />
-            <button type="button" onClick={() => setImageTarget({ sectionKey: "__meta", field: "ogImageUrl", currentUrl: meta.ogImageUrl })} className="inline-flex min-h-10 w-full items-center justify-center rounded-md border border-white/15 text-sm font-bold text-[#cbc0b0] hover:border-[#d8b766] hover:text-[#f8f5ee]">Chọn ảnh OG từ thư viện</button>
+            <CmsField label="OG image URL" value={meta.ogImageUrl} disabled={!currentPage} onChange={(ogImageUrl) => updateCurrentMeta({ ogImageUrl })} />
+            <button type="button" disabled={!currentPage} onClick={() => setImageTarget({ sectionKey: "__meta", field: "ogImageUrl", currentUrl: meta.ogImageUrl })} className="inline-flex min-h-10 w-full items-center justify-center rounded-md border border-white/15 text-sm font-bold text-[#cbc0b0] hover:border-[#d8b766] hover:text-[#f8f5ee] disabled:cursor-not-allowed disabled:opacity-40">Chọn ảnh OG từ thư viện</button>
           </div>
 
+          {currentPage && <TloraOgImageCropper key={`${currentPage.id}:${meta.ogImageUrl}`} imageUrl={meta.ogImageUrl} pageKey={currentPage.pageKey} pageTitle={meta.seoTitle || currentPage.title} onApplied={(ogImageUrl) => updateCurrentMeta({ ogImageUrl })} onUploaded={(asset) => setMedia((current) => [asset, ...current])} />}
+
           <div className="mt-6 overflow-hidden rounded-lg border border-white/10 bg-[#07080a]">
-            <div className="aspect-[1.91/1] bg-[#1c1813] bg-cover bg-center" style={meta.ogImageUrl ? { backgroundImage: `url(${meta.ogImageUrl})` } : undefined} />
+            <div className="aspect-video bg-[#1c1813] bg-cover bg-center" style={meta.ogImageUrl ? { backgroundImage: `url(${meta.ogImageUrl})` } : undefined} />
             <div className="p-3">
-              <p className="line-clamp-2 text-sm font-bold text-[#f8f5ee]">{meta.seoTitle || "TLORA Studio"}</p>
-              <p className="mt-1 line-clamp-2 text-xs leading-5 text-[#8c8174]">{meta.seoDescription || "Mô tả trang chủ khi được chia sẻ."}</p>
+              <p className="min-h-5 line-clamp-2 text-sm font-bold text-[#f8f5ee]">{meta.seoTitle}</p>
+              <p className="mt-1 min-h-10 line-clamp-2 text-xs leading-5 text-[#8c8174]">{meta.seoDescription}</p>
               <p className="mt-2 text-[10px] uppercase tracking-[.08em] text-[#cbc0b0]">tlgroup.site</p>
             </div>
           </div>
@@ -269,7 +318,7 @@ export function TloraCmsEditor({
   );
 }
 
-function CmsField({ label, value, onChange, textarea = false }: { label: string; value: string; onChange: (value: string) => void; textarea?: boolean }) {
+function CmsField({ label, value, onChange, textarea = false, disabled = false }: { label: string; value: string; onChange: (value: string) => void; textarea?: boolean; disabled?: boolean }) {
   const className = "mt-2 w-full rounded-md border border-white/10 bg-[#07080a] px-3 py-2 text-sm font-normal text-[#f8f5ee] outline-none focus:border-[#d8b766]";
-  return <label className="block text-sm font-bold text-[#cbc0b0]">{label}{textarea ? <textarea value={value} onChange={(event) => onChange(event.target.value)} className={`${className} min-h-24`} /> : <input value={value} onChange={(event) => onChange(event.target.value)} className={className} />}</label>;
+  return <label className="block text-sm font-bold text-[#cbc0b0]">{label}{textarea ? <textarea value={value} disabled={disabled} maxLength={200} onChange={(event) => onChange(event.target.value)} className={`${className} min-h-24 disabled:opacity-45`} /> : <input value={value} disabled={disabled} maxLength={label === "OG title" ? 70 : undefined} onChange={(event) => onChange(event.target.value)} className={`${className} disabled:opacity-45`} />}</label>;
 }
