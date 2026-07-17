@@ -44,10 +44,10 @@ export function ConceptAlbumCard({ album, order, total, priority = false, onOpen
         <span className="block text-[11px] font-bold uppercase tracking-[.22em] text-[var(--brand-gold-soft)]">{category}</span>
         <span className="mt-2 block h-px w-8 bg-[var(--brand-gold)]" aria-hidden="true" />
       </span>
-      <span className="absolute right-5 top-5 font-serif text-lg text-[var(--foreground)] sm:right-6 sm:top-6"><span className="text-[var(--brand-gold-soft)]">{numberLabel(order)}</span> / {numberLabel(total)}</span>
+      <span className="absolute right-5 top-5 text-lg text-[var(--foreground)] sm:right-6 sm:top-6"><span className="text-[var(--brand-gold-soft)]">{numberLabel(order)}</span> / {numberLabel(total)}</span>
       <span className="absolute inset-x-5 bottom-5 flex items-center justify-between gap-3 text-sm font-bold text-[var(--foreground)] sm:inset-x-6 sm:bottom-6">
         {imageCount > 0 ? <span className="inline-flex items-center gap-2"><Images size={18} aria-hidden="true" /> {imageCount} ảnh</span> : <span />}
-        <span className="inline-flex items-center gap-2 font-serif text-base text-[var(--brand-gold-soft)]">Xem album <ArrowRight className="transition-transform duration-500 group-hover/card:translate-x-1.5" size={19} aria-hidden="true" /></span>
+        <span className="inline-flex items-center gap-2 text-base text-[var(--brand-gold-soft)]">Xem album <ArrowRight className="transition-transform duration-500 group-hover/card:translate-x-1.5" size={19} aria-hidden="true" /></span>
       </span>
     </>
   );
@@ -67,7 +67,7 @@ export function ConceptAlbumCard({ album, order, total, priority = false, onOpen
         <div className="p-5 sm:p-6">
           <div className="flex items-center gap-3" aria-hidden="true"><span className="h-px flex-1 bg-white/10" /><Sparkles size={14} className="text-[var(--brand-gold-soft)]" /><span className="h-px flex-1 bg-white/10" /></div>
           <p className="mt-5 text-[11px] font-bold uppercase tracking-[.2em] text-[var(--brand-gold)]">{category}</p>
-          <h2 className="mt-2 line-clamp-2 font-serif text-[clamp(1.75rem,5vw,2.5rem)] uppercase leading-[1.08] tracking-[.02em] text-[var(--foreground)]">{album.title}</h2>
+          <h2 className="mt-2 line-clamp-2 text-[clamp(1.75rem,5vw,2.5rem)] font-bold uppercase leading-[1.08] tracking-[-.025em] text-[var(--foreground)]">{album.title}</h2>
           {description && <p className="mt-3 line-clamp-2 text-sm leading-6 text-[var(--muted)]">{description}</p>}
 
           {album.tags.length > 0 && <div className="mt-5 flex flex-wrap gap-2">{album.tags.map((tag) => <span key={tag} className="inline-flex min-h-8 items-center rounded-full border border-[var(--album-border)] bg-[var(--surface-raised)] px-3 text-xs font-semibold text-[var(--brand-gold-soft)]"><Sparkles className="mr-1.5" size={11} aria-hidden="true" />{tag}</span>)}</div>}

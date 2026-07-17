@@ -1,4 +1,4 @@
-import { ArrowRight, ArrowUpRight, Check, Images, Sparkles } from "lucide-react";
+import { ArrowRight, ArrowUpRight, Check } from "lucide-react";
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
@@ -196,7 +196,6 @@ export default async function HomePage() {
   const publishedGallery = publishedSections.gallery?.isEnabled ? publishedSections.gallery.content : {};
   const publishedContact = publishedSections.contact?.isEnabled ? publishedSections.contact.content : {};
   const heroImagePosition = typeof publishedHero.imagePosition === "string" ? publishedHero.imagePosition : "62% 50%";
-  const featuredAlbum = selectedAlbums[0];
   const structuredData = {
     "@context": "https://schema.org",
     "@type": "WebSite",
@@ -258,21 +257,7 @@ export default async function HomePage() {
         </section>
 
         <section hidden={publishedSections.gallery?.isEnabled === false} id="mood" data-cms-section-root="gallery" className="bg-[var(--home-background-secondary)] px-5 py-20 sm:px-8 sm:py-28 lg:px-10 lg:py-36">
-          {featuredAlbum && <div className="mx-auto grid max-w-7xl overflow-hidden rounded-[22px] border border-[var(--home-border-default)] bg-[var(--home-background-primary)] lg:grid-cols-[1.35fr_.65fr]">
-            <div className="relative min-h-[62svh] overflow-hidden sm:min-h-[720px] lg:min-h-[760px]">
-              {featuredAlbum.coverImageUrl ? <Image src={featuredAlbum.coverImageUrl} alt={`Ảnh bìa album ${featuredAlbum.title}`} fill priority unoptimized sizes="(min-width: 1024px) 66vw, 100vw" className="object-contain" /> : <div className="absolute inset-0 grid place-items-center bg-[var(--home-background-elevated)] text-[var(--home-text-muted)]"><Images size={40} aria-hidden="true" /></div>}
-              <div className="pointer-events-none absolute inset-0 bg-linear-to-t from-[#08090b]/90 via-transparent to-[#08090b]/10" />
-              <div className="absolute inset-x-0 bottom-0 flex items-end justify-between gap-4 p-5 sm:p-8"><span className="inline-flex items-center gap-2 text-sm font-semibold"><Images size={18} className="text-[var(--home-accent-gold)]" aria-hidden="true" />{featuredAlbum.images.length} ảnh</span><span className="font-serif text-lg text-[var(--home-accent-gold-light)]">01 / {String(selectedAlbums.length).padStart(2, "0")}</span></div>
-            </div>
-            <div className="flex flex-col justify-center p-6 sm:p-10 lg:p-12">
-              <p className="home-eyebrow">{featuredAlbum.categoryName || "Featured Concept"}</p>
-              <h2 className="home-editorial-title mt-5 text-[clamp(2.6rem,9vw,5rem)] uppercase leading-[.95]">{featuredAlbum.title}</h2>
-              {featuredAlbum.excerpt && <p className="mt-6 line-clamp-3 text-base leading-7 text-[var(--home-text-secondary)]">{featuredAlbum.excerpt}</p>}
-              {featuredAlbum.tags.length > 0 && <div className="mt-7 flex flex-wrap gap-2">{featuredAlbum.tags.map((tag) => <span key={tag} className="inline-flex min-h-8 items-center gap-1.5 rounded-full border border-[var(--home-border-subtle)] px-3 text-xs text-[var(--home-accent-gold-light)]"><Sparkles size={11} aria-hidden="true" />{tag}</span>)}</div>}
-              <div className="mt-9 grid gap-3 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2"><Link href={`/album-concept?album=${encodeURIComponent(featuredAlbum.slug)}`} className="home-button-primary px-5">Xem bộ ảnh <ArrowRight size={17} aria-hidden="true" /></Link><Link href={`/album-concept?consult=${encodeURIComponent(featuredAlbum.slug)}`} className="home-button-secondary px-5">Tư vấn <ArrowUpRight size={17} aria-hidden="true" /></Link></div>
-            </div>
-          </div>}
-          <div className="mx-auto mt-20 max-w-7xl sm:mt-24">
+          <div className="mx-auto max-w-7xl">
             <div className="max-w-3xl"><p className="home-eyebrow">Selected collections</p><h2 data-cms-section="gallery" data-cms-field="title" className="home-editorial-title mt-4 text-[clamp(2.5rem,10vw,4.8rem)] leading-none">{String(publishedGallery.title || "Album chọn lọc")}</h2><p data-cms-section="gallery" data-cms-field="description" className="mt-5 text-base leading-7 text-[var(--home-text-secondary)]">{String(publishedGallery.description || "Sáu album concept tiêu biểu được tuyển chọn từ thư viện TLORA.")}</p></div>
             <div className="-mx-5 mt-10 flex snap-x snap-mandatory gap-4 overflow-x-auto px-5 pb-6 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:-mx-8 sm:px-8 lg:mx-0 lg:grid lg:grid-cols-3 lg:gap-7 lg:overflow-visible lg:px-0 [&>article]:w-[86vw] [&>article]:max-w-[390px] [&>article]:shrink-0 [&>article]:snap-start lg:[&>article]:w-auto lg:[&>article]:max-w-none">
               {selectedAlbums.map((album, index) => <ConceptAlbumCard key={album.id} album={album} order={index + 1} total={selectedAlbums.length} priority={false} />)}

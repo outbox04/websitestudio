@@ -1,17 +1,9 @@
 import type { Metadata, Viewport } from "next";
-import { Google_Sans, Google_Sans_Code } from "next/font/google";
+import { Inter } from "next/font/google";
 import "./globals.css";
 
-const body = Google_Sans({
+const body = Inter({
   variable: "--font-body",
-  subsets: ["vietnamese"],
-  weight: "variable",
-  style: ["normal", "italic"],
-  axes: ["opsz"],
-});
-
-const code = Google_Sans_Code({
-  variable: "--font-code",
   subsets: ["vietnamese"],
   weight: "variable",
   style: ["normal", "italic"],
@@ -53,7 +45,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="vi" className={`${body.variable} ${code.variable} h-full scroll-smooth`}>
+    <html lang="vi" className={`${body.variable} h-full scroll-smooth`}>
       <body className="min-h-full bg-[#07080a] text-[#f8f5ee] antialiased">{children}</body>
     </html>
   );
