@@ -27,8 +27,8 @@ export function ConceptAlbumCard({ album, order, priority = false, onOpen }: Con
           src={album.coverImageUrl}
           alt={`Ảnh bìa album ${album.title}`}
           fill
-          priority={priority}
-          unoptimized
+          fetchPriority={priority ? "high" : "auto"}
+          quality={70}
           onError={() => setImageError(true)}
           className="object-cover transition-transform duration-700 ease-out group-hover/card:scale-[1.035]"
           sizes="(min-width: 1024px) 33vw, (min-width: 768px) 50vw, 92vw"

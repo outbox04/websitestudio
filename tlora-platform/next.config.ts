@@ -30,10 +30,14 @@ const nextConfig: NextConfig = {
   turbopack: {
     root: process.cwd(),
   },
+  experimental: {
+    inlineCss: true,
+  },
   async headers() {
     return [{ source: "/:path*", headers: securityHeaders }];
   },
   images: {
+    qualities: [70, 75],
     remotePatterns: [
       { protocol: "https", hostname: "images.unsplash.com" },
       { protocol: "https", hostname: "drive.google.com" },

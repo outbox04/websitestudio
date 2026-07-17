@@ -88,13 +88,13 @@ function AlbumViewer({ album, onClose, onConsult }: { album: TloraConceptAlbum; 
 
           <div className="md:hidden">
             <div className="flex h-[calc(100dvh-70px)] snap-x snap-mandatory overflow-x-auto">
-              {images.map((image, index) => <figure key={`${image}-${index}`} className="relative h-full min-w-full snap-center p-4"><Image src={image} alt={`${album.title} ${index + 1}`} fill sizes="100vw" unoptimized className="object-contain p-4" /><figcaption className="absolute bottom-5 left-1/2 -translate-x-1/2 rounded-full bg-black/65 px-4 py-2 text-xs font-bold">{index + 1} / {images.length}</figcaption></figure>)}
+              {images.map((image, index) => <figure key={`${image}-${index}`} className="relative h-full min-w-full snap-center p-4"><Image src={image} alt={`${album.title} ${index + 1}`} fill sizes="100vw" quality={70} className="object-contain p-4" /><figcaption className="absolute bottom-5 left-1/2 -translate-x-1/2 rounded-full bg-black/65 px-4 py-2 text-xs font-bold">{index + 1} / {images.length}</figcaption></figure>)}
             </div>
           </div>
 
           <div className="hidden border-x border-b border-white/10 bg-[#101115] p-6 md:block">
             <div className="mb-8"><p className="text-xs font-bold uppercase tracking-[.16em] text-[#d8b766]">{album.categoryName || "Album Concept"}</p><h2 className="mt-3 text-4xl font-black text-[#f8f5ee]">{album.title}</h2><p className="mt-4 max-w-2xl text-base leading-7 text-[#cbc0b0]">{album.excerpt}</p></div>
-            <div className="columns-2 gap-4 lg:columns-3">{images.map((image, index) => <div key={`${image}-${index}`} className="mb-4 break-inside-avoid overflow-hidden rounded-xl border border-white/10"><Image src={image} alt={`${album.title} ${index + 1}`} width={1200} height={900} unoptimized className="h-auto w-full transition duration-500 hover:scale-[1.02]" /></div>)}</div>
+            <div className="columns-2 gap-4 lg:columns-3">{images.map((image, index) => <div key={`${image}-${index}`} className="mb-4 break-inside-avoid overflow-hidden rounded-xl border border-white/10"><Image src={image} alt={`${album.title} ${index + 1}`} width={1200} height={900} sizes="(min-width: 1024px) 33vw, 50vw" quality={70} className="h-auto w-full transition duration-500 hover:scale-[1.02]" /></div>)}</div>
           </div>
         </div>
       </div>

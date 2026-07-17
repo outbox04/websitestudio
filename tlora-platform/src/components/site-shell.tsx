@@ -15,7 +15,7 @@ const defaultNav = [
   { href: "/tin-tuc", label: "Tin tức" },
 ];
 
-function BrandLogo({ className, priority = false }: { className: string; priority?: boolean }) {
+function BrandLogo({ className, fetchPriority = "auto" }: { className: string; fetchPriority?: "auto" | "high" | "low" }) {
   return (
     <span className={`relative block shrink-0 overflow-hidden ${className}`} aria-hidden="true">
       <Image
@@ -23,7 +23,8 @@ function BrandLogo({ className, priority = false }: { className: string; priorit
         alt=""
         width={1536}
         height={1024}
-        priority={priority}
+        fetchPriority={fetchPriority}
+        sizes="(min-width: 1024px) 150px, (min-width: 640px) 132px, 116px"
         className="absolute left-1/2 top-1/2 h-[240%] w-auto max-w-none -translate-x-1/2 -translate-y-1/2 object-contain"
       />
     </span>
@@ -71,7 +72,7 @@ export function SiteHeader({ navItems = defaultNav, contact }: { navItems?: Arra
     <header className={`${isHome ? "fixed inset-x-0 top-0 z-50 transition-[background-color,border-color] duration-400" : "sticky top-0 z-40 border-b border-white/10 bg-[#07080a]/85 backdrop-blur-xl"} ${isHome && pastHero ? "border-b border-white/10 bg-[#08090b]/88 backdrop-blur-xl" : "border-b border-transparent bg-transparent"}`}>
       <div className={`mx-auto flex max-w-7xl items-center justify-between gap-2 px-3 sm:px-6 lg:px-8 ${isHome && pastHero ? "py-2" : "py-2.5 sm:py-3"}`}>
         <Link href="/" className="flex shrink-0 items-center" aria-label="TLORA Studio — Trang chủ">
-          <BrandLogo priority className="h-11 w-[116px] sm:h-12 sm:w-[132px] lg:h-14 lg:w-[150px]" />
+          <BrandLogo fetchPriority="high" className="h-11 w-[116px] sm:h-12 sm:w-[132px] lg:h-14 lg:w-[150px]" />
         </Link>
         <nav className="hidden items-center gap-7 text-sm font-medium text-zinc-300 lg:flex" aria-label="Điều hướng chính">
           {navItems.map((item) => (
