@@ -228,41 +228,26 @@ export default async function HomePage() {
       <HomeCinematic />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }} />
       <div id="top" className="home-luxury">
-        <section hidden={publishedSections.hero?.isEnabled === false} id="home-hero" data-cms-section-root="hero" className="relative flex min-h-svh items-center justify-center overflow-hidden px-5 py-28 sm:px-8 lg:px-10">
+        <section hidden={publishedSections.hero?.isEnabled === false} id="home-hero" data-cms-section-root="hero" className="relative flex min-h-svh items-end overflow-hidden px-5 pb-10 pt-28 sm:px-8 sm:pb-14 lg:px-10 lg:pb-16">
           <HeroBannerSlideshow initialSlides={heroSlides} fallbackImage={heroFallbackImage} imagePosition={heroImagePosition} />
-          <div className="pointer-events-none absolute inset-0 bg-radial from-transparent via-[#08090b]/60 to-[#08090b]/95" />
-          <div className="pointer-events-none absolute inset-0 bg-linear-to-b from-[#08090b]/75 via-transparent to-[#08090b]/98" />
-          <div className="home-hero-copy relative mx-auto flex w-full max-w-7xl flex-col items-center text-center">
-            <h1 className="home-hero-brand-title font-black uppercase tracking-tight text-[clamp(3.6rem,13.5vw,10.5rem)] leading-[0.92] select-none">
-              TLORA Studio
+          <div className="pointer-events-none absolute inset-0 bg-linear-to-b from-[#08090b]/58 via-transparent to-[#08090b]/92" />
+          <div className="pointer-events-none absolute inset-0 bg-linear-to-r from-[#08090b]/78 via-[#08090b]/22 to-transparent lg:via-transparent" />
+          <div className="home-hero-copy relative mx-auto w-full max-w-7xl">
+            <p data-cms-section="hero" data-cms-field="text.eyebrow" className="home-eyebrow">{cmsText(publishedHero, "eyebrow", "TLORA Portrait Studio")}</p>
+            <h1 data-cms-section="hero" data-cms-field="title" className="home-editorial-title home-shine mt-4 max-w-[10ch] text-[clamp(2.65rem,12vw,5rem)] leading-[1.15] text-[var(--home-text-primary)] sm:max-w-[12ch] lg:max-w-[13ch] lg:text-[clamp(5rem,7.4vw,7rem)] lg:leading-[1.1]">
+              {String(publishedHero.title || "Mỗi set chụp là một concept dựng riêng cho bạn.")}
             </h1>
-            <p data-cms-section="hero" data-cms-field="title" className="mt-5 font-heading text-xl font-semibold tracking-wide text-[#F6E2D0] sm:text-2xl lg:text-3xl">
-              {String(publishedHero.title || "Mỗi khoảnh khắc là một câu chuyện riêng")}
+            <p data-cms-section="hero" data-cms-field="description" className="mt-6 max-w-xl text-base leading-7 text-[var(--home-text-secondary)] sm:text-lg sm:leading-8">
+              {String(publishedHero.description || "TLORA không chụp đại trà. Ba dịch vụ, một tiêu chuẩn duy nhất: ảnh nhận về phải xứng đáng với số tiền bạn bỏ ra.")}
             </p>
-            <p data-cms-section="hero" data-cms-field="description" className="mt-4 max-w-2xl text-base leading-relaxed text-[#aaa297] sm:text-lg sm:leading-8 font-light whitespace-pre-line">
-              {String(publishedHero.description || "Chúng tôi không chỉ chụp ảnh.\nChúng tôi kể lại câu chuyện của bạn bằng nghệ thuật, cảm xúc và sự thấu hiểu.")}
-            </p>
-
-            <div className="mt-7 flex flex-wrap justify-center gap-2.5 sm:gap-3">
-              <span className="home-hero-tag">CONCEPT CÁ NHÂN HÓA</span>
-              <span className="home-hero-tag">ẢNH CƯỚI NGHỆ THUẬT</span>
-              <span className="home-hero-tag">CHÂN DUNG SÁNG TẠO</span>
-            </div>
-
-            <div className="mt-8 flex flex-col items-center justify-center gap-3 min-[430px]:flex-row">
-              <Link data-cms-section="hero" data-cms-field="ctaHref" href={String(publishedHero.ctaHref || "/bang-gia")} className="home-button-primary px-7">
+            <div className="mt-7 flex flex-col gap-3 min-[430px]:flex-row">
+              <Link data-cms-section="hero" data-cms-field="ctaHref" href={String(publishedHero.ctaHref || "/bang-gia")} className="home-button-primary px-6">
                 <span data-cms-section="hero" data-cms-field="ctaLabel">{String(publishedHero.ctaLabel || "Đặt lịch tư vấn")}</span><ArrowRight size={17} aria-hidden="true" />
               </Link>
               <PillLink href="#mood"><span data-cms-section="hero" data-cms-field="text.secondaryCta">{cmsText(publishedHero, "secondaryCta", "Xem mood ảnh mẫu")}</span></PillLink>
             </div>
-
-            <ul className="mt-10 flex flex-wrap justify-center gap-x-8 gap-y-2.5 border-t border-white/10 pt-6 text-xs sm:text-sm text-[var(--home-text-secondary)]">
-              {trustItems.map((item, index) => (
-                <li key={item} className="flex items-center gap-2">
-                  <Check size={15} className="text-[#D6A06A]" aria-hidden="true" />
-                  <span data-cms-section="hero" data-cms-field={`text.trust.${index}`}>{cmsText(publishedHero, `trust.${index}`, item)}</span>
-                </li>
-              ))}
+            <ul className="mt-8 grid max-w-3xl gap-2 border-t border-white/10 pt-5 sm:grid-cols-3">
+              {trustItems.map((item, index) => <li key={item} className="flex items-center gap-2 text-sm text-[var(--home-text-secondary)]"><Check size={15} className="text-[var(--home-accent-gold)]" aria-hidden="true" /><span data-cms-section="hero" data-cms-field={`text.trust.${index}`}>{cmsText(publishedHero, `trust.${index}`, item)}</span></li>)}
             </ul>
           </div>
         </section>
