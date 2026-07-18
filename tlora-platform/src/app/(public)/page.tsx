@@ -12,6 +12,7 @@ import { tloraPublicCacheTags } from "@/lib/tlora-public-cache";
 import { buildTloraPageMetadata } from "@/lib/tlora-metadata";
 import { listPublishedTloraConceptAlbums } from "@/repositories/tlora/concept-albums-repository";
 import type { TloraConceptAlbum } from "@/types/scope";
+import { HomeCinematic } from "@/components/public/home-cinematic";
 
 const trustItems = [
   "Tư vấn concept trước khi chụp",
@@ -224,6 +225,7 @@ export default async function HomePage() {
 
   return (
     <>
+      <HomeCinematic />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }} />
       <div id="top" className="home-luxury">
         <section hidden={publishedSections.hero?.isEnabled === false} id="home-hero" data-cms-section-root="hero" className="relative flex min-h-svh items-end overflow-hidden px-5 pb-10 pt-28 sm:px-8 sm:pb-14 lg:px-10 lg:pb-16">
@@ -232,7 +234,7 @@ export default async function HomePage() {
           <div className="pointer-events-none absolute inset-0 bg-linear-to-r from-[#08090b]/78 via-[#08090b]/22 to-transparent lg:via-transparent" />
           <div className="home-hero-copy relative mx-auto w-full max-w-7xl">
             <p data-cms-section="hero" data-cms-field="text.eyebrow" className="home-eyebrow">{cmsText(publishedHero, "eyebrow", "TLORA Portrait Studio")}</p>
-            <h1 data-cms-section="hero" data-cms-field="title" className="home-editorial-title mt-4 max-w-[10ch] text-[clamp(2.65rem,12vw,5rem)] leading-[1.15] text-[var(--home-text-primary)] sm:max-w-[12ch] lg:max-w-[13ch] lg:text-[clamp(5rem,7.4vw,7rem)] lg:leading-[1.1]">
+            <h1 data-cms-section="hero" data-cms-field="title" className="home-editorial-title home-shine mt-4 max-w-[10ch] text-[clamp(2.65rem,12vw,5rem)] leading-[1.15] text-[var(--home-text-primary)] sm:max-w-[12ch] lg:max-w-[13ch] lg:text-[clamp(5rem,7.4vw,7rem)] lg:leading-[1.1]">
               {String(publishedHero.title || "Mỗi set chụp là một concept dựng riêng cho bạn.")}
             </h1>
             <p data-cms-section="hero" data-cms-field="description" className="mt-6 max-w-xl text-base leading-7 text-[var(--home-text-secondary)] sm:text-lg sm:leading-8">
@@ -272,15 +274,16 @@ export default async function HomePage() {
           </div>
         </div>
 
+        <div aria-hidden="true" className="home-section-divider" />
         <section hidden={publishedSections.about?.isEnabled === false} data-cms-section-root="about" className="px-5 py-20 sm:px-8 sm:py-28 lg:px-10 lg:py-36">
           <div className="mx-auto grid max-w-7xl gap-12 lg:grid-cols-[.9fr_1.1fr] lg:items-center lg:gap-20">
-            <div className="relative mx-auto w-full max-w-xl pb-12 pr-8 sm:pb-16 sm:pr-14">
-              <div className="relative aspect-[4/5] overflow-hidden rounded-[22px] bg-[var(--home-background-elevated)]"><Image data-cms-section="about" data-cms-field="images.primary" data-cms-image-url={cmsImage(publishedAbout, "primary", cmsImage(publishedServices, "service.beauty", services[1].image))} src={cmsImage(publishedAbout, "primary", cmsImage(publishedServices, "service.beauty", services[1].image))} alt="Chân dung beauty editorial tại TLORA" fill sizes="(min-width: 1024px) 42vw, 90vw" quality={70} className="object-cover" /></div>
+            <div data-reveal data-reveal-delay="0" className="relative mx-auto w-full max-w-xl pb-12 pr-8 sm:pb-16 sm:pr-14">
+              <div className="relative aspect-[4/5] overflow-hidden rounded-[22px] bg-[var(--home-background-elevated)]"><Image data-cms-section="about" data-cms-field="images.primary" data-cms-image-url={cmsImage(publishedAbout, "primary", cmsImage(publishedServices, "service.beauty", services[1].image))} src={cmsImage(publishedAbout, "primary", cmsImage(publishedServices, "service.beauty", services[1].image))} alt="Chân dung beauty editorial tại TLORA" fill sizes="(min-width: 1024px) 42vw, 90vw" quality={70} className="home-img-reveal object-cover" /></div>
               <div className="absolute bottom-0 right-0 aspect-[3/4] w-[38%] overflow-hidden rounded-[18px] border-[6px] border-[var(--home-background-primary)] bg-[var(--home-background-elevated)]"><Image data-cms-section="about" data-cms-field="images.secondary" data-cms-image-url={cmsImage(publishedAbout, "secondary", cmsImage(publishedServices, "service.concept", services[2].image))} src={cmsImage(publishedAbout, "secondary", cmsImage(publishedServices, "service.concept", services[2].image))} alt="Chi tiết concept thời trang TLORA" fill sizes="(min-width: 1024px) 16vw, 34vw" quality={70} className="object-cover" /></div>
             </div>
-            <div>
+            <div data-reveal data-reveal-delay="120">
               <p data-cms-section="about" data-cms-field="text.eyebrow" className="home-eyebrow">{cmsText(publishedAbout, "eyebrow", "We don't just take photos")}</p>
-              <h2 data-cms-section="about" data-cms-field="title" className="home-editorial-title mt-5 max-w-[15ch] text-[clamp(2.4rem,9vw,4.4rem)] leading-[1.15]">{String(publishedAbout.title || "TLORA giữ buổi chụp riêng tư, rõ ràng và tôn trọng cá tính từng người")}</h2>
+              <h2 data-cms-section="about" data-cms-field="title" className="home-editorial-title home-shine mt-5 max-w-[15ch] text-[clamp(2.4rem,9vw,4.4rem)] leading-[1.15]">{String(publishedAbout.title || "TLORA giữ buổi chụp riêng tư, rõ ràng và tôn trọng cá tính từng người")}</h2>
               <p data-cms-section="about" data-cms-field="description" className="mt-6 max-w-xl text-base leading-8 text-[var(--home-text-secondary)]">{String(publishedAbout.description || "Trải nghiệm nhiếp ảnh được thiết kế theo cá tính của từng khách hàng.")}</p>
               <div className="mt-10 grid gap-7 border-t border-white/10 pt-8 sm:grid-cols-3 lg:grid-cols-1 xl:grid-cols-3">
                 {whyCards.map(([title, description], index) => <article key={title}><span className="home-eyebrow">0{index + 1}</span><h3 data-cms-section="about" data-cms-field={`text.value.${index}.title`} className="mt-3 text-lg font-bold">{cmsText(publishedAbout, `value.${index}.title`, title)}</h3><p data-cms-section="about" data-cms-field={`text.value.${index}.description`} className="mt-2 text-sm leading-6 text-[var(--home-text-muted)]">{cmsText(publishedAbout, `value.${index}.description`, description)}</p></article>)}
@@ -289,11 +292,12 @@ export default async function HomePage() {
           </div>
         </section>
 
+        <div aria-hidden="true" className="home-section-divider" />
         <section hidden={publishedSections.gallery?.isEnabled === false} id="mood" data-cms-section-root="gallery" className="bg-[var(--home-background-secondary)] px-5 py-20 sm:px-8 sm:py-28 lg:px-10 lg:py-36">
           <div className="mx-auto max-w-7xl">
-            <div className="mx-auto max-w-3xl text-center">
+            <div data-reveal className="mx-auto max-w-3xl text-center">
               <p data-cms-section="gallery" data-cms-field="text.eyebrow" className="home-eyebrow block text-center uppercase">{cmsText(publishedGallery, "eyebrow", "SELECTED COLLECTIONS")}</p>
-              <h2 data-cms-section="gallery" data-cms-field="title" className="home-editorial-title mt-4 text-[clamp(2.5rem,10vw,4.8rem)] leading-[1.15] text-center uppercase">
+              <h2 data-cms-section="gallery" data-cms-field="title" className="home-editorial-title home-shine mt-4 text-[clamp(2.5rem,10vw,4.8rem)] leading-[1.15] text-center uppercase">
                 {getSectionText(publishedGallery.title, ["Album chọn lọc"], "NHỮNG CONCEPT TIÊU BIỂU")}
               </h2>
               <p data-cms-section="gallery" data-cms-field="description" className="mt-5 max-w-2xl text-base leading-7 text-[var(--home-text-secondary)] mx-auto text-center">
@@ -307,11 +311,12 @@ export default async function HomePage() {
           </div>
         </section>
 
+        <div aria-hidden="true" className="home-section-divider" />
         <section hidden={publishedSections.services?.isEnabled === false} id="dich-vu" data-cms-section-root="services" className="px-5 py-20 sm:px-8 sm:py-28 lg:px-10 lg:py-36">
           <div className="mx-auto max-w-7xl">
-            <div className="mx-auto max-w-3xl text-center">
+            <div data-reveal className="mx-auto max-w-3xl text-center">
               <p data-cms-section="services" data-cms-field="text.eyebrow" className="home-eyebrow block text-center uppercase">{cmsText(publishedServices, "eyebrow", "TLORA SERVICES")}</p>
-              <h2 data-cms-section="services" data-cms-field="title" className="home-editorial-title mt-4 text-[clamp(2.5rem,10vw,5rem)] leading-[1.15] text-center uppercase">
+              <h2 data-cms-section="services" data-cms-field="title" className="home-editorial-title home-shine mt-4 text-[clamp(2.5rem,10vw,5rem)] leading-[1.15] text-center uppercase">
                 {getSectionText(publishedServices.title, ["Ba concept, một tiêu chuẩn giá trị", "Dịch vụ nổi bật"], "NGHỆ THUẬT CỦA SỰ CÁ NHÂN HÓA")}
               </h2>
               <p data-cms-section="services" data-cms-field="description" className="mt-5 max-w-2xl text-base leading-8 text-[var(--home-text-secondary)] mx-auto text-center">
@@ -322,7 +327,7 @@ export default async function HomePage() {
           </div>
 
           <div className="mx-auto mt-24 max-w-7xl border-t border-white/10 pt-20 sm:mt-32 sm:pt-24">
-            <div className="mx-auto max-w-3xl text-center">
+            <div data-reveal className="mx-auto max-w-3xl text-center">
               <p data-cms-section="services" data-cms-field="text.process.eyebrow" className="home-eyebrow block text-center uppercase">{cmsText(publishedServices, "process.eyebrow", "THE EXPERIENCE")}</p>
               <h2 data-cms-section="services" data-cms-field="text.process.title" className="home-editorial-title mt-4 text-[clamp(2.5rem,10vw,4.8rem)] leading-[1.15] text-center uppercase">
                 {getSectionText(cmsText(publishedServices, "process.title", ""), ["Từ lúc đặt lịch đến khi nhận ảnh"], "HÀNH TRÌNH TẠO NÊN MỘT CÂU CHUYỆN")}
@@ -337,11 +342,12 @@ export default async function HomePage() {
           </div>
         </section>
 
+        <div aria-hidden="true" className="home-section-divider" />
         <section className="bg-[var(--home-background-secondary)] px-5 py-20 sm:px-8 sm:py-28 lg:px-10 lg:py-36">
           <div className="mx-auto max-w-7xl">
-            <div className="mx-auto max-w-3xl text-center">
+            <div data-reveal className="mx-auto max-w-3xl text-center">
               <p data-cms-section="about" data-cms-field="text.testimonials.eyebrow" className="home-eyebrow block text-center uppercase">{cmsText(publishedAbout, "testimonials.eyebrow", "CLIENT NOTES")}</p>
-              <h2 data-cms-section="about" data-cms-field="text.testimonials.title" className="home-editorial-title mt-4 text-[clamp(2.5rem,10vw,4.8rem)] leading-[1.15] text-center uppercase">
+              <h2 data-cms-section="about" data-cms-field="text.testimonials.title" className="home-editorial-title home-shine mt-4 text-[clamp(2.5rem,10vw,4.8rem)] leading-[1.15] text-center uppercase">
                 {getSectionText(cmsText(publishedAbout, "testimonials.title", ""), ["Phản hồi sau buổi chụp"], "NHỮNG CẢM NHẬN SAU HÀNH TRÌNH")}
               </h2>
             </div>
@@ -349,11 +355,12 @@ export default async function HomePage() {
           </div>
         </section>
 
+        <div aria-hidden="true" className="home-section-divider" />
         <section className="px-5 py-20 sm:px-8 sm:py-28 lg:px-10 lg:py-36">
           <div className="mx-auto max-w-7xl">
-            <div className="mx-auto max-w-3xl text-center mb-12 lg:mb-16">
+            <div data-reveal className="mx-auto max-w-3xl text-center mb-12 lg:mb-16">
               <p data-cms-section="contact" data-cms-field="text.faq.eyebrow" className="home-eyebrow block text-center uppercase">{cmsText(publishedContact, "faq.eyebrow", "BEFORE YOUR SESSION")}</p>
-              <h2 data-cms-section="contact" data-cms-field="text.faq.title" className="home-editorial-title mt-4 text-[clamp(2.5rem,10vw,4.8rem)] leading-[1.15] text-center uppercase">
+              <h2 data-cms-section="contact" data-cms-field="text.faq.title" className="home-editorial-title home-shine mt-4 text-[clamp(2.5rem,10vw,4.8rem)] leading-[1.15] text-center uppercase">
                 {getSectionText(cmsText(publishedContact, "faq.title", ""), ["Những điều khách thường hỏi trước khi đặt lịch"], "NHỮNG ĐIỀU BẠN CẦN BIẾT")}
               </h2>
             </div>
@@ -361,6 +368,7 @@ export default async function HomePage() {
           </div>
         </section>
 
+        <div aria-hidden="true" className="home-section-divider" />
         <section hidden={publishedSections.contact?.isEnabled === false} id="home-final-cta" data-cms-section-root="contact" className="px-5 pb-20 sm:px-8 sm:pb-28 lg:px-10 lg:pb-36">
           <div className="relative mx-auto min-h-[520px] max-w-7xl overflow-hidden rounded-[22px] border border-white/10 px-6 py-16 sm:px-10 lg:flex lg:items-center lg:px-16">
             <Image data-cms-section="contact" data-cms-field="images.finalCta" data-cms-image-url={cmsImage(publishedContact, "finalCta", cmsImage(publishedServices, "service.sinh-nhat", services[0].image))} src={cmsImage(publishedContact, "finalCta", cmsImage(publishedServices, "service.sinh-nhat", services[0].image))} alt="Concept chân dung TLORA" fill sizes="100vw" quality={70} className="object-cover" />
