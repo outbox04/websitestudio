@@ -116,6 +116,46 @@ button[disabled],
   line-height: 1.15;
 }
 
+/* ── Hero Luxury Typography (Apple x Dior x Vogue style) ───────── */
+.home-hero-brand-title {
+  background: linear-gradient(135deg, #FFF9F2 0%, #E8D4B5 30%, #D6A06A 65%, #F6E2D0 100%);
+  background-size: 220% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0 6px 20px rgba(0, 0, 0, 0.5));
+  animation: hero-metallic-shine 9s ease-in-out infinite alternate;
+}
+
+@keyframes hero-metallic-shine {
+  0% { background-position: 0% 50%; }
+  100% { background-position: 100% 50%; }
+}
+
+.home-hero-tag {
+  align-items: center;
+  backdrop-filter: blur(12px);
+  background: rgba(16, 17, 21, 0.55);
+  border: 1px solid rgba(232, 212, 181, 0.22);
+  border-radius: 9999px;
+  color: #E8D4B5;
+  display: inline-flex;
+  font-size: .7rem;
+  font-weight: 700;
+  gap: .4rem;
+  letter-spacing: .16em;
+  padding: .35rem .95rem;
+  text-transform: uppercase;
+  transition: border-color var(--motion-fast), box-shadow var(--motion-fast), color var(--motion-fast), transform var(--motion-fast);
+}
+
+.home-hero-tag:hover {
+  border-color: rgba(214, 160, 106, 0.6);
+  box-shadow: 0 0 16px rgba(214, 160, 106, 0.22);
+  color: #FFF9F2;
+  transform: translateY(-1px);
+}
+
 .home-eyebrow {
   color: var(--home-accent-gold);
   font-family: var(--font-code), monospace;
