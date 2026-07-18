@@ -12,7 +12,7 @@ const contentSecurityPolicy = [
   "font-src 'self' data:",
   "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.openai.com https://www.googleapis.com",
   "media-src 'self' blob: https:",
-  "frame-src 'self' https://pay.sepay.vn https://sandbox.pay.sepay.vn",
+  "frame-src 'self' https://pay.sepay.vn https://sandbox.pay.sepay.vn https://www.google.com https://*.google.com",
   "upgrade-insecure-requests",
 ].join("; ");
 
