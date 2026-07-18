@@ -25,7 +25,7 @@ const roleLabels: Record<TloraCmsUserRow["role"], string> = {
 export function TloraUsersManager({ initialUsers }: { initialUsers: TloraCmsUserRow[] }) {
   const [users, setUsers] = useState(initialUsers);
   const [open, setOpen] = useState(false);
-  const [form, setForm] = useState({ name: "", backupEmail: "", account: "" });
+  const [form, setForm] = useState({ name: "", backupEmail: "", account: "", role: "staff" as "staff" | "admin" });
   const [credentials, setCredentials] = useState<Credentials | null>(null);
   const [message, setMessage] = useState("");
   const [creating, setCreating] = useState(false);
@@ -37,7 +37,7 @@ export function TloraUsersManager({ initialUsers }: { initialUsers: TloraCmsUser
       const response = await fetch("/api/admin/tlora/users", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
+        body: JSON.stringify({ name: form.name, backupEmail: form.backupEmail, account: form.account, role: form.role }),
       });
       const result = await response.json() as { credentials?: Credentials; error?: string };
       if (!response.ok || !result.credentials) {
@@ -135,6 +135,17 @@ export function TloraUsersManager({ initialUsers }: { initialUsers: TloraCmsUser
                     <span className="text-zinc-500">tlora.</span>
                     <input value={form.account} onChange={(event) => setForm((current) => ({ ...current, account: event.target.value }))} className="min-w-0 flex-1 outline-none" />
                   </div>
+                </label>
+                <label className="block text-sm font-bold">
+                  Vai trò
+                  <select
+                    value={form.role}
+                    onChange={(event) => setForm((current) => ({ ...current, role: event.target.value as "staff" | "admin" }))}
+                    className="mt-2 min-h-11 w-full rounded-md border px-3 font-normal"
+                  >
+                    <option value="staff">Biên tập viên (staff)</option>
+                    <option value="admin">Quản trị viên (admin)</option>
+                  </select>
                 </label>
                 {message && <p className="text-sm text-red-600">{message}</p>}
                 <button disabled={!form.name || !form.account || creating} onClick={create} className="min-h-11 w-full rounded-md bg-[#d8b766] font-bold disabled:opacity-40">

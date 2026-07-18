@@ -19,9 +19,10 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     const context = await requireTloraAdmin(request);
-    const body = await request.json() as { name?: string; backupEmail?: string; account?: string };
+    const body = await request.json() as { name?: string; backupEmail?: string; account?: string; role?: string };
     const name = String(body.name || "").trim();
     const base = String(body.account || "").trim().toLowerCase().replace(/^tlora\./, "").replace(/[^a-z0-9._-]/g, "");
+    const role = body.role === "admin" ? "admin" : "staff";
     if (!name || !base) return NextResponse.json({ error: "Tên và tài khoản là bắt buộc." }, { status: 400 });
     const username = `tlora.${base}`;
     const authEmail = `${username.replace(/\./g, "-")}@accounts.tlgroup.site`;
@@ -30,8 +31,8 @@ export async function POST(request: Request) {
     const { data: created, error } = await admin.auth.admin.createUser({ email: authEmail, password, email_confirm: true, user_metadata: { full_name: name, username } });
     if (error || !created.user) throw error || new Error("Không thể tạo tài khoản.");
     try {
-      await admin.from("profiles").upsert({ id: created.user.id, email: authEmail, full_name: name, username, role: "staff", is_active: true }, { onConflict: "id" }).throwOnError();
-      await admin.from("studio_members").upsert({ studio_id: context.studio.id, user_id: created.user.id, role: "staff", is_active: true }, { onConflict: "studio_id,user_id" }).throwOnError();
+      await admin.from("profiles").upsert({ id: created.user.id, email: authEmail, full_name: name, username, role, is_active: true }, { onConflict: "id" }).throwOnError();
+      await admin.from("studio_members").upsert({ studio_id: context.studio.id, user_id: created.user.id, role, is_active: true }, { onConflict: "studio_id,user_id" }).throwOnError();
       await admin.from("tlora_cms_users").insert({ user_id: created.user.id, studio_id: context.studio.id, username, display_name: name, backup_email: body.backupEmail || null, created_by: context.userId }).throwOnError();
     } catch (insertError) {
       await admin.auth.admin.deleteUser(created.user.id);
