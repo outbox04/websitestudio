@@ -30,7 +30,7 @@ export async function POST(request: Request) {
     const { data: created, error } = await admin.auth.admin.createUser({ email: authEmail, password, email_confirm: true, user_metadata: { full_name: name, username } });
     if (error || !created.user) throw error || new Error("Không thể tạo tài khoản.");
     try {
-      await admin.from("profiles").upsert({ id: created.user.id, email: authEmail, full_name: name, username, role: "user", is_active: true }, { onConflict: "id" }).throwOnError();
+      await admin.from("profiles").upsert({ id: created.user.id, email: authEmail, full_name: name, username, role: "staff", is_active: true }, { onConflict: "id" }).throwOnError();
       await admin.from("studio_members").upsert({ studio_id: context.studio.id, user_id: created.user.id, role: "staff", is_active: true }, { onConflict: "studio_id,user_id" }).throwOnError();
       await admin.from("tlora_cms_users").insert({ user_id: created.user.id, studio_id: context.studio.id, username, display_name: name, backup_email: body.backupEmail || null, created_by: context.userId }).throwOnError();
     } catch (insertError) {
