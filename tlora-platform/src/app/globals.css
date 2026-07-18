@@ -164,11 +164,11 @@ select {
   to { opacity: 1; transform: translateY(0); }
 }
 
-.home-marquee-track { animation: home-marquee 48s linear infinite; width: max-content; }
+.home-marquee-track { animation: home-marquee 28s linear infinite; width: max-content; will-change: transform; }
 
 @keyframes home-marquee {
-  from { transform: translateX(-50%); }
-  to { transform: translateX(0); }
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
 }
 
 .home-swipe-hint {

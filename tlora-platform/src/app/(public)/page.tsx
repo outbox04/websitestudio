@@ -11,6 +11,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { tloraPublicCacheTags } from "@/lib/tlora-public-cache";
 import { buildTloraPageMetadata } from "@/lib/tlora-metadata";
 import { listPublishedTloraConceptAlbums } from "@/repositories/tlora/concept-albums-repository";
+import type { TloraConceptAlbum } from "@/types/scope";
 
 const trustItems = [
   "Tư vấn concept trước khi chụp",
@@ -143,6 +144,14 @@ function cmsText(content: Record<string, unknown>, key: string, fallback: string
   return typeof values?.[key] === "string" ? String(values[key]) : fallback;
 }
 
+function getSectionText(cmsValue: unknown, oldDefaults: string[], newDefault: string): string {
+  const str = typeof cmsValue === "string" && cmsValue.trim() ? cmsValue.trim() : "";
+  if (!str || oldDefaults.includes(str)) {
+    return newDefault;
+  }
+  return str;
+}
+
 function cmsImage(content: Record<string, unknown>, key: string, fallback: string) {
   const values = content.images as Record<string, unknown> | undefined;
   return typeof values?.[key] === "string" && values[key] ? String(values[key]) : fallback;
@@ -166,10 +175,12 @@ const getPublishedHome = unstable_cache(async () => {
     .eq("page_id", page.id)
     .order("sort_order");
 
-  const sectionMap = Object.fromEntries((sections || []).map((section) => [
-    section.section_key,
-    { isEnabled: section.is_enabled, content: section.published_content as Record<string, unknown> },
-  ])) as Record<string, PublishedSection>;
+  const sectionMap = Object.fromEntries(
+    (sections || []).map((section: { section_key: string; is_enabled: boolean; published_content: unknown }) => [
+      section.section_key,
+      { isEnabled: section.is_enabled, content: section.published_content as Record<string, unknown> },
+    ])
+  ) as Record<string, PublishedSection>;
   return { page, sections: sectionMap };
 }, ["tlora-published-home"], {
   revalidate: 300,
@@ -192,7 +203,7 @@ export async function generateMetadata(): Promise<Metadata> {
 export default async function HomePage() {
   const [{ sections: publishedSections }, selectedAlbums] = await Promise.all([
     getPublishedHomeSafe(),
-    listPublishedTloraConceptAlbums(6).catch(() => []),
+    listPublishedTloraConceptAlbums(6).catch(() => [] as TloraConceptAlbum[]),
   ]);
   const publishedHero = publishedSections.hero?.isEnabled ? publishedSections.hero.content : {};
   const publishedAbout = publishedSections.about?.isEnabled ? publishedSections.about.content : {};
@@ -201,7 +212,7 @@ export default async function HomePage() {
   const publishedContact = publishedSections.contact?.isEnabled ? publishedSections.contact.content : {};
   const heroImagePosition = typeof publishedHero.imagePosition === "string" ? publishedHero.imagePosition : "62% 50%";
   const heroFallbackImage = String(publishedHero.image || "/concept/concept-14.webp");
-  const heroSlides = Array.isArray(publishedHero.slides) ? publishedHero.slides.filter((value): value is string => typeof value === "string" && Boolean(value)) : [];
+  const heroSlides = Array.isArray(publishedHero.slides) ? publishedHero.slides.filter((value: unknown): value is string => typeof value === "string" && Boolean(value)) : [];
   const structuredData = {
     "@context": "https://schema.org",
     "@type": "WebSite",
@@ -239,9 +250,25 @@ export default async function HomePage() {
           </div>
         </section>
 
-        <div className="overflow-hidden border-y border-white/10 bg-[var(--home-background-secondary)] py-4" aria-label="Phong cách TLORA">
+        <div className="w-full overflow-hidden border-y border-white/10 bg-[var(--home-background-secondary)] py-4" aria-label="Phong cách TLORA">
           <div className="home-marquee-track flex items-center text-sm font-semibold uppercase tracking-[.2em] text-[var(--home-text-secondary)]">
-            {[0, 1].map((copy) => <div key={copy} aria-hidden={copy === 1} className="flex shrink-0 items-center">{["Fashion", "Beauty", "Portrait", "Personal Story", "TLORA"].map((word, index) => <span key={`${copy}-${word}`} className="flex items-center"><i className="mx-5 size-1 not-italic bg-[var(--home-accent-gold)]" /><span data-cms-section={copy === 0 ? "hero" : undefined} data-cms-field={copy === 0 ? `text.marquee.${index}` : undefined}>{cmsText(publishedHero, `marquee.${index}`, word)}</span></span>)}</div>)}
+            {[0, 1].map((copy) => (
+              <div key={copy} aria-hidden={copy === 1} className="flex shrink-0 items-center">
+                {[0, 1, 2].flatMap((repeatIndex) =>
+                  ["Fashion", "Beauty", "Portrait", "Personal Story", "TLORA"].map((word, index) => (
+                    <span key={`${copy}-${repeatIndex}-${word}`} className="flex items-center">
+                      <i className="mx-5 size-1 not-italic bg-[var(--home-accent-gold)]" />
+                      <span
+                        data-cms-section={copy === 0 && repeatIndex === 0 ? "hero" : undefined}
+                        data-cms-field={copy === 0 && repeatIndex === 0 ? `text.marquee.${index}` : undefined}
+                      >
+                        {cmsText(publishedHero, `marquee.${index}`, word)}
+                      </span>
+                    </span>
+                  ))
+                )}
+              </div>
+            ))}
           </div>
         </div>
 
@@ -264,22 +291,46 @@ export default async function HomePage() {
 
         <section hidden={publishedSections.gallery?.isEnabled === false} id="mood" data-cms-section-root="gallery" className="bg-[var(--home-background-secondary)] px-5 py-20 sm:px-8 sm:py-28 lg:px-10 lg:py-36">
           <div className="mx-auto max-w-7xl">
-            <div className="max-w-3xl"><p data-cms-section="gallery" data-cms-field="text.eyebrow" className="home-eyebrow">{cmsText(publishedGallery, "eyebrow", "Selected collections")}</p><h2 data-cms-section="gallery" data-cms-field="title" className="home-editorial-title mt-4 text-[clamp(2.5rem,10vw,4.8rem)] leading-none">{String(publishedGallery.title || "Album chọn lọc")}</h2><p data-cms-section="gallery" data-cms-field="description" className="mt-5 text-base leading-7 text-[var(--home-text-secondary)]">{String(publishedGallery.description || "Sáu album concept tiêu biểu được tuyển chọn từ thư viện TLORA.")}</p></div>
-            <MobileCarousel label="Album chọn lọc" className="mt-4 lg:mt-10 lg:grid-cols-3 lg:gap-7">
-              {selectedAlbums.map((album, index) => <ConceptAlbumCard key={album.id} album={album} order={index + 1} priority={false} />)}
-              {!selectedAlbums.length && <p className="w-full rounded-xl border border-dashed border-white/15 p-8 text-[var(--home-text-muted)]">Chưa có Album Concept được xuất bản.</p>}
+            <div className="mx-auto max-w-3xl text-center">
+              <p data-cms-section="gallery" data-cms-field="text.eyebrow" className="home-eyebrow block text-center uppercase">{cmsText(publishedGallery, "eyebrow", "SELECTED COLLECTIONS")}</p>
+              <h2 data-cms-section="gallery" data-cms-field="title" className="home-editorial-title mt-4 text-[clamp(2.5rem,10vw,4.8rem)] leading-none text-center uppercase">
+                {getSectionText(publishedGallery.title, ["Album chọn lọc"], "NHỮNG CONCEPT TIÊU BIỂU")}
+              </h2>
+              <p data-cms-section="gallery" data-cms-field="description" className="mt-5 max-w-2xl text-base leading-7 text-[var(--home-text-secondary)] mx-auto text-center">
+                {getSectionText(publishedGallery.description, ["Sáu album concept tiêu biểu được tuyển chọn từ thư viện TLORA."], "Khám phá những concept được khách hàng yêu thích và đại diện cho ngôn ngữ hình ảnh của TLORA.")}
+              </p>
+            </div>
+            <MobileCarousel label="NHỮNG CONCEPT TIÊU BIỂU" className="mt-4 lg:mt-10 lg:grid-cols-3 lg:gap-7">
+              {selectedAlbums.map((album: TloraConceptAlbum, index: number) => <ConceptAlbumCard key={album.id} album={album} order={index + 1} priority={false} />)}
+              {!selectedAlbums.length && <p className="w-full rounded-xl border border-dashed border-white/15 p-8 text-center text-[var(--home-text-muted)]">Chưa có Album Concept được xuất bản.</p>}
             </MobileCarousel>
           </div>
         </section>
 
         <section hidden={publishedSections.services?.isEnabled === false} id="dich-vu" data-cms-section-root="services" className="px-5 py-20 sm:px-8 sm:py-28 lg:px-10 lg:py-36">
           <div className="mx-auto max-w-7xl">
-            <div className="grid gap-5 lg:grid-cols-[.75fr_1.25fr] lg:items-end"><div><p data-cms-section="services" data-cms-field="text.eyebrow" className="home-eyebrow">{cmsText(publishedServices, "eyebrow", "TLORA Services")}</p><h2 data-cms-section="services" data-cms-field="title" className="home-editorial-title mt-4 text-[clamp(2.5rem,10vw,5rem)] leading-none">{String(publishedServices.title || "Ba concept, một tiêu chuẩn giá trị")}</h2></div><p data-cms-section="services" data-cms-field="description" className="max-w-2xl text-base leading-8 text-[var(--home-text-secondary)] lg:justify-self-end">{String(publishedServices.description || "Không có gói chụp đại trà. Mỗi dịch vụ được tính đúng theo công sức bỏ vào: tư vấn, set dựng, trang phục, ánh sáng và hậu kỳ.")}</p></div>
+            <div className="mx-auto max-w-3xl text-center">
+              <p data-cms-section="services" data-cms-field="text.eyebrow" className="home-eyebrow block text-center uppercase">{cmsText(publishedServices, "eyebrow", "TLORA SERVICES")}</p>
+              <h2 data-cms-section="services" data-cms-field="title" className="home-editorial-title mt-4 text-[clamp(2.5rem,10vw,5rem)] leading-none text-center uppercase">
+                {getSectionText(publishedServices.title, ["Ba concept, một tiêu chuẩn giá trị", "Dịch vụ nổi bật"], "NGHỆ THUẬT CỦA SỰ CÁ NHÂN HÓA")}
+              </h2>
+              <p data-cms-section="services" data-cms-field="description" className="mt-5 max-w-2xl text-base leading-8 text-[var(--home-text-secondary)] mx-auto text-center">
+                {getSectionText(publishedServices.description, ["Không có gói chụp đại trà. Mỗi dịch vụ được tính đúng theo công sức bỏ vào: tư vấn, set dựng, trang phục, ánh sáng và hậu kỳ."], "Từ ý tưởng, bối cảnh đến hậu kỳ, mọi chi tiết đều được thiết kế để kể câu chuyện của riêng bạn.")}
+              </p>
+            </div>
             <MobileCarousel label="Dịch vụ TLORA" className="mt-4 lg:mt-12 lg:grid-cols-3 lg:gap-6">{services.map((service) => <ServiceSection key={service.id} service={service} content={publishedServices} />)}</MobileCarousel>
           </div>
 
           <div className="mx-auto mt-24 max-w-7xl border-t border-white/10 pt-20 sm:mt-32 sm:pt-24">
-            <div className="max-w-3xl"><p data-cms-section="services" data-cms-field="text.process.eyebrow" className="home-eyebrow">{cmsText(publishedServices, "process.eyebrow", "The experience")}</p><h2 data-cms-section="services" data-cms-field="text.process.title" className="home-editorial-title mt-4 text-[clamp(2.5rem,10vw,4.8rem)] leading-none">{cmsText(publishedServices, "process.title", "Từ lúc đặt lịch đến khi nhận ảnh")}</h2><p data-cms-section="services" data-cms-field="text.process.description" className="mt-5 text-base leading-7 text-[var(--home-text-secondary)]">{cmsText(publishedServices, "process.description", "Năm bước, không có công đoạn nào bị giấu đi. Bạn biết mình đang ở đâu trong quy trình tại mọi thời điểm.")}</p></div>
+            <div className="mx-auto max-w-3xl text-center">
+              <p data-cms-section="services" data-cms-field="text.process.eyebrow" className="home-eyebrow block text-center uppercase">{cmsText(publishedServices, "process.eyebrow", "THE EXPERIENCE")}</p>
+              <h2 data-cms-section="services" data-cms-field="text.process.title" className="home-editorial-title mt-4 text-[clamp(2.5rem,10vw,4.8rem)] leading-none text-center uppercase">
+                {getSectionText(cmsText(publishedServices, "process.title", ""), ["Từ lúc đặt lịch đến khi nhận ảnh"], "HÀNH TRÌNH TẠO NÊN MỘT CÂU CHUYỆN")}
+              </h2>
+              <p data-cms-section="services" data-cms-field="text.process.description" className="mt-5 max-w-2xl text-base leading-7 text-[var(--home-text-secondary)] mx-auto text-center">
+                {getSectionText(cmsText(publishedServices, "process.description", ""), ["Năm bước, không có công đoạn nào bị giấu đi. Bạn biết mình đang ở đâu trong quy trình tại mọi thời điểm."], "Từng bước được kết nối liền mạch để biến cảm xúc thành những khung hình mang giá trị lâu dài.")}
+              </p>
+            </div>
             <ol className="relative mt-12 border-l border-[var(--home-border-subtle)] pl-7 sm:pl-10 lg:grid lg:grid-cols-5 lg:border-l-0 lg:border-t lg:pl-0 lg:pt-10">
               {processSteps.map(([step, title, description]) => <li key={step} className="relative pb-10 last:pb-0 lg:px-5 lg:pb-0 first:lg:pl-0"><span className="absolute -left-[2.18rem] top-0 grid size-4 place-items-center rounded-full border-4 border-[var(--home-background-primary)] bg-[var(--home-accent-gold)] sm:-left-[2.68rem] lg:-top-12 lg:left-5 lg:size-5 first:lg:left-0" aria-hidden="true" /><span className="home-eyebrow">{step}</span><h3 data-cms-section="services" data-cms-field={`text.process.${step}.title`} className="mt-3 text-lg font-bold">{cmsText(publishedServices, `process.${step}.title`, title)}</h3><p data-cms-section="services" data-cms-field={`text.process.${step}.description`} className="mt-3 text-sm leading-6 text-[var(--home-text-muted)]">{cmsText(publishedServices, `process.${step}.description`, description)}</p></li>)}
             </ol>
@@ -287,20 +338,34 @@ export default async function HomePage() {
         </section>
 
         <section className="bg-[var(--home-background-secondary)] px-5 py-20 sm:px-8 sm:py-28 lg:px-10 lg:py-36">
-          <div className="mx-auto max-w-7xl"><p data-cms-section="about" data-cms-field="text.testimonials.eyebrow" className="home-eyebrow">{cmsText(publishedAbout, "testimonials.eyebrow", "Client notes")}</p><h2 data-cms-section="about" data-cms-field="text.testimonials.title" className="home-editorial-title mt-4 max-w-[12ch] text-[clamp(2.5rem,10vw,4.8rem)] leading-none">{cmsText(publishedAbout, "testimonials.title", "Phản hồi sau buổi chụp")}</h2>
+          <div className="mx-auto max-w-7xl">
+            <div className="mx-auto max-w-3xl text-center">
+              <p data-cms-section="about" data-cms-field="text.testimonials.eyebrow" className="home-eyebrow block text-center uppercase">{cmsText(publishedAbout, "testimonials.eyebrow", "CLIENT NOTES")}</p>
+              <h2 data-cms-section="about" data-cms-field="text.testimonials.title" className="home-editorial-title mt-4 text-[clamp(2.5rem,10vw,4.8rem)] leading-none text-center uppercase">
+                {getSectionText(cmsText(publishedAbout, "testimonials.title", ""), ["Phản hồi sau buổi chụp"], "NHỮNG CẢM NHẬN SAU HÀNH TRÌNH")}
+              </h2>
+            </div>
             <MobileCarousel label="Phản hồi khách hàng" className="mt-4 lg:mt-10 lg:grid-cols-3 lg:gap-4">{[["Mình từng nghĩ ảnh sinh nhật chỉ cần thổi nến cho có. Đến lúc nhận ảnh mới thấy giá trị mình bỏ ra hoàn toàn xứng đáng.", "Khách chụp Sinh nhật, tuổi 22"], ["Ảnh retouch vẫn là mặt mình, chỉ là phiên bản sáng và mịn hơn, không bị lạ như nhiều nơi mình từng chụp.", "Khách chụp Beauty Concept"], ["Ba set bối cảnh trong một buổi giúp mình có đủ ảnh cho cả tháng làm content, không phải đặt lịch lại nhiều lần.", "Khách chụp Concept Trang Phục"]].map(([quote, person], index) => <article key={person} className="flex min-h-[310px] flex-col justify-between rounded-[20px] border border-white/10 bg-[var(--home-background-elevated)] p-7"><span className="home-editorial-title text-5xl leading-none text-[var(--home-accent-gold)]">“</span><p data-cms-section="about" data-cms-field={`text.testimonials.${index}.quote`} className="home-editorial-title text-2xl leading-[1.35]">{cmsText(publishedAbout, `testimonials.${index}.quote`, quote)}</p><p data-cms-section="about" data-cms-field={`text.testimonials.${index}.person`} className="mt-7 text-xs font-bold uppercase tracking-[.12em] text-[var(--home-text-muted)]">— {cmsText(publishedAbout, `testimonials.${index}.person`, person)}</p></article>)}</MobileCarousel>
           </div>
         </section>
 
         <section className="px-5 py-20 sm:px-8 sm:py-28 lg:px-10 lg:py-36">
-          <div className="mx-auto grid max-w-7xl gap-10 lg:grid-cols-[.75fr_1.25fr] lg:gap-20"><div><p data-cms-section="contact" data-cms-field="text.faq.eyebrow" className="home-eyebrow">{cmsText(publishedContact, "faq.eyebrow", "Before your session")}</p><h2 data-cms-section="contact" data-cms-field="text.faq.title" className="home-editorial-title mt-4 text-[clamp(2.5rem,10vw,4.8rem)] leading-none">{cmsText(publishedContact, "faq.title", "Những điều khách thường hỏi trước khi đặt lịch")}</h2></div><div>{faqs.map(([question, answer], index) => <details key={question} open={index === 0} className="group border-b border-white/10"><summary className="flex min-h-20 cursor-pointer list-none items-center justify-between gap-5 py-5 text-base font-semibold focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--home-accent-gold)]"><span data-cms-section="contact" data-cms-field={`text.faq.${index}.question`}>{cmsText(publishedContact, `faq.${index}.question`, question)}</span><span aria-hidden="true" className="grid size-10 shrink-0 place-items-center rounded-full border border-white/10 text-xl font-light text-[var(--home-accent-gold)] transition duration-[var(--motion-normal)] group-open:rotate-45">+</span></summary><p data-cms-section="contact" data-cms-field={`text.faq.${index}.answer`} className="max-w-2xl pb-6 pr-14 text-sm leading-7 text-[var(--home-text-muted)]">{cmsText(publishedContact, `faq.${index}.answer`, answer)}</p></details>)}</div></div>
+          <div className="mx-auto max-w-7xl">
+            <div className="mx-auto max-w-3xl text-center mb-12 lg:mb-16">
+              <p data-cms-section="contact" data-cms-field="text.faq.eyebrow" className="home-eyebrow block text-center uppercase">{cmsText(publishedContact, "faq.eyebrow", "BEFORE YOUR SESSION")}</p>
+              <h2 data-cms-section="contact" data-cms-field="text.faq.title" className="home-editorial-title mt-4 text-[clamp(2.5rem,10vw,4.8rem)] leading-none text-center uppercase">
+                {getSectionText(cmsText(publishedContact, "faq.title", ""), ["Những điều khách thường hỏi trước khi đặt lịch"], "NHỮNG ĐIỀU BẠN CẦN BIẾT")}
+              </h2>
+            </div>
+            <div className="mx-auto max-w-4xl">{faqs.map(([question, answer], index) => <details key={question} open={index === 0} className="group border-b border-white/10"><summary className="flex min-h-20 cursor-pointer list-none items-center justify-between gap-5 py-5 text-base font-semibold focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--home-accent-gold)]"><span data-cms-section="contact" data-cms-field={`text.faq.${index}.question`}>{cmsText(publishedContact, `faq.${index}.question`, question)}</span><span aria-hidden="true" className="grid size-10 shrink-0 place-items-center rounded-full border border-white/10 text-xl font-light text-[var(--home-accent-gold)] transition duration-[var(--motion-normal)] group-open:rotate-45">+</span></summary><p data-cms-section="contact" data-cms-field={`text.faq.${index}.answer`} className="max-w-2xl pb-6 pr-14 text-sm leading-7 text-[var(--home-text-muted)]">{cmsText(publishedContact, `faq.${index}.answer`, answer)}</p></details>)}</div>
+          </div>
         </section>
 
         <section hidden={publishedSections.contact?.isEnabled === false} id="home-final-cta" data-cms-section-root="contact" className="px-5 pb-20 sm:px-8 sm:pb-28 lg:px-10 lg:pb-36">
           <div className="relative mx-auto min-h-[520px] max-w-7xl overflow-hidden rounded-[22px] border border-white/10 px-6 py-16 sm:px-10 lg:flex lg:items-center lg:px-16">
             <Image data-cms-section="contact" data-cms-field="images.finalCta" data-cms-image-url={cmsImage(publishedContact, "finalCta", cmsImage(publishedServices, "service.sinh-nhat", services[0].image))} src={cmsImage(publishedContact, "finalCta", cmsImage(publishedServices, "service.sinh-nhat", services[0].image))} alt="Concept chân dung TLORA" fill sizes="100vw" quality={70} className="object-cover" />
             <div className="absolute inset-0 bg-linear-to-r from-[#08090b]/95 via-[#08090b]/78 to-[#08090b]/28" />
-            <div className="relative max-w-3xl"><p data-cms-section="contact" data-cms-field="text.eyebrow" className="home-eyebrow">{cmsText(publishedContact, "eyebrow", "Create your story")}</p><h2 data-cms-section="contact" data-cms-field="title" className="home-editorial-title mt-5 text-[clamp(2.7rem,11vw,5.4rem)] leading-[.95]">{String(publishedContact.title || "Sẵn sàng có một bộ ảnh thể hiện đúng cá tính của bạn?")}</h2><p data-cms-section="contact" data-cms-field="description" className="mt-6 max-w-xl text-base leading-7 text-[var(--home-text-secondary)]">{String(publishedContact.description || "Xem giá chụp, chuẩn bị lịch trình và để TLORA lo phần concept. Bạn chỉ cần tới đúng giờ.")}</p><div className="mt-8 flex flex-col gap-3 min-[430px]:flex-row"><PillLink href="/bang-gia" tone="light"><span data-cms-section="contact" data-cms-field="text.cta.primary">{cmsText(publishedContact, "cta.primary", "Đặt lịch tư vấn")}</span><ArrowRight size={16} aria-hidden="true" /></PillLink><PillLink href="#dich-vu"><span data-cms-section="contact" data-cms-field="text.cta.secondary">{cmsText(publishedContact, "cta.secondary", "Xem lại 3 dịch vụ")}</span></PillLink></div></div>
+            <div className="relative mx-auto max-w-3xl text-center"><p data-cms-section="contact" data-cms-field="text.eyebrow" className="home-eyebrow block text-center uppercase">{cmsText(publishedContact, "eyebrow", "CREATE YOUR STORY")}</p><h2 data-cms-section="contact" data-cms-field="title" className="home-editorial-title mt-5 text-[clamp(2.7rem,11vw,5.4rem)] leading-[.95] text-center uppercase">{String(publishedContact.title || "Sẵn sàng có một bộ ảnh thể hiện đúng cá tính của bạn?")}</h2><p data-cms-section="contact" data-cms-field="description" className="mt-6 mx-auto max-w-xl text-base leading-7 text-[var(--home-text-secondary)] text-center">{String(publishedContact.description || "Xem giá chụp, chuẩn bị lịch trình và để TLORA lo phần concept. Bạn chỉ cần tới đúng giờ.")}</p><div className="mt-8 flex flex-col gap-3 justify-center min-[430px]:flex-row"><PillLink href="/bang-gia" tone="light"><span data-cms-section="contact" data-cms-field="text.cta.primary">{cmsText(publishedContact, "cta.primary", "Đặt lịch tư vấn")}</span><ArrowRight size={16} aria-hidden="true" /></PillLink><PillLink href="#dich-vu"><span data-cms-section="contact" data-cms-field="text.cta.secondary">{cmsText(publishedContact, "cta.secondary", "Xem lại 3 dịch vụ")}</span></PillLink></div></div>
           </div>
         </section>
       </div>
