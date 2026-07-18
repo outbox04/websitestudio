@@ -135,6 +135,10 @@ export const cmsSiteSettingsSchema = z.object({
   facebookUrl: safeHref.or(z.literal("")),
   zalo: z.string().trim().max(40),
   defaultOgImage: imageUrl,
+  googleMapsEmbed: z.string().trim().max(2000).refine(
+    (value) => !value || /^https:\/\/www\.google\.com\/maps\/embed/i.test(value),
+    "Phải là URL Google Maps embed hợp lệ (bắt đầu bằng https://www.google.com/maps/embed).",
+  ).optional().default(""),
 });
 
 export const conceptAlbumSchema = z.object({

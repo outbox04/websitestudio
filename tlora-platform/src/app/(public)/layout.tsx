@@ -23,6 +23,7 @@ const readPublishedShell = unstable_cache(async () => {
     address: publishedContact.address.trim() || legacyValue("address"),
     facebookUrl: publishedContact.facebookUrl.trim() || legacyValue("facebook_url"),
     zalo: publishedContact.zalo.trim() || legacyValue("zalo_phone"),
+    googleMapsEmbed: publishedContact.googleMapsEmbed?.trim() || "",
   };
   return { navItems: items.length ? items : undefined, contact };
 }, ["tlora-published-shell"], {

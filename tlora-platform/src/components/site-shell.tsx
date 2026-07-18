@@ -32,7 +32,7 @@ function BrandLogo({ className, fetchPriority = "auto" }: { className: string; f
   );
 }
 
-export type SiteContact = { siteName?: string; description?: string; email?: string; phone?: string; address?: string; facebookUrl?: string; facebook_url?: string; zalo?: string; zalo_phone?: string };
+export type SiteContact = { siteName?: string; description?: string; email?: string; phone?: string; address?: string; facebookUrl?: string; facebook_url?: string; zalo?: string; zalo_phone?: string; googleMapsEmbed?: string };
 
 function externalUrl(value: string) {
   if (!value) return "";
@@ -153,7 +153,7 @@ export function SiteFooter({ contact }: { contact?: SiteContact }) {
             <p className="home-eyebrow mb-3">Vị trí studio</p>
             <div className="overflow-hidden rounded-xl border border-white/10">
               <iframe
-                src="https://www.google.com/maps/embed?pb=!1m14!1m12!1m3!1d233.61668559396074!2d106.31679097323517!3d20.470656370154337!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!5e0!3m2!1svi!2s!4v1784346049212!5m2!1svi!2s"
+                src={contact?.googleMapsEmbed || "https://www.google.com/maps/embed?pb=!1m14!1m12!1m3!1d233.61668559396074!2d106.31679097323517!3d20.470656370154337!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!5e0!3m2!1svi!2s!4v1784346049212!5m2!1svi!2s"}
                 width="100%"
                 height="180"
                 style={{ border: 0 }}
@@ -195,7 +195,7 @@ export function SiteFooter({ contact }: { contact?: SiteContact }) {
           <p className="mb-3 font-semibold text-white">Vị trí studio</p>
           <div className="overflow-hidden rounded-xl border border-white/10">
             <iframe
-              src="https://www.google.com/maps/embed?pb=!1m14!1m12!1m3!1d233.61668559396074!2d106.31679097323517!3d20.470656370154337!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!5e0!3m2!1svi!2s!4v1784346049212!5m2!1svi!2s"
+              src={contact?.googleMapsEmbed || "https://www.google.com/maps/embed?pb=!1m14!1m12!1m3!1d233.61668559396074!2d106.31679097323517!3d20.470656370154337!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!5e0!3m2!1svi!2s!4v1784346049212!5m2!1svi!2s"}
               width="100%"
               height="180"
               style={{ border: 0 }}

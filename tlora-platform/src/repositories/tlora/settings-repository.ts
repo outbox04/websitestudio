@@ -12,6 +12,7 @@ export type TloraSiteSettings = {
   facebookUrl: string;
   zalo: string;
   defaultOgImage: string;
+  googleMapsEmbed: string;
 };
 
 const defaults: TloraSiteSettings = {
@@ -23,6 +24,7 @@ const defaults: TloraSiteSettings = {
   facebookUrl: "",
   zalo: "",
   defaultOgImage: "",
+  googleMapsEmbed: "",
 };
 
 export async function getTloraSiteSettings(studioId: string) {
