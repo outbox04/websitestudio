@@ -2,19 +2,45 @@
 
 import { Save, Send } from "lucide-react";
 import { useState } from "react";
-import { cmsSiteSettingsSchema } from "@/schemas/tlora-cms";
+import { cmsSiteSettingsSchema, extractGoogleMapsUrl } from "@/schemas/tlora-cms";
 import type { TloraSiteSettings } from "@/repositories/tlora/settings-repository";
 
 export function TloraSettingsManager({ initialSettings }: { initialSettings: TloraSiteSettings }) {
   const [settings, setSettings] = useState(initialSettings);
   const [message, setMessage] = useState("");
+  const [saving, setSaving] = useState(false);
 
-  async function request(method: "PATCH" | "POST") {
-    const parsed = cmsSiteSettingsSchema.safeParse(settings);
-    if (!parsed.success) return setMessage(parsed.error.issues[0]?.message || "Thiết lập không hợp lệ.");
-    const response = await fetch("/api/admin/tlora/settings", { method, headers: { "Content-Type": "application/json" }, body: method === "PATCH" ? JSON.stringify(parsed.data) : undefined });
-    const result = await response.json() as { error?: string };
-    setMessage(response.ok ? method === "PATCH" ? "Đã lưu bản nháp thiết lập." : "Đã xuất bản thiết lập website." : result.error || "Không thể lưu thiết lập.");
+  const previewMapUrl = extractGoogleMapsUrl(settings.googleMapsEmbed);
+
+  async function saveAndPublish() {
+    setSaving(true);
+    setMessage("");
+    try {
+      const parsed = cmsSiteSettingsSchema.safeParse(settings);
+      if (!parsed.success) return setMessage(parsed.error.issues[0]?.message || "Thiết lập không hợp lệ.");
+
+      const patchResponse = await fetch("/api/admin/tlora/settings", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(parsed.data),
+      });
+
+      if (!patchResponse.ok) {
+        const patchResult = await patchResponse.json() as { error?: string };
+        return setMessage(patchResult.error || "Không thể lưu thiết lập.");
+      }
+
+      const postResponse = await fetch("/api/admin/tlora/settings", { method: "POST" });
+      const postResult = await postResponse.json() as { error?: string };
+      if (postResponse.ok) {
+        setSettings((current) => ({ ...current, googleMapsEmbed: parsed.data.googleMapsEmbed }));
+        setMessage("Đã lưu và xuất bản thiết lập website.");
+      } else {
+        setMessage(postResult.error || "Không thể xuất bản thiết lập.");
+      }
+    } finally {
+      setSaving(false);
+    }
   }
 
   return (
@@ -36,15 +62,36 @@ export function TloraSettingsManager({ initialSettings }: { initialSettings: Tlo
               value={settings.googleMapsEmbed}
               onChange={(googleMapsEmbed) => setSettings((current) => ({ ...current, googleMapsEmbed }))}
               textarea
-              placeholder={'Dán URL từ Google Maps → Chia sẻ → Nhúng bản đồ → Copy src="..."'}
+              placeholder={'Dán đoạn mã <iframe src="..."></iframe> hoặc URL Google Maps nhúng vào đây'}
             />
             <p className="mt-1.5 text-xs text-zinc-500">
-              Mở Google Maps → Chia sẻ → <strong>Nhúng bản đồ</strong> → Copy nội dung thuộc tính <code>src="…"</code> trong thẻ &lt;iframe&gt;.
+              Có thể dán trực tiếp toàn bộ thẻ <code>&lt;iframe&gt;</code> từ Google Maps. Khi bấm Xuất bản, hệ thống sẽ tự động tách URL <code>src</code> để lưu.
             </p>
+            {previewMapUrl && (
+              <div className="mt-3 overflow-hidden rounded-xl border border-zinc-200 bg-zinc-50">
+                <p className="border-b border-zinc-200 bg-zinc-100 px-3 py-2 text-xs font-bold text-zinc-700">
+                  Xem trước bản đồ:
+                </p>
+                <div className="p-2">
+                  <iframe
+                    src={previewMapUrl}
+                    width="100%"
+                    height="220"
+                    style={{ border: 0, borderRadius: "8px" }}
+                    loading="lazy"
+                    title="Bản đồ xem trước"
+                  />
+                </div>
+              </div>
+            )}
           </div>
         </div>
         {message && <p className="mt-4 text-sm font-semibold text-zinc-600">{message}</p>}
-        <div className="mt-5 flex gap-2 border-t border-zinc-200 pt-5"><button type="button" onClick={() => request("PATCH")} className="inline-flex min-h-11 items-center gap-2 rounded-md bg-zinc-950 px-5 text-sm font-bold text-white"><Save size={16} /> Lưu bản nháp</button><button type="button" onClick={() => request("POST")} className="inline-flex min-h-11 items-center gap-2 rounded-md bg-[#d8b766] px-5 text-sm font-bold text-zinc-950"><Send size={16} /> Xuất bản</button></div>
+        <div className="mt-5 flex gap-2 border-t border-zinc-200 pt-5">
+          <button type="button" disabled={saving} onClick={saveAndPublish} className="inline-flex min-h-11 items-center gap-2 rounded-md bg-[#d8b766] px-5 text-sm font-bold text-zinc-950 hover:bg-[#c9a655] disabled:opacity-50">
+            <Send size={16} /> {saving ? "Đang lưu..." : "Xuất bản thiết lập"}
+          </button>
+        </div>
       </section>
     </main>
   );

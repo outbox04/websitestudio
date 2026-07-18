@@ -126,6 +126,18 @@ export const cmsMenuSchema = z.object({
   items: z.array(cmsMenuItemSchema).max(30),
 });
 
+export function extractGoogleMapsUrl(raw: string): string {
+  if (!raw) return "";
+  const trimmed = raw.trim();
+  if (trimmed.includes("<iframe")) {
+    const match = trimmed.match(/src=["']([^"']+)["']/i);
+    if (match && match[1]) {
+      return match[1].trim();
+    }
+  }
+  return trimmed;
+}
+
 export const cmsSiteSettingsSchema = z.object({
   siteName: z.string().trim().min(2).max(120),
   description: z.string().trim().max(320),
@@ -135,9 +147,9 @@ export const cmsSiteSettingsSchema = z.object({
   facebookUrl: safeHref.or(z.literal("")),
   zalo: z.string().trim().max(40),
   defaultOgImage: imageUrl,
-  googleMapsEmbed: z.string().trim().max(2000).refine(
-    (value) => !value || /^https:\/\/www\.google\.com\/maps\/embed/i.test(value),
-    "Phải là URL Google Maps embed hợp lệ (bắt đầu bằng https://www.google.com/maps/embed).",
+  googleMapsEmbed: z.string().trim().max(4000).transform(extractGoogleMapsUrl).refine(
+    (value) => !value || /^https:\/\/(?:www\.)?google\.com\/maps\/embed/i.test(value),
+    "Phải là URL hoặc mã nhúng Google Maps hợp lệ (bắt đầu bằng https://www.google.com/maps/embed).",
   ).optional().default(""),
 });
 

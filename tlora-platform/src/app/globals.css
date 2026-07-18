@@ -70,6 +70,17 @@ select {
   -webkit-tap-highlight-color: transparent;
 }
 
+button,
+[role="button"] {
+  cursor: pointer;
+}
+
+button:disabled,
+button[disabled],
+[role="button"][aria-disabled="true"] {
+  cursor: not-allowed;
+}
+
 .news-editor h1 { font-size: 2em; font-weight: 800; line-height: 1.2; margin: 1em 0 .5em; }
 .news-editor h2 { font-size: 1.5em; font-weight: 800; line-height: 1.3; margin: 1em 0 .5em; }
 .news-editor p { margin: 0 0 1em; }
