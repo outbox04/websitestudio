@@ -18,7 +18,7 @@ export function HomeCinematic() {
     updateProgress();
 
     // ── Scroll-reveal (IntersectionObserver) ─────────────────────
-    const revealEls = document.querySelectorAll<HTMLElement>("[data-reveal]");
+    const revealEls = Array.from(document.querySelectorAll<HTMLElement>("[data-reveal], .home-img-reveal"));
     if (!revealEls.length) return () => { window.removeEventListener("scroll", updateProgress); };
 
     const observer = new IntersectionObserver(
@@ -33,7 +33,7 @@ export function HomeCinematic() {
           }
         });
       },
-      { threshold: 0.12, rootMargin: "0px 0px -40px 0px" }
+      { threshold: 0.08, rootMargin: "0px 0px -20px 0px" }
     );
 
     revealEls.forEach((el) => observer.observe(el));
