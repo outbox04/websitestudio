@@ -149,10 +149,20 @@ export function SiteFooter({ contact }: { contact?: SiteContact }) {
             <p className="text-[#f5f1e8]">{contact?.phone || "0901 234 567"}</p>
             {contact?.address && <p className="mt-2">{contact.address}</p>}
           </div>
-          <div className="text-sm leading-7">
-            <p className="home-eyebrow">Trải nghiệm</p>
-            <p className="mt-4">Tư vấn concept theo phong cách riêng</p>
-            <p>Chọn ảnh trực tuyến và nhận album riêng tư</p>
+          <div>
+            <p className="home-eyebrow mb-3">Vị trí studio</p>
+            <div className="overflow-hidden rounded-xl border border-white/10">
+              <iframe
+                src="https://www.google.com/maps/embed?pb=!1m14!1m12!1m3!1d233.61668559396074!2d106.31679097323517!3d20.470656370154337!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!5e0!3m2!1svi!2s!4v1784346049212!5m2!1svi!2s"
+                width="100%"
+                height="180"
+                style={{ border: 0 }}
+                allowFullScreen
+                loading="lazy"
+                referrerPolicy="strict-origin-when-cross-origin"
+                title="Bản đồ TLORA Studio"
+              />
+            </div>
           </div>
         </div>
         <div className="mx-auto flex max-w-7xl flex-col gap-4 border-t border-white/10 px-5 py-5 text-xs sm:flex-row sm:items-center sm:justify-between sm:px-8 lg:px-10">
@@ -181,10 +191,20 @@ export function SiteFooter({ contact }: { contact?: SiteContact }) {
           <p>{contact?.phone || "0901 234 567"}</p>
           {contact?.address && <p>{contact.address}</p>}
         </div>
-        <div className="text-sm text-zinc-400">
-          <p className="font-semibold text-white">Trải nghiệm tại TLORA</p>
-          <p className="mt-3">Tư vấn concept theo phong cách riêng</p>
-          <p>Chọn ảnh trực tuyến và nhận album riêng tư</p>
+        <div>
+          <p className="mb-3 font-semibold text-white">Vị trí studio</p>
+          <div className="overflow-hidden rounded-xl border border-white/10">
+            <iframe
+              src="https://www.google.com/maps/embed?pb=!1m14!1m12!1m3!1d233.61668559396074!2d106.31679097323517!3d20.470656370154337!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!5e0!3m2!1svi!2s!4v1784346049212!5m2!1svi!2s"
+              width="100%"
+              height="180"
+              style={{ border: 0 }}
+              allowFullScreen
+              loading="lazy"
+              referrerPolicy="strict-origin-when-cross-origin"
+              title="Bản đồ TLORA Studio"
+            />
+          </div>
         </div>
       </div>
       <div className="mx-auto flex max-w-7xl flex-col gap-3 border-t border-white/10 px-4 py-5 text-sm text-zinc-500 sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:px-8">
