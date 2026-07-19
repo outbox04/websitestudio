@@ -232,7 +232,7 @@ export default async function HomePage() {
     <>
       <HomeCinematic />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }} />
-      <div id="top" className="home-luxury">
+      <div id="top" className="home-luxury flex flex-col">
         <div className="home-hero-stage relative">
         <section hidden={publishedSections.hero?.isEnabled === false} id="home-hero" data-cms-section-root="hero" className="relative flex min-h-svh items-end overflow-hidden px-5 pb-[10rem] pt-28 sm:px-8 lg:px-10 lg:pb-16">
           <HeroBannerSlideshow initialSlides={heroSlides} fallbackImage={heroFallbackImage} imagePosition={heroImagePosition} />
@@ -301,7 +301,7 @@ export default async function HomePage() {
         </section>
 
         <div aria-hidden="true" className="home-section-divider" />
-        <section hidden={publishedSections.services?.isEnabled === false} id="he-sinh-thai-tl" className="bg-[var(--home-background-secondary)] px-5 py-20 sm:px-8 sm:py-28 lg:px-10 lg:py-32">
+        <section hidden={publishedSections.services?.isEnabled === false} id="he-sinh-thai-tl" className="order-[100] border-t border-white/10 bg-[var(--home-background-secondary)] px-5 py-20 sm:px-8 sm:py-28 lg:px-10 lg:py-32">
           <div className="mx-auto max-w-7xl">
             <div data-reveal className="flex items-end justify-between gap-6 border-b border-white/10 pb-6">
               <div>
@@ -318,7 +318,7 @@ export default async function HomePage() {
                 const branchImage = cmsImage(publishedServices, `ecosystemPage.branch.${branchIndex}.image`, branch.image);
                 const branchLogo = cmsImage(publishedServices, `ecosystemPage.branch.${branchIndex}.logo`, tlLogoPlaceholder);
                 return (
-                  <Link key={branch.name} href="/dich-vu" className="tl-ecosystem-home-card group relative aspect-[4/5] overflow-hidden rounded-xl border border-white/10 bg-[var(--home-background-elevated)]">
+                  <Link key={branch.name} href={`/dich-vu?linh-vuc=${branchIndex === 0 ? "media" : branchIndex === 1 ? "studio" : "academy"}`} className="tl-ecosystem-home-card group relative aspect-[4/5] overflow-hidden rounded-xl border border-white/10 bg-[var(--home-background-elevated)]">
                     <Image data-cms-section="services" data-cms-field={`images.ecosystemPage.branch.${branchIndex}.image`} data-cms-image-url={branchImage} src={branchImage} alt={branch.name} fill sizes="(min-width: 1024px) 31vw, 82vw" quality={72} className="tl-ecosystem-panel-image object-cover" style={{ objectPosition: branch.imagePosition }} />
                     <div className="absolute inset-0 bg-linear-to-t from-[#07080a] via-[#07080a]/12 to-[#07080a]/25" />
                     <div className="tl-ecosystem-shine absolute inset-0" aria-hidden="true" />

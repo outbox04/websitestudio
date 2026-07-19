@@ -115,6 +115,19 @@ function ContactDock({ contact }: { contact?: SiteContact }) {
   </div>;
 }
 
+function EcosystemFooterLinks({ home = false }: { home?: boolean }) {
+  return (
+    <nav aria-label="Hệ sinh thái TL" className={home ? "text-sm leading-7" : "text-sm text-zinc-400"}>
+      <p className={home ? "home-eyebrow" : "font-semibold text-white"}>HỆ SINH THÁI TL</p>
+      <div className="mt-3 flex flex-col items-start gap-1">
+        <Link href="/dich-vu?linh-vuc=media" className="transition hover:text-[#f3d88e]">TL Media</Link>
+        <Link href="/dich-vu?linh-vuc=studio" className="transition hover:text-[#f3d88e]">TLORA Studio</Link>
+        <Link href="/dich-vu?linh-vuc=academy" className="transition hover:text-[#f3d88e]">TL Academy</Link>
+      </div>
+    </nav>
+  );
+}
+
 export function SiteFooter({ contact }: { contact?: SiteContact }) {
   const pathname = usePathname();
   const isHome = pathname === "/";
@@ -142,7 +155,7 @@ export function SiteFooter({ contact }: { contact?: SiteContact }) {
   if (isHome) {
     return (
       <footer className="border-t border-white/10 bg-[#08090b] text-[#aaa297]">
-        <div className="mx-auto grid max-w-7xl gap-10 px-5 py-16 sm:px-8 md:grid-cols-[1.35fr_1fr_1fr] lg:px-10 lg:py-20">
+        <div className="mx-auto grid max-w-7xl gap-10 px-5 py-16 sm:px-8 md:grid-cols-2 lg:grid-cols-[1.2fr_.75fr_.75fr_1fr] lg:px-10 lg:py-20">
           <div>
             <BrandLogo className="h-16 w-[170px]" />
             <p className="mt-5 max-w-md text-sm leading-7">{contact?.description || "Nơi cá tính trở thành nghệ thuật, với album khách hàng, chọn ảnh trực tuyến và quy trình retouch rõ ràng."}</p>
@@ -153,6 +166,7 @@ export function SiteFooter({ contact }: { contact?: SiteContact }) {
             <p className="text-[#f5f1e8]">{contact?.phone || "0901 234 567"}</p>
             {contact?.address && <p className="mt-2">{contact.address}</p>}
           </div>
+          <EcosystemFooterLinks home />
           <div>
             <p className="home-eyebrow mb-3">Vị trí studio</p>
             <div className="overflow-hidden rounded-xl border border-white/10">
@@ -182,7 +196,7 @@ export function SiteFooter({ contact }: { contact?: SiteContact }) {
 
   return (
     <footer className="border-t border-white/10 bg-[#07080a]">
-      <div className="mx-auto grid max-w-7xl gap-8 px-4 py-10 sm:px-6 md:grid-cols-[1.4fr_1fr_1fr] lg:px-8">
+      <div className="mx-auto grid max-w-7xl gap-8 px-4 py-10 sm:px-6 md:grid-cols-2 lg:grid-cols-[1.2fr_.75fr_.75fr_1fr] lg:px-8">
         <div>
           <p className="font-heading text-lg font-bold text-white">{contact?.siteName || "TLORA Studio"}</p>
           <p className="mt-3 max-w-md text-sm leading-6 text-zinc-400">
@@ -195,6 +209,7 @@ export function SiteFooter({ contact }: { contact?: SiteContact }) {
           <p>{contact?.phone || "0901 234 567"}</p>
           {contact?.address && <p>{contact.address}</p>}
         </div>
+        <EcosystemFooterLinks />
         <div>
           <p className="mb-3 font-semibold text-white">Vị trí studio</p>
           <div className="overflow-hidden rounded-xl border border-white/10">

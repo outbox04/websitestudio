@@ -516,6 +516,19 @@ body:has([role="dialog"]) .home-sticky-cta { display: none; }
   box-shadow: 0 22px 62px rgba(0, 0, 0, .35);
 }
 
+.tl-ecosystem-selector {
+  scrollbar-width: none;
+  overscroll-behavior-inline: contain;
+}
+
+.tl-ecosystem-selector::-webkit-scrollbar {
+  display: none;
+}
+
+.tl-ecosystem-content {
+  animation: tl-ecosystem-content-in .75s var(--motion-editorial) both;
+}
+
 @media (hover: hover) {
   .tl-ecosystem-panel:hover .tl-ecosystem-panel-image,
   .tl-ecosystem-home-card:hover .tl-ecosystem-panel-image {
@@ -540,6 +553,19 @@ body:has([role="dialog"]) .home-sticky-cta { display: none; }
 @keyframes tl-ecosystem-logo-float {
   0%, 100% { transform: translateY(0); }
   50% { transform: translateY(-5px); }
+}
+
+@keyframes tl-ecosystem-content-in {
+  from {
+    opacity: 0;
+    filter: blur(8px);
+    transform: translateY(24px);
+  }
+  to {
+    opacity: 1;
+    filter: blur(0);
+    transform: translateY(0);
+  }
 }
 
 @keyframes aurora-text-sweep {
@@ -624,6 +650,7 @@ body:has([role="dialog"]) .home-sticky-cta { display: none; }
   }
 
   .home-hero-slide { animation: none !important; transform: none !important; }
+  .tl-ecosystem-content { animation: none !important; }
   .home-editorial-title.home-shine,
   .tlora-text-title { animation: none !important; background-image: none !important; -webkit-text-fill-color: var(--home-text-primary) !important; }
   .tlora-aurora-title { animation: tlora-aurora-luxury 4s linear infinite !important; }
