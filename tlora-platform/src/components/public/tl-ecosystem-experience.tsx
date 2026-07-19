@@ -3,7 +3,7 @@
 import { ArrowDown, ArrowLeft, ArrowRight, ChevronLeft, ChevronRight, Sparkles } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { useRef, useState, type MouseEvent, type PointerEvent } from "react";
+import { useEffect, useRef, useState, type MouseEvent, type PointerEvent } from "react";
 
 export type TlEcosystemBranch = {
   name: string;
@@ -28,12 +28,25 @@ type Props = {
 
 export function TlEcosystemExperience({ eyebrow, title, branches, initialIndex = 0 }: Props) {
   const [selectedIndex, setSelectedIndex] = useState(initialIndex);
+  const [logoOverrides, setLogoOverrides] = useState<Record<number, string>>({});
   const bannerRef = useRef<HTMLElement>(null);
   const contentRef = useRef<HTMLElement>(null);
   const introLogoRef = useRef<HTMLDivElement>(null);
   const pointerStartX = useRef<number | null>(null);
   const didSwipe = useRef(false);
   const active = branches[selectedIndex] ?? branches[0];
+
+  useEffect(() => {
+    function handleCmsImageChange(event: Event) {
+      const detail = (event as CustomEvent<{ sectionKey?: string; field?: string; value?: string }>).detail;
+      if (detail?.sectionKey !== "services" || !detail.value) return;
+      const match = detail.field?.match(/^images\.ecosystemPage\.branch\.(\d+)\.logo$/);
+      if (!match) return;
+      setLogoOverrides((current) => ({ ...current, [Number(match[1])]: detail.value! }));
+    }
+    window.addEventListener("tlora:cms-image-change", handleCmsImageChange);
+    return () => window.removeEventListener("tlora:cms-image-change", handleCmsImageChange);
+  }, []);
 
   function flyLogoToIntroduction(index: number, sourceLogo: HTMLElement) {
     const targetLogo = introLogoRef.current;
@@ -58,7 +71,8 @@ export function TlEcosystemExperience({ eyebrow, title, branches, initialIndex =
       width: `${sourceRect.width}px`,
       height: `${sourceRect.height}px`,
     });
-    flyerImage.src = branches[index].logo;
+    const sourceImage = sourceLogo.querySelector<HTMLImageElement>("img");
+    flyerImage.src = sourceImage?.dataset.cmsImageUrl || sourceImage?.currentSrc || sourceImage?.src || logoOverrides[index] || branches[index].logo;
     flyerImage.alt = "";
     flyer.appendChild(flyerImage);
     document.body.appendChild(flyer);
@@ -172,11 +186,11 @@ export function TlEcosystemExperience({ eyebrow, title, branches, initialIndex =
                   data-position={position}
                   className="tl-ecosystem-orbit-card group absolute top-3 text-left"
                 >
-                  <div className="tl-ecosystem-orbit-frame relative overflow-hidden rounded-xl border border-white/15 bg-[#101115]/86 px-5 pb-5 pt-4 backdrop-blur-xl sm:px-6 sm:pb-6">
+                  <div data-cms-image-host className="tl-ecosystem-orbit-frame relative overflow-hidden rounded-xl border border-white/15 bg-[#101115]/86 px-5 pb-5 pt-4 backdrop-blur-xl sm:px-6 sm:pb-6">
                     <div className="tl-ecosystem-frame-light absolute inset-0" aria-hidden="true" />
                     <div className="relative flex items-start justify-between gap-4">
                       <div data-ecosystem-card-logo className="tl-ecosystem-logo relative h-12 w-28 overflow-hidden rounded-md border border-white/15 bg-black/35 backdrop-blur-md transition-opacity sm:h-14 sm:w-32">
-                        <Image data-cms-section="services" data-cms-field={`images.ecosystemPage.branch.${index}.logo`} data-cms-image-url={branch.logo} src={branch.logo} alt={`Logo ${branch.name}`} fill sizes="128px" className="object-contain p-2" />
+                        <Image data-cms-section="services" data-cms-field={`images.ecosystemPage.branch.${index}.logo`} data-cms-image-url={logoOverrides[index] || branch.logo} src={logoOverrides[index] || branch.logo} alt={`Logo ${branch.name}`} fill sizes="128px" className="object-contain p-2" />
                       </div>
                       <span className={`grid size-8 shrink-0 place-items-center rounded-full border transition ${selected ? "border-[#dfbb63] bg-[#dfbb63] text-black" : "border-white/20 text-white/65"}`}><ArrowRight size={14} /></span>
                     </div>
@@ -213,8 +227,8 @@ export function TlEcosystemExperience({ eyebrow, title, branches, initialIndex =
               <div className="order-1 lg:order-2">
                 <p className="home-eyebrow">GIỚI THIỆU</p>
                 <h2 data-cms-section="services" data-cms-field={`text.ecosystemPage.branch.${selectedIndex}.introTitle`} className="home-editorial-title mt-4 max-w-[10ch] text-[clamp(2.7rem,9vw,6rem)] uppercase leading-[.92]">{active.introTitle}</h2>
-                <div ref={introLogoRef} className="tl-ecosystem-intro-logo relative mt-7 h-16 w-40 overflow-hidden rounded-lg border border-white/15 bg-black/30 backdrop-blur-xl sm:h-20 sm:w-48">
-                  <Image data-cms-section="services" data-cms-field={`images.ecosystemPage.branch.${selectedIndex}.logo`} data-cms-image-url={active.logo} src={active.logo} alt={`Logo ${active.name}`} fill sizes="192px" className="object-contain p-3" />
+                <div ref={introLogoRef} data-cms-image-host className="tl-ecosystem-intro-logo relative mt-7 h-16 w-40 overflow-hidden rounded-lg border border-white/15 bg-black/30 backdrop-blur-xl sm:h-20 sm:w-48">
+                  <Image data-cms-section="services" data-cms-field={`images.ecosystemPage.branch.${selectedIndex}.logo`} data-cms-image-url={logoOverrides[selectedIndex] || active.logo} src={logoOverrides[selectedIndex] || active.logo} alt={`Logo ${active.name}`} fill sizes="192px" className="object-contain p-3" />
                 </div>
                 <p data-cms-section="services" data-cms-field={`text.ecosystemPage.branch.${selectedIndex}.description`} className="mt-7 max-w-xl text-base leading-8 text-white/68 sm:text-lg">{active.description}</p>
                 <p data-cms-section="services" data-cms-field={`text.ecosystemPage.branch.${selectedIndex}.introText`} className="mt-4 max-w-xl text-sm leading-7 text-white/48 sm:text-base">{active.introText}</p>

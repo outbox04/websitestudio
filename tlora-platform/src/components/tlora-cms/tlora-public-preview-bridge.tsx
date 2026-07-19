@@ -39,6 +39,9 @@ function setImage(sectionKey: string, field: string, value: unknown) {
       element.src = value;
       element.dataset.cmsImageUrl = value;
     });
+  window.dispatchEvent(new CustomEvent("tlora:cms-image-change", {
+    detail: { sectionKey, field, value },
+  }));
 }
 
 function setImagePosition(sectionKey: string, value: unknown) {
@@ -128,18 +131,29 @@ function makeEditable(element: HTMLElement) {
 
   if (element instanceof HTMLImageElement) {
     const pickerField = sectionKey === "hero" && field === "image" ? "__hero_slide_add" : field;
-    const openPicker = () => {
+    const openPicker = (event?: Event) => {
+      event?.preventDefault();
+      event?.stopPropagation();
       requestImage(sectionKey, pickerField, element.dataset.cmsImageUrl || element.currentSrc || element.src);
     };
     const parent = element.parentElement;
-    if (parent && !parent.querySelector(`[data-cms-image-badge="${field}"]`)) {
+    const badgeHost = element.closest<HTMLElement>("[data-cms-image-host]") || parent;
+    if (badgeHost && !badgeHost.querySelector(`[data-cms-image-badge="${field}"]`)) {
       const badge = document.createElement("span");
       badge.dataset.cmsImageBadge = field;
       badge.textContent = pickerField === "__hero_slide_add" ? "Thêm ảnh banner" : "Thay ảnh";
       badge.setAttribute("role", "button");
+      badge.tabIndex = 0;
       badge.style.cssText = "position:absolute;right:12px;top:12px;z-index:30;border-radius:6px;background:#d8b766;color:#07080a;padding:8px 12px;font:700 12px/1 sans-serif;cursor:pointer;box-shadow:0 8px 24px #0008";
+      badge.addEventListener("pointerdown", (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+      });
       badge.addEventListener("click", openPicker);
-      parent.appendChild(badge);
+      badge.addEventListener("keydown", (event) => {
+        if (event.key === "Enter" || event.key === " ") openPicker(event);
+      });
+      badgeHost.appendChild(badge);
     }
 
     if (sectionKey === "hero" && field === "image") {
