@@ -46,9 +46,10 @@ body {
 }
 
 html {
-  scrollbar-color: var(--brand-gold) #0d0e11;
-  scrollbar-width: thin;
+  scrollbar-width: none;
 }
+
+html::-webkit-scrollbar { display: none; height: 0; width: 0; }
 
 ::-webkit-scrollbar { width: 8px; height: 8px; }
 ::-webkit-scrollbar-track { background: #0d0e11; }
