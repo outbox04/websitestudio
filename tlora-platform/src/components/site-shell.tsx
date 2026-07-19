@@ -73,9 +73,7 @@ export function SiteHeader({ navItems = defaultNav, contact }: { navItems?: Arra
     <header className={`${isHome ? "fixed inset-x-0 top-0 z-50 transition-[background-color,border-color] duration-400" : "sticky top-0 z-40 border-b border-white/10 bg-[#07080a]/85 backdrop-blur-xl"} ${isHome && pastHero ? "border-b border-white/10 bg-[#08090b]/88 backdrop-blur-xl" : "border-b border-transparent bg-transparent"}`}>
       <div className={`mx-auto flex max-w-7xl items-center justify-between gap-2 px-3 sm:px-6 lg:px-8 ${isHome && pastHero ? "py-2" : "py-2.5 sm:py-3"}`}>
         <Link href="/" className="flex shrink-0 items-center" aria-label="TLORA Studio — Trang chủ">
-          <span className="tlora-text-title whitespace-nowrap text-xl font-black tracking-[-.045em] sm:text-2xl lg:text-[1.7rem]">
-            TLORA Studio
-          </span>
+          <BrandLogo fetchPriority="high" className="h-11 w-[116px] sm:h-12 sm:w-[132px] lg:h-14 lg:w-[150px]" />
         </Link>
         <nav className="hidden items-center gap-7 text-sm font-medium text-zinc-300 lg:flex" aria-label="Điều hướng chính">
           {navItems.map((item) => (

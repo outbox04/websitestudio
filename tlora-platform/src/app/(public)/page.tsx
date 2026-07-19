@@ -233,7 +233,7 @@ export default async function HomePage() {
           <div className="pointer-events-none absolute inset-0 bg-linear-to-b from-[#08090b]/58 via-transparent to-[#08090b]/92" />
           <div className="pointer-events-none absolute inset-0 bg-linear-to-r from-[#08090b]/78 via-[#08090b]/22 to-transparent lg:via-transparent" />
           <div className="home-hero-copy relative mx-auto w-full max-w-7xl">
-            <h1 data-cms-section="hero" data-cms-field="title" className="home-editorial-title home-shine max-w-[10ch] text-[clamp(2.65rem,12vw,5rem)] leading-[1.15] sm:max-w-[12ch] lg:max-w-[13ch] lg:text-[clamp(5rem,7.4vw,7rem)] lg:leading-[1.1]">
+            <h1 data-cms-section="hero" data-cms-field="title" className="home-editorial-title tlora-aurora-title max-w-[10ch] text-[clamp(2.65rem,12vw,5rem)] leading-[1.15] sm:max-w-[12ch] lg:max-w-[13ch] lg:text-[clamp(5rem,7.4vw,7rem)] lg:leading-[1.1]">
               {String(publishedHero.title || "Mỗi set chụp là một concept dựng riêng cho bạn.")}
             </h1>
             <p data-cms-section="hero" data-cms-field="description" className="mt-6 max-w-xl text-base leading-7 text-[var(--home-text-secondary)] sm:text-lg sm:leading-8">
