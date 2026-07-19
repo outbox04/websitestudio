@@ -234,8 +234,14 @@ export default async function HomePage() {
           <div className="pointer-events-none absolute inset-0 bg-linear-to-r from-[#08090b]/78 via-[#08090b]/22 to-transparent lg:via-transparent" />
           <div className="home-hero-copy relative mx-auto w-full max-w-7xl">
             <p data-cms-section="hero" data-cms-field="text.eyebrow" className="home-eyebrow">{cmsText(publishedHero, "eyebrow", "TLORA Portrait Studio")}</p>
-            <h1 data-cms-section="hero" data-cms-field="title" className="home-editorial-title home-shine mt-4 max-w-[10ch] text-[clamp(2.65rem,12vw,5rem)] leading-[1.15] text-[var(--home-text-primary)] sm:max-w-[12ch] lg:max-w-[13ch] lg:text-[clamp(5rem,7.4vw,7rem)] lg:leading-[1.1]">
-              {String(publishedHero.title || "Mỗi set chụp là một concept dựng riêng cho bạn.")}
+            <h1 data-cms-section="hero" data-cms-field="title" className="aurora-title home-editorial-title mt-4 max-w-[10ch] text-[clamp(2.65rem,12vw,5rem)] font-extrabold leading-[1.15] text-white sm:max-w-[12ch] lg:max-w-[13ch] lg:text-[clamp(5rem,7.4vw,7rem)] lg:leading-[1.1]">
+              <span className="relative z-10">{String(publishedHero.title || "Mỗi set chụp là một concept dựng riêng cho bạn.")}</span>
+              <span className="aurora pointer-events-none absolute inset-0 z-20 mix-blend-darken" aria-hidden="true">
+                <span className="aurora__item" />
+                <span className="aurora__item" />
+                <span className="aurora__item" />
+                <span className="aurora__item" />
+              </span>
             </h1>
             <p data-cms-section="hero" data-cms-field="description" className="mt-6 max-w-xl text-base leading-7 text-[var(--home-text-secondary)] sm:text-lg sm:leading-8">
               {String(publishedHero.description || "TLORA không chụp đại trà. Ba dịch vụ, một tiêu chuẩn duy nhất: ảnh nhận về phải xứng đáng với số tiền bạn bỏ ra.")}
