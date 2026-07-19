@@ -214,6 +214,10 @@ export default async function HomePage() {
   const heroImagePosition = typeof publishedHero.imagePosition === "string" ? publishedHero.imagePosition : "62% 50%";
   const heroFallbackImage = String(publishedHero.image || "/concept/concept-14.webp");
   const heroSlides = Array.isArray(publishedHero.slides) ? publishedHero.slides.filter((value: unknown): value is string => typeof value === "string" && Boolean(value)) : [];
+  const heroRotatingLines = [
+    { field: "description", text: String(publishedHero.description || "Nơi cá tính trở thành nghệ thuật.") },
+    ...trustItems.map((item, index) => ({ field: `text.trust.${index}`, text: cmsText(publishedHero, `trust.${index}`, item) })),
+  ];
   const structuredData = {
     "@context": "https://schema.org",
     "@type": "WebSite",
@@ -236,18 +240,20 @@ export default async function HomePage() {
             <h1 data-cms-section="hero" data-cms-field="title" className="home-editorial-title tlora-aurora-title max-w-[10ch] text-[clamp(2.65rem,12vw,5rem)] leading-[1.15] sm:max-w-[12ch] lg:max-w-[13ch] lg:text-[clamp(5rem,7.4vw,7rem)] lg:leading-[1.1]">
               {String(publishedHero.title || "Mỗi set chụp là một concept dựng riêng cho bạn.")}
             </h1>
-            <p data-cms-section="hero" data-cms-field="description" className="mt-6 max-w-xl text-base leading-7 text-[var(--home-text-secondary)] sm:text-lg sm:leading-8">
-              {String(publishedHero.description || "TLORA không chụp đại trà. Ba dịch vụ, một tiêu chuẩn duy nhất: ảnh nhận về phải xứng đáng với số tiền bạn bỏ ra.")}
-            </p>
+            <div className="home-rotating-copy mt-5 max-w-3xl" aria-label={heroRotatingLines.map((item) => item.text).join(". ")}>
+              {heroRotatingLines.map((item) => (
+                <p key={item.field} aria-hidden="true" data-cms-section="hero" data-cms-field={item.field} className="home-rotating-line">
+                  <i aria-hidden="true" />
+                  <span>{item.text}</span>
+                </p>
+              ))}
+            </div>
             <div className="mt-7 flex flex-col gap-3 min-[430px]:flex-row">
               <Link data-cms-section="hero" data-cms-field="ctaHref" href={String(publishedHero.ctaHref || "/bang-gia")} className="home-button-primary px-6">
                 <span data-cms-section="hero" data-cms-field="ctaLabel">{String(publishedHero.ctaLabel || "Đặt lịch tư vấn")}</span><ArrowRight size={17} aria-hidden="true" />
               </Link>
               <PillLink href="#mood"><span data-cms-section="hero" data-cms-field="text.secondaryCta">{cmsText(publishedHero, "secondaryCta", "Xem mood ảnh mẫu")}</span></PillLink>
             </div>
-            <ul className="mt-8 grid max-w-3xl gap-2 border-t border-white/10 pt-5 sm:grid-cols-3">
-              {trustItems.map((item, index) => <li key={item} className="flex items-center gap-2 text-sm text-[var(--home-text-secondary)]"><Check size={15} className="text-[var(--home-accent-gold)]" aria-hidden="true" /><span data-cms-section="hero" data-cms-field={`text.trust.${index}`}>{cmsText(publishedHero, `trust.${index}`, item)}</span></li>)}
-            </ul>
           </div>
         </section>
 
