@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Inter, Cormorant_Garamond, Montserrat } from "next/font/google";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 import "./globals.css";
 
 const inter = Inter({
@@ -59,7 +60,10 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="vi" className={`h-full scroll-smooth ${inter.variable} ${cormorant.variable} ${montserrat.variable}`}>
-      <body className="min-h-full bg-[#07080a] text-[#f8f5ee] antialiased">{children}</body>
+      <body className="min-h-full bg-[#07080a] text-[#f8f5ee] antialiased">
+        {children}
+        <SpeedInsights />
+      </body>
     </html>
   );
 }

@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Google_Sans, Google_Sans_Code } from "next/font/google";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 import "./globals.css";
 
 const body = Google_Sans({
@@ -54,7 +55,10 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="vi" className={`${body.variable} ${code.variable} h-full scroll-smooth`}>
-      <body className="min-h-full bg-[#07080a] text-[#f8f5ee] antialiased">{children}</body>
+      <body className="min-h-full bg-[#07080a] text-[#f8f5ee] antialiased">
+        {children}
+        <SpeedInsights />
+      </body>
     </html>
   );
 }
