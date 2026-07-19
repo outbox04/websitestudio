@@ -1,9 +1,9 @@
 "use client";
 
-import { ArrowDown, ArrowLeft, ArrowRight, Check, Sparkles } from "lucide-react";
+import { ArrowDown, ArrowLeft, ArrowRight, ChevronLeft, ChevronRight, Sparkles } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { useRef, useState } from "react";
+import { useRef, useState, type PointerEvent } from "react";
 
 export type TlEcosystemBranch = {
   name: string;
@@ -30,22 +30,51 @@ export function TlEcosystemExperience({ eyebrow, title, branches, initialIndex =
   const [selectedIndex, setSelectedIndex] = useState(initialIndex);
   const bannerRef = useRef<HTMLElement>(null);
   const contentRef = useRef<HTMLElement>(null);
+  const pointerStartX = useRef<number | null>(null);
+  const didSwipe = useRef(false);
   const active = branches[selectedIndex] ?? branches[0];
 
-  function selectBranch(index: number) {
+  function openBranch(index: number) {
+    if (didSwipe.current) return;
     setSelectedIndex(index);
     window.requestAnimationFrame(() => {
       contentRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
     });
   }
 
+  function cycleBranch(direction: -1 | 1) {
+    setSelectedIndex((current) => (current + direction + branches.length) % branches.length);
+  }
+
+  function carouselPosition(index: number) {
+    const offset = (index - selectedIndex + branches.length) % branches.length;
+    if (offset === 0) return "center";
+    return offset === 1 ? "right" : "left";
+  }
+
+  function handlePointerDown(event: PointerEvent<HTMLDivElement>) {
+    pointerStartX.current = event.clientX;
+    didSwipe.current = false;
+    event.currentTarget.setPointerCapture(event.pointerId);
+  }
+
+  function handlePointerUp(event: PointerEvent<HTMLDivElement>) {
+    if (pointerStartX.current === null) return;
+    const distance = event.clientX - pointerStartX.current;
+    pointerStartX.current = null;
+    if (Math.abs(distance) < 36) return;
+    didSwipe.current = true;
+    cycleBranch(distance < 0 ? 1 : -1);
+    window.setTimeout(() => { didSwipe.current = false; }, 0);
+  }
+
   return (
     <>
       <section ref={bannerRef} className="relative flex min-h-[100svh] scroll-mt-20 items-end overflow-hidden px-5 pb-10 pt-24 sm:px-8 sm:pb-14 lg:px-10">
-        <div className="absolute inset-0 grid grid-cols-3" aria-hidden="true">
+        <div className="absolute inset-0" aria-hidden="true">
           {branches.map((branch, index) => (
-            <div key={branch.name} className="relative overflow-hidden border-r border-white/10 last:border-r-0">
-              <Image src={branch.image} alt="" fill priority={index === 1} sizes="33vw" className="tl-ecosystem-hero-image object-cover" style={{ objectPosition: branch.imagePosition, animationDelay: `${index * -2.5}s` }} />
+            <div key={branch.name} className={`absolute inset-0 transition-[opacity,transform] duration-1000 ease-out ${selectedIndex === index ? "scale-100 opacity-100" : "scale-105 opacity-0"}`}>
+              <Image src={branch.image} alt="" fill priority={index === initialIndex} sizes="100vw" className="tl-ecosystem-hero-image object-cover" style={{ objectPosition: branch.imagePosition, animationDelay: `${index * -2.5}s` }} />
             </div>
           ))}
         </div>
@@ -58,36 +87,67 @@ export function TlEcosystemExperience({ eyebrow, title, branches, initialIndex =
           <h1 data-cms-section="services" data-cms-field="text.ecosystemPage.title" className="home-editorial-title mt-4 whitespace-nowrap text-[clamp(2rem,8.6vw,8rem)] uppercase leading-[.9] tracking-[-.055em]">
             {title}
           </h1>
-          <div className="mt-8 flex items-center justify-between gap-5 border-t border-white/20 pt-4 sm:mt-10">
-            <p className="text-[10px] font-bold uppercase tracking-[.18em] text-white/60 sm:text-xs">Vuốt để chọn · Chạm để khám phá</p>
+          <div className="mt-7 flex items-center justify-between gap-5 border-t border-white/20 pt-4 sm:mt-9">
+            <p className="text-[10px] font-bold uppercase tracking-[.18em] text-white/60 sm:text-xs">Vuốt để chọn · Lĩnh vực ở giữa là chủ thể</p>
             <ArrowDown size={17} className="shrink-0 text-[var(--home-accent-gold-light)]" aria-hidden="true" />
           </div>
 
-          <div className="tl-ecosystem-selector -mx-5 mt-5 flex snap-x snap-mandatory gap-3 overflow-x-auto px-5 pb-2 sm:-mx-8 sm:px-8 lg:mx-0 lg:grid lg:grid-cols-3 lg:px-0">
+          <div
+            className="tl-ecosystem-orbit relative -mx-5 mt-4 h-[292px] touch-pan-y select-none overflow-hidden sm:-mx-8 sm:h-[320px] lg:mx-0 lg:h-[350px]"
+            role="region"
+            aria-label="Chọn lĩnh vực trong hệ sinh thái TL"
+            tabIndex={0}
+            onPointerDown={handlePointerDown}
+            onPointerUp={handlePointerUp}
+            onPointerCancel={() => { pointerStartX.current = null; }}
+            onKeyDown={(event) => {
+              if (event.key === "ArrowLeft") cycleBranch(-1);
+              if (event.key === "ArrowRight") cycleBranch(1);
+              if (event.key === "Enter") openBranch(selectedIndex);
+            }}
+          >
             {branches.map((branch, index) => {
-              const selected = selectedIndex === index;
+              const position = carouselPosition(index);
+              const selected = position === "center";
               return (
                 <button
                   key={branch.name}
                   type="button"
-                  onClick={() => selectBranch(index)}
+                  onClick={() => {
+                    if (didSwipe.current) return;
+                    if (selected) openBranch(index);
+                    else setSelectedIndex(index);
+                  }}
                   aria-pressed={selected}
-                  className={`group relative min-w-[78vw] snap-center overflow-hidden rounded-xl border p-4 text-left backdrop-blur-xl transition duration-500 sm:min-w-[46vw] lg:min-w-0 ${selected ? "border-[#dfbb63]/70 bg-[#dfbb63]/14 shadow-[0_18px_55px_rgba(0,0,0,.35)]" : "border-white/15 bg-black/25 hover:border-white/35"}`}
+                  data-position={position}
+                  className="tl-ecosystem-orbit-card group absolute top-3 overflow-hidden rounded-xl border border-white/15 bg-[#101115]/82 text-left shadow-[0_24px_70px_rgba(0,0,0,.48)] backdrop-blur-xl"
                 >
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="relative h-11 w-28 overflow-hidden rounded-md bg-black/25">
-                      <Image data-cms-section="services" data-cms-field={`images.ecosystemPage.branch.${index}.logo`} data-cms-image-url={branch.logo} src={branch.logo} alt={`Logo ${branch.name}`} fill sizes="112px" className="object-contain p-1.5" />
+                  <div className="relative h-36 overflow-hidden sm:h-40 lg:h-44">
+                    <Image src={branch.image} alt="" fill sizes="(min-width:1024px) 430px, 72vw" className="object-cover transition duration-700 group-hover:scale-[1.03]" style={{ objectPosition: branch.imagePosition }} />
+                    <div className="absolute inset-0 bg-linear-to-t from-[#101115] via-transparent to-black/15" />
+                    <div className="tl-ecosystem-shine absolute inset-0" />
+                    <div className="tl-ecosystem-logo absolute left-4 top-4 h-10 w-24 overflow-hidden rounded-md border border-white/15 bg-black/40 backdrop-blur-md">
+                      <Image data-cms-section="services" data-cms-field={`images.ecosystemPage.branch.${index}.logo`} data-cms-image-url={branch.logo} src={branch.logo} alt={`Logo ${branch.name}`} fill sizes="96px" className="object-contain p-1.5" />
                     </div>
-                    <span className={`grid size-8 place-items-center rounded-full border transition ${selected ? "border-[#dfbb63] bg-[#dfbb63] text-black" : "border-white/20 text-white/65"}`}>
-                      {selected ? <Check size={15} /> : <ArrowRight size={14} />}
-                    </span>
                   </div>
-                  <p data-cms-section="services" data-cms-field={`text.ecosystemPage.branch.${index}.name`} className="mt-5 text-xl font-black uppercase tracking-[-.03em] text-white">{branch.name}</p>
-                  <p data-cms-section="services" data-cms-field={`text.ecosystemPage.branch.${index}.label`} className="mt-1 text-[10px] font-bold uppercase tracking-[.16em] text-white/50">{branch.label}</p>
+                  <div className="px-4 pb-4 pt-2 sm:px-5 sm:pb-5">
+                    <div className="flex items-center justify-between gap-3">
+                      <p data-cms-section="services" data-cms-field={`text.ecosystemPage.branch.${index}.name`} className="text-xl font-black uppercase tracking-[-.03em] text-white sm:text-2xl">{branch.name}</p>
+                      <span className={`grid size-8 shrink-0 place-items-center rounded-full border transition ${selected ? "border-[#dfbb63] bg-[#dfbb63] text-black" : "border-white/20 text-white/65"}`}><ArrowRight size={14} /></span>
+                    </div>
+                    <p data-cms-section="services" data-cms-field={`text.ecosystemPage.branch.${index}.label`} className="mt-1 text-[9px] font-bold uppercase tracking-[.16em] text-white/50">{branch.label}</p>
+                    <p className={`mt-3 line-clamp-2 text-xs leading-5 text-white/58 transition duration-500 ${selected ? "translate-y-0 opacity-100" : "translate-y-2 opacity-0"}`}>{branch.description}</p>
+                  </div>
                 </button>
               );
             })}
+            <button type="button" onClick={() => cycleBranch(-1)} aria-label="Lĩnh vực trước" className="absolute bottom-1 left-5 z-30 grid size-9 place-items-center rounded-full border border-white/15 bg-black/35 text-white/70 backdrop-blur-md transition hover:border-[#dfbb63]/60 hover:text-[#dfbb63]"><ChevronLeft size={17} /></button>
+            <button type="button" onClick={() => cycleBranch(1)} aria-label="Lĩnh vực tiếp theo" className="absolute bottom-1 right-5 z-30 grid size-9 place-items-center rounded-full border border-white/15 bg-black/35 text-white/70 backdrop-blur-md transition hover:border-[#dfbb63]/60 hover:text-[#dfbb63]"><ChevronRight size={17} /></button>
+            <div className="absolute bottom-4 left-1/2 z-30 flex -translate-x-1/2 gap-1.5" aria-hidden="true">
+              {branches.map((branch, index) => <span key={branch.name} className={`h-1 rounded-full transition-all duration-500 ${index === selectedIndex ? "w-6 bg-[#dfbb63]" : "w-1 bg-white/30"}`} />)}
+            </div>
           </div>
+          <button type="button" onClick={() => openBranch(selectedIndex)} className="home-button-primary mx-auto mt-1 flex min-h-11 w-fit items-center justify-center gap-2 px-6 text-xs">KHÁM PHÁ {active.name.toUpperCase()} <ArrowDown size={15} /></button>
         </div>
       </section>
 

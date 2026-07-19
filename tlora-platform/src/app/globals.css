@@ -525,6 +525,57 @@ body:has([role="dialog"]) .home-sticky-cta { display: none; }
   display: none;
 }
 
+.tl-ecosystem-orbit {
+  perspective: 1200px;
+  perspective-origin: 50% 42%;
+}
+
+.tl-ecosystem-orbit-card {
+  left: 50%;
+  width: min(72vw, 360px);
+  transform-style: preserve-3d;
+  transition:
+    transform .72s var(--motion-editorial),
+    opacity .55s var(--motion-editorial),
+    filter .55s var(--motion-editorial),
+    border-color .55s var(--motion-editorial);
+  will-change: transform, opacity, filter;
+}
+
+.tl-ecosystem-orbit-card[data-position="center"] {
+  z-index: 20;
+  border-color: rgba(216, 183, 102, .72);
+  filter: blur(0) saturate(1);
+  opacity: 1;
+  transform: translateX(-50%) translateZ(70px) scale(1);
+}
+
+.tl-ecosystem-orbit-card[data-position="left"] {
+  z-index: 10;
+  filter: blur(2px) saturate(.6);
+  opacity: .28;
+  transform: translateX(-142%) translateY(18px) translateZ(-100px) rotateY(28deg) scale(.76);
+}
+
+.tl-ecosystem-orbit-card[data-position="right"] {
+  z-index: 10;
+  filter: blur(2px) saturate(.6);
+  opacity: .28;
+  transform: translateX(42%) translateY(18px) translateZ(-100px) rotateY(-28deg) scale(.76);
+}
+
+@media (min-width: 1024px) {
+  .tl-ecosystem-orbit-card { width: min(34vw, 430px); }
+  .tl-ecosystem-orbit-card[data-position="left"] {
+    opacity: .42;
+    transform: translateX(-132%) translateY(22px) translateZ(-110px) rotateY(25deg) scale(.8);
+  }
+  .tl-ecosystem-orbit-card[data-position="right"] {
+    opacity: .42;
+    transform: translateX(32%) translateY(22px) translateZ(-110px) rotateY(-25deg) scale(.8);
+  }
+}
+
 .tl-ecosystem-content {
   animation: tl-ecosystem-content-in .75s var(--motion-editorial) both;
 }
@@ -651,6 +702,7 @@ body:has([role="dialog"]) .home-sticky-cta { display: none; }
 
   .home-hero-slide { animation: none !important; transform: none !important; }
   .tl-ecosystem-content { animation: none !important; }
+  .tl-ecosystem-orbit-card { transition: none !important; }
   .home-editorial-title.home-shine,
   .tlora-text-title { animation: none !important; background-image: none !important; -webkit-text-fill-color: var(--home-text-primary) !important; }
   .tlora-aurora-title { animation: tlora-aurora-luxury 4s linear infinite !important; }
