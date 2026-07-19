@@ -3,7 +3,7 @@
 import { ArrowDown, ArrowLeft, ArrowRight, ChevronLeft, ChevronRight, Sparkles } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { useRef, useState, type PointerEvent } from "react";
+import { useRef, useState, type MouseEvent, type PointerEvent } from "react";
 
 export type TlEcosystemBranch = {
   name: string;
@@ -30,13 +30,63 @@ export function TlEcosystemExperience({ eyebrow, title, branches, initialIndex =
   const [selectedIndex, setSelectedIndex] = useState(initialIndex);
   const bannerRef = useRef<HTMLElement>(null);
   const contentRef = useRef<HTMLElement>(null);
+  const introLogoRef = useRef<HTMLDivElement>(null);
   const pointerStartX = useRef<number | null>(null);
   const didSwipe = useRef(false);
   const active = branches[selectedIndex] ?? branches[0];
 
-  function openBranch(index: number) {
+  function flyLogoToIntroduction(index: number, sourceLogo: HTMLElement) {
+    const targetLogo = introLogoRef.current;
+    const content = contentRef.current;
+    if (!targetLogo || !content || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+
+    const sourceRect = sourceLogo.getBoundingClientRect();
+    const targetRect = targetLogo.getBoundingClientRect();
+    const contentRect = content.getBoundingClientRect();
+    const finalTop = targetRect.top - contentRect.top + 72;
+    const deltaX = targetRect.left - sourceRect.left;
+    const deltaY = finalTop - sourceRect.top;
+    const scaleX = targetRect.width / sourceRect.width;
+    const scaleY = targetRect.height / sourceRect.height;
+    const flyer = document.createElement("div");
+    const flyerImage = document.createElement("img");
+
+    flyer.className = "tl-ecosystem-logo-flight";
+    Object.assign(flyer.style, {
+      left: `${sourceRect.left}px`,
+      top: `${sourceRect.top}px`,
+      width: `${sourceRect.width}px`,
+      height: `${sourceRect.height}px`,
+    });
+    flyerImage.src = branches[index].logo;
+    flyerImage.alt = "";
+    flyer.appendChild(flyerImage);
+    document.body.appendChild(flyer);
+    sourceLogo.style.opacity = "0";
+    targetLogo.style.opacity = "0";
+
+    const animation = flyer.animate([
+      { offset: 0, transform: "translate3d(0,0,0) scale(1)", opacity: 1, filter: "blur(0)" },
+      { offset: .42, transform: `translate3d(${deltaX * .42}px,${deltaY * .3}px,0) scale(.82)`, opacity: 1, filter: "blur(0)" },
+      { offset: .78, transform: `translate3d(${deltaX * .78}px,${deltaY * .72}px,0) scale(${(scaleX + .82) / 2},${(scaleY + .82) / 2})`, opacity: .96, filter: "blur(.3px)" },
+      { offset: 1, transform: `translate3d(${deltaX}px,${deltaY}px,0) scale(${scaleX},${scaleY})`, opacity: 1, filter: "blur(0)" },
+    ], { duration: 1050, easing: "cubic-bezier(.22,.8,.2,1)", fill: "forwards" });
+
+    animation.finished.finally(() => {
+      flyer.remove();
+      sourceLogo.style.opacity = "";
+      targetLogo.style.opacity = "";
+      targetLogo.animate([
+        { opacity: 0, transform: "translateY(-8px) scale(.94)" },
+        { opacity: 1, transform: "translateY(0) scale(1)" },
+      ], { duration: 480, easing: "cubic-bezier(.22,.8,.2,1)" });
+    });
+  }
+
+  function openBranch(index: number, sourceLogo?: HTMLElement | null) {
     if (didSwipe.current) return;
     setSelectedIndex(index);
+    if (sourceLogo) flyLogoToIntroduction(index, sourceLogo);
     window.requestAnimationFrame(() => {
       contentRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
     });
@@ -113,9 +163,9 @@ export function TlEcosystemExperience({ eyebrow, title, branches, initialIndex =
                 <button
                   key={branch.name}
                   type="button"
-                  onClick={() => {
+                  onClick={(event: MouseEvent<HTMLButtonElement>) => {
                     if (didSwipe.current) return;
-                    if (selected) openBranch(index);
+                    if (selected) openBranch(index, event.currentTarget.querySelector<HTMLElement>("[data-ecosystem-card-logo]"));
                     else setSelectedIndex(index);
                   }}
                   aria-pressed={selected}
@@ -125,7 +175,7 @@ export function TlEcosystemExperience({ eyebrow, title, branches, initialIndex =
                   <div className="tl-ecosystem-orbit-frame relative overflow-hidden rounded-xl border border-white/15 bg-[#101115]/86 px-5 pb-5 pt-4 backdrop-blur-xl sm:px-6 sm:pb-6">
                     <div className="tl-ecosystem-frame-light absolute inset-0" aria-hidden="true" />
                     <div className="relative flex items-start justify-between gap-4">
-                      <div className="tl-ecosystem-logo relative h-12 w-28 overflow-hidden rounded-md border border-white/15 bg-black/35 backdrop-blur-md sm:h-14 sm:w-32">
+                      <div data-ecosystem-card-logo className="tl-ecosystem-logo relative h-12 w-28 overflow-hidden rounded-md border border-white/15 bg-black/35 backdrop-blur-md transition-opacity sm:h-14 sm:w-32">
                         <Image data-cms-section="services" data-cms-field={`images.ecosystemPage.branch.${index}.logo`} data-cms-image-url={branch.logo} src={branch.logo} alt={`Logo ${branch.name}`} fill sizes="128px" className="object-contain p-2" />
                       </div>
                       <span className={`grid size-8 shrink-0 place-items-center rounded-full border transition ${selected ? "border-[#dfbb63] bg-[#dfbb63] text-black" : "border-white/20 text-white/65"}`}><ArrowRight size={14} /></span>
@@ -151,7 +201,7 @@ export function TlEcosystemExperience({ eyebrow, title, branches, initialIndex =
         <div key={active.name} className="tl-ecosystem-content">
           <section className="px-5 py-16 sm:px-8 sm:py-24 lg:px-10 lg:py-28">
             <div className="mx-auto grid max-w-7xl gap-8 lg:grid-cols-[1.05fr_.95fr] lg:items-center lg:gap-16">
-              <div className="relative aspect-[4/5] overflow-hidden rounded-xl border border-white/10 shadow-[0_32px_100px_rgba(0,0,0,.42)] sm:aspect-[16/11] lg:aspect-[4/5]">
+              <div className="relative order-2 aspect-[4/5] overflow-hidden rounded-xl border border-white/10 shadow-[0_32px_100px_rgba(0,0,0,.42)] sm:aspect-[16/11] lg:order-1 lg:aspect-[4/5]">
                 <Image data-cms-section="services" data-cms-field={`images.ecosystemPage.branch.${selectedIndex}.image`} data-cms-image-url={active.image} src={active.image} alt={active.name} fill sizes="(min-width:1024px) 48vw, 94vw" className="tl-ecosystem-panel-image object-cover" style={{ objectPosition: active.imagePosition }} />
                 <div className="absolute inset-0 bg-linear-to-t from-black/75 via-transparent to-black/15" />
                 <div className="tl-ecosystem-shine absolute inset-0" />
@@ -160,9 +210,12 @@ export function TlEcosystemExperience({ eyebrow, title, branches, initialIndex =
                   <p className="mt-2 text-3xl font-black uppercase tracking-[-.04em] text-white sm:text-5xl">{active.name}</p>
                 </div>
               </div>
-              <div>
+              <div className="order-1 lg:order-2">
                 <p className="home-eyebrow">GIỚI THIỆU</p>
                 <h2 data-cms-section="services" data-cms-field={`text.ecosystemPage.branch.${selectedIndex}.introTitle`} className="home-editorial-title mt-4 max-w-[10ch] text-[clamp(2.7rem,9vw,6rem)] uppercase leading-[.92]">{active.introTitle}</h2>
+                <div ref={introLogoRef} className="tl-ecosystem-intro-logo relative mt-7 h-16 w-40 overflow-hidden rounded-lg border border-white/15 bg-black/30 backdrop-blur-xl sm:h-20 sm:w-48">
+                  <Image data-cms-section="services" data-cms-field={`images.ecosystemPage.branch.${selectedIndex}.logo`} data-cms-image-url={active.logo} src={active.logo} alt={`Logo ${active.name}`} fill sizes="192px" className="object-contain p-3" />
+                </div>
                 <p data-cms-section="services" data-cms-field={`text.ecosystemPage.branch.${selectedIndex}.description`} className="mt-7 max-w-xl text-base leading-8 text-white/68 sm:text-lg">{active.description}</p>
                 <p data-cms-section="services" data-cms-field={`text.ecosystemPage.branch.${selectedIndex}.introText`} className="mt-4 max-w-xl text-sm leading-7 text-white/48 sm:text-base">{active.introText}</p>
               </div>
