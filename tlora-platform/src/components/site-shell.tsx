@@ -1,15 +1,17 @@
 "use client";
 
-import { ArrowRight, BadgeDollarSign, Camera, Home, Images, Newspaper, Phone } from "lucide-react";
+import { ArrowRight, BadgeDollarSign, Camera, Home, Images, Newspaper, Phone, ShoppingBag } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
+import { RentalCartButton } from "@/components/rental/rental-cart-button";
 
 const defaultNav = [
   { href: "/", label: "Trang chủ" },
   { href: "/dich-vu", label: "Dịch vụ" },
   { href: "/bang-gia", label: "Bảng giá" },
+  { href: "/thue-trang-phuc", label: "Thuê Trang Phục" },
   { href: "/album-concept", label: "Album Concept" },
   { href: "/ai-concept", label: "AI Concept" },
   { href: "/tin-tuc", label: "Tin tức" },
@@ -49,12 +51,13 @@ function zaloUrl(value: string) {
 function navIcon(href: string) {
   if (href === "/") return Home;
   if (href.includes("bang-gia")) return BadgeDollarSign;
+  if (href.includes("thue-trang-phuc")) return ShoppingBag;
   if (href.includes("album")) return Images;
   if (href.includes("tin-tuc")) return Newspaper;
   return Camera;
 }
 
-export function SiteHeader({ navItems = defaultNav, contact }: { navItems?: Array<{ href: string; label: string }>; contact?: SiteContact }) {
+export function SiteHeader({ navItems = defaultNav, contact, rentalEnabled = true }: { navItems?: Array<{ href: string; label: string }>; contact?: SiteContact; rentalEnabled?: boolean }) {
   const pathname = usePathname();
   const [pastHero, setPastHero] = useState(false);
   const isHome = pathname === "/";
@@ -83,6 +86,7 @@ export function SiteHeader({ navItems = defaultNav, contact }: { navItems?: Arra
           ))}
         </nav>
         <div className="flex items-center gap-2">
+          {rentalEnabled && <RentalCartButton />}
           {isHome && <Link href="/bang-gia" className="home-button-primary min-h-9 whitespace-nowrap px-3 text-xs sm:min-h-10 sm:px-4 sm:text-sm lg:min-h-11">Đặt lịch <ArrowRight className="hidden min-[390px]:block" size={14} aria-hidden="true" /></Link>}
         </div>
       </div>

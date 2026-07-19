@@ -6,6 +6,7 @@ import { getFirstPartyStudio } from "@/lib/tenancy/request-context";
 import { tloraPublicCacheTags } from "@/lib/tlora-public-cache";
 import { getTloraMenu } from "@/repositories/tlora/menus-repository";
 import { getPublishedTloraSiteSettings } from "@/repositories/tlora/settings-repository";
+import { RENTAL_ENABLED, RENTAL_MENU_ITEM } from "@/lib/rental/config";
 
 export const revalidate = 300;
 
@@ -41,10 +42,15 @@ async function getPublishedShell() {
 
 export default async function PublicLayout({ children }: { children: ReactNode }) {
   const { navItems, contact } = await getPublishedShell();
+  const visibleNavItems = RENTAL_ENABLED && navItems
+    ? navItems.some((item) => item.href === RENTAL_MENU_ITEM.href)
+      ? navItems
+      : [...navItems.slice(0, Math.max(0, navItems.findIndex((item) => item.href === "/bang-gia") + 1)), RENTAL_MENU_ITEM, ...navItems.slice(Math.max(0, navItems.findIndex((item) => item.href === "/bang-gia") + 1))]
+    : navItems;
   return (
     <>
       <TloraPublicPreviewLoader />
-      <SiteHeader navItems={navItems} contact={contact} />
+      <SiteHeader navItems={visibleNavItems} contact={contact} rentalEnabled={RENTAL_ENABLED} />
       <main>{children}</main>
       <SiteFooter contact={contact} />
       <div className="h-20 lg:hidden" aria-hidden="true" />

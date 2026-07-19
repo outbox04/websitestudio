@@ -50,6 +50,27 @@ export async function POST(request: Request) {
     if (payload.notification_type !== "ORDER_PAID" || !["captured", "paid", "success", "completed"].includes(status)) return NextResponse.json({ ok: true, ignored: true });
 
     const admin = createAdminClient();
+    if (orderId.startsWith("TLTD_")) {
+      const { data: rentalOrder, error: rentalError } = await admin
+        .from("rental_orders")
+        .select("id,status,deposit_vnd,total_vnd")
+        .eq("order_code", orderId)
+        .maybeSingle();
+      if (rentalError) throw rentalError;
+      if (!rentalOrder) return NextResponse.json({ error: "Không tìm thấy đơn thuê trang phục." }, { status: 404 });
+      if (["paid", "ready", "renting", "returned"].includes(rentalOrder.status)) return NextResponse.json({ ok: true, orderId, type: "rental", alreadyProcessed: true });
+      if (amount && amount !== Number(rentalOrder.deposit_vnd)) return NextResponse.json({ error: "Số tiền cọc không khớp đơn thuê." }, { status: 400 });
+      const { error: updateRentalError } = await admin.from("rental_orders").update({
+        status: "paid",
+        paid_deposit_vnd: rentalOrder.deposit_vnd,
+        remaining_vnd: Math.max(Number(rentalOrder.total_vnd) - Number(rentalOrder.deposit_vnd), 0),
+        transaction_id: String(payload.transaction?.transaction_id || ""),
+        paid_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      }).eq("id", rentalOrder.id);
+      if (updateRentalError) throw updateRentalError;
+      return NextResponse.json({ ok: true, orderId, type: "rental" });
+    }
     const { data: gallery, error } = await admin
       .from("customer_galleries")
       .select("id,total_cost_vnd,deposit_paid_vnd,payment_status")

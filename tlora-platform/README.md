@@ -1,5 +1,9 @@
 # TLORA Studio
 
+## Rental module
+
+The independent `/thue-trang-phuc` module is enabled by default. Set `NEXT_PUBLIC_RENTAL_ENABLED=false` to hide its routes, navigation item, cart, and sitemap entries. Before accepting rental orders, apply [`supabase/rental-module.sql`](./supabase/rental-module.sql) to the production Supabase project. Rental deposits use the existing SePay credentials and IPN endpoint.
+
 Next.js App Router website for TLORA Studio, a concept photo studio with public pages, customer album portal, admin dashboard, Google Drive album sync and AI concept workflow scaffolding.
 
 Brand tagline: `Nơi cá tính trở thành nghệ thuật`.
