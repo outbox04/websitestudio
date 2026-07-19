@@ -542,6 +542,49 @@ body:has([role="dialog"]) .home-sticky-cta { display: none; }
   will-change: transform, opacity, filter;
 }
 
+.tl-ecosystem-orbit-frame {
+  min-height: 208px;
+  isolation: isolate;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, .08),
+    0 32px 34px -22px rgba(0, 0, 0, .92);
+  transition: box-shadow .72s var(--motion-editorial), border-color .55s var(--motion-editorial);
+}
+
+.tl-ecosystem-frame-light {
+  background:
+    linear-gradient(115deg, rgba(255, 255, 255, .08), transparent 30%, transparent 68%, rgba(216, 183, 102, .06)),
+    linear-gradient(180deg, rgba(255, 255, 255, .025), transparent 45%);
+  pointer-events: none;
+}
+
+.tl-ecosystem-orbit-card[data-position="center"] .tl-ecosystem-orbit-frame {
+  border-color: rgba(216, 183, 102, .72);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, .14),
+    0 38px 32px -20px rgba(0, 0, 0, .96),
+    0 18px 48px rgba(0, 0, 0, .5);
+}
+
+.tl-ecosystem-pedestal {
+  border-top: 1px solid rgba(243, 216, 142, .32);
+  background: linear-gradient(180deg, rgba(216, 183, 102, .18), rgba(20, 17, 15, .72) 48%, rgba(7, 8, 10, .1));
+  clip-path: polygon(10% 0, 90% 0, 100% 100%, 0 100%);
+  filter: drop-shadow(0 22px 22px rgba(0, 0, 0, .72));
+  transform: perspective(420px) rotateX(58deg);
+  transform-origin: center top;
+}
+
+.tl-ecosystem-pedestal::after {
+  position: absolute;
+  inset: 8px 18% auto;
+  height: 18px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, .72);
+  content: "";
+  filter: blur(12px);
+}
+
 .tl-ecosystem-orbit-card[data-position="center"] {
   z-index: 20;
   border-color: rgba(216, 183, 102, .72);
