@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 160" role="img" aria-labelledby="title">
+  <title id="title">TL logo placeholder</title>
+  <rect width="360" height="160" rx="20" fill="#101115"/>
+  <path d="M76 45h92v18h-35v54h-22V63H76V45Zm110 0h22v54h76v18h-98V45Z" fill="#d8b766"/>
+  <path d="M76 132h208" stroke="#f3d88e" stroke-opacity=".35"/>
+</svg>

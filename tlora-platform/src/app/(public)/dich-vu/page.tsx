@@ -1,45 +1,17 @@
-import { Aperture, ArrowRight, Clapperboard, GraduationCap } from "lucide-react";
+import { ArrowDown, ArrowRight } from "lucide-react";
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
+import { HomeCinematic } from "@/components/public/home-cinematic";
+import { tlEcosystemBranches, tlLogoPlaceholder } from "@/lib/tl-ecosystem";
 import { buildTloraPageMetadata } from "@/lib/tlora-metadata";
 import { getPublishedTloraPageMeta, getPublishedTloraSection } from "@/repositories/tlora/cms-repository";
-
-const ecosystem = [
-  {
-    name: "TL Media",
-    label: "Production / Event",
-    description: "Đội ngũ hình ảnh dành cho những khoảnh khắc quy mô lớn, sự kiện và câu chuyện cần được ghi lại chân thực.",
-    image: "/concept/concept-07.webp",
-    imagePosition: "50% 35%",
-    icon: Clapperboard,
-    services: ["Kỷ yếu", "Phóng sự cưới", "Cưới truyền thống", "Event & sự kiện", "Tựu trường"],
-  },
-  {
-    name: "TLORA Studio",
-    label: "Studio / Concept",
-    description: "Không gian sáng tạo hình ảnh cá nhân với concept được xây dựng theo phong cách, cá tính và mục đích riêng.",
-    image: "/concept/concept-01.webp",
-    imagePosition: "50% 28%",
-    icon: Aperture,
-    services: ["Chụp tại studio", "Concept ngoại cảnh", "Beauty portrait", "Fashion editorial", "Sinh nhật & cá nhân"],
-  },
-  {
-    name: "TL Academy",
-    label: "Education / Creative",
-    description: "Nơi kinh nghiệm thực chiến được hệ thống thành những khóa học dễ ứng dụng cho người yêu nhiếp ảnh.",
-    image: "/concept/concept-14.webp",
-    imagePosition: "50% 24%",
-    icon: GraduationCap,
-    services: ["Khóa Chụp ảnh", "Khóa Chỉnh ảnh", "Ánh sáng & bố cục", "Chỉnh màu & retouch", "Quy trình hậu kỳ"],
-  },
-];
 
 export async function generateMetadata(): Promise<Metadata> {
   const meta = await getPublishedTloraPageMeta("services");
   return buildTloraPageMetadata(meta, "/dich-vu", {
     title: "Hệ sinh thái TL | Media, Studio & Academy",
-    description: "Khám phá hệ sinh thái TL gồm TL Media, TLORA Studio và TL Academy — từ sản xuất hình ảnh đến đào tạo nhiếp ảnh.",
+    description: "TL Media, TLORA Studio và TL Academy — sản xuất hình ảnh, sáng tạo concept và đào tạo nhiếp ảnh.",
   });
 }
 
@@ -54,111 +26,106 @@ export default async function ServicesPage() {
 
   return (
     <div className="home-luxury overflow-hidden">
-      <section className="relative border-b border-white/10 px-5 pb-16 pt-20 sm:px-8 sm:pb-24 sm:pt-28 lg:px-10 lg:pb-28">
-        <div aria-hidden="true" className="pointer-events-none absolute -right-8 top-0 select-none text-[clamp(12rem,32vw,31rem)] font-black leading-none tracking-[-.1em] text-white/[.025]">TL</div>
-        <div className="relative mx-auto max-w-7xl">
-          <p data-cms-section="services" data-cms-field="text.ecosystemPage.eyebrow" className="home-eyebrow">
-            {text("ecosystemPage.eyebrow", "TL GROUP CREATIVE ECOSYSTEM")}
-          </p>
-          <h1 data-cms-section="services" data-cms-field="text.ecosystemPage.title" className="home-editorial-title mt-5 max-w-[13ch] text-[clamp(3rem,11vw,7rem)] leading-[1.02]">
-            {text("ecosystemPage.title", "Một hệ sinh thái. Ba hướng phát triển hình ảnh.")}
-          </h1>
-          <div className="mt-8 grid gap-8 border-t border-white/10 pt-7 lg:grid-cols-[1fr_1fr] lg:items-end">
-            <p data-cms-section="services" data-cms-field="text.ecosystemPage.description" className="max-w-2xl text-base leading-8 text-[var(--home-text-secondary)] sm:text-lg">
-              {text("ecosystemPage.description", "Từ sản xuất hình ảnh quy mô lớn, sáng tạo concept cá nhân đến đào tạo kỹ năng nhiếp ảnh — mỗi thương hiệu trong TL đều có một chuyên môn riêng và cùng chia sẻ một tiêu chuẩn chất lượng.")}
-            </p>
-            <div className="grid grid-cols-3 gap-3 text-right">
-              {["Media", "Studio", "Academy"].map((item, index) => (
-                <div key={item} className="border-l border-white/10 pl-3">
-                  <span className="block text-xs font-bold text-[var(--home-accent-gold)]">0{index + 1}</span>
-                  <span className="mt-1 block text-[11px] uppercase tracking-[.14em] text-[var(--home-text-muted)] sm:text-xs">{item}</span>
-                </div>
-              ))}
+      <HomeCinematic />
+
+      <section className="relative flex min-h-[72svh] items-end overflow-hidden px-5 pb-14 pt-24 sm:min-h-[78svh] sm:px-8 sm:pb-20 lg:px-10">
+        <div className="absolute inset-0 grid grid-cols-3" aria-hidden="true">
+          {tlEcosystemBranches.map((branch, index) => (
+            <div key={branch.name} className="relative overflow-hidden border-r border-white/10 last:border-r-0">
+              <Image src={image(`ecosystemPage.branch.${index}.image`, branch.image)} alt="" fill priority={index === 1} sizes="33vw" className="tl-ecosystem-hero-image object-cover" style={{ objectPosition: branch.imagePosition, animationDelay: `${index * -2.5}s` }} />
             </div>
+          ))}
+        </div>
+        <div className="absolute inset-0 bg-[#07080a]/56" />
+        <div className="absolute inset-0 bg-linear-to-t from-[#07080a] via-[#07080a]/18 to-[#07080a]/45" />
+        <div aria-hidden="true" className="tl-ecosystem-scan absolute inset-0" />
+
+        <div className="relative mx-auto w-full max-w-7xl">
+          <p data-cms-section="services" data-cms-field="text.ecosystemPage.eyebrow" className="home-eyebrow uppercase">
+            {text("ecosystemPage.eyebrow", "TL CREATIVE GROUP")}
+          </p>
+          <h1 data-cms-section="services" data-cms-field="text.ecosystemPage.title" className="home-editorial-title mt-4 max-w-[9ch] text-[clamp(3.5rem,15vw,9rem)] uppercase leading-[.9]">
+            {text("ecosystemPage.title", "Hệ sinh thái TL")}
+          </h1>
+          <div className="mt-8 flex items-center justify-between gap-5 border-t border-white/20 pt-5">
+            <p className="text-xs font-bold uppercase tracking-[.16em] text-white/65 sm:text-sm">Media · Studio · Academy</p>
+            <a href="#thuong-hieu" aria-label="Xem các thương hiệu" className="grid size-11 shrink-0 place-items-center rounded-full border border-white/25 text-[var(--home-accent-gold-light)] backdrop-blur-md">
+              <ArrowDown size={18} aria-hidden="true" />
+            </a>
           </div>
         </div>
       </section>
 
-      <section className="px-5 py-16 sm:px-8 sm:py-24 lg:px-10 lg:py-28">
-        <div className="mx-auto max-w-7xl">
-          <div className="mb-10 flex items-end justify-between gap-6 border-b border-white/10 pb-5 sm:mb-14">
-            <div>
-              <p data-cms-section="services" data-cms-field="text.ecosystemPage.brandsEyebrow" className="home-eyebrow">
-                {text("ecosystemPage.brandsEyebrow", "THREE SPECIALIZED BRANDS")}
-              </p>
-              <h2 data-cms-section="services" data-cms-field="text.ecosystemPage.brandsTitle" className="mt-3 text-2xl font-bold text-white sm:text-3xl">
-                {text("ecosystemPage.brandsTitle", "Chọn đúng đội ngũ cho câu chuyện của bạn")}
-              </h2>
-            </div>
-            <span className="hidden text-sm text-[var(--home-text-muted)] sm:block">TL / 01—03</span>
-          </div>
+      <section id="thuong-hieu" className="px-4 py-12 sm:px-8 sm:py-20 lg:px-10 lg:py-24">
+        <div className="mx-auto grid max-w-7xl gap-5 lg:grid-cols-3">
+          {tlEcosystemBranches.map((branch, branchIndex) => {
+            const branchImage = image(`ecosystemPage.branch.${branchIndex}.image`, branch.image);
+            const branchLogo = image(`ecosystemPage.branch.${branchIndex}.logo`, tlLogoPlaceholder);
+            return (
+              <article key={branch.name} data-reveal data-reveal-delay={String(branchIndex * 110)} className="tl-ecosystem-panel group relative min-h-[68svh] overflow-hidden rounded-xl border border-white/10 bg-[var(--home-background-secondary)] lg:min-h-[680px]">
+                <Image
+                  data-cms-section="services"
+                  data-cms-field={`images.ecosystemPage.branch.${branchIndex}.image`}
+                  data-cms-image-url={branchImage}
+                  src={branchImage}
+                  alt={branch.name}
+                  fill
+                  sizes="(min-width: 1024px) 31vw, 94vw"
+                  quality={74}
+                  className="tl-ecosystem-panel-image object-cover"
+                  style={{ objectPosition: branch.imagePosition }}
+                />
+                <div className="absolute inset-0 bg-linear-to-t from-[#07080a] via-[#07080a]/25 to-[#07080a]/10" />
+                <div className="absolute inset-0 bg-linear-to-b from-black/50 via-transparent to-transparent" />
+                <div className="tl-ecosystem-shine absolute inset-0" aria-hidden="true" />
 
-          <div className="grid gap-6 lg:grid-cols-3">
-            {ecosystem.map((branch, branchIndex) => {
-              const Icon = branch.icon;
-              const branchImage = image(`ecosystemPage.branch.${branchIndex}.image`, branch.image);
-              return (
-                <article key={branch.name} className="group overflow-hidden rounded-xl border border-white/10 bg-[var(--home-background-secondary)] transition duration-500 hover:-translate-y-1 hover:border-[var(--home-border-subtle)]">
-                  <div className="relative aspect-[4/3] overflow-hidden bg-[var(--home-background-elevated)]">
+                <div className="absolute inset-x-0 top-0 flex items-start justify-between gap-5 p-5 sm:p-6">
+                  <div className="tl-ecosystem-logo relative h-14 w-36 overflow-hidden rounded-md border border-white/15 bg-black/35 p-2 backdrop-blur-xl sm:h-16 sm:w-40">
                     <Image
                       data-cms-section="services"
-                      data-cms-field={`images.ecosystemPage.branch.${branchIndex}.image`}
-                      data-cms-image-url={branchImage}
-                      src={branchImage}
-                      alt={`${branch.name} — ${branch.label}`}
+                      data-cms-field={`images.ecosystemPage.branch.${branchIndex}.logo`}
+                      data-cms-image-url={branchLogo}
+                      src={branchLogo}
+                      alt={`Logo ${branch.name}`}
                       fill
-                      sizes="(min-width: 1024px) 31vw, 92vw"
-                      quality={72}
-                      className="object-cover saturate-[.78] transition duration-700 group-hover:scale-[1.025] group-hover:saturate-100"
-                      style={{ objectPosition: branch.imagePosition }}
+                      sizes="160px"
+                      className="object-contain p-2"
                     />
-                    <div className="pointer-events-none absolute inset-0 bg-linear-to-t from-[#08090b] via-[#08090b]/18 to-transparent" />
-                    <span className="absolute left-5 top-5 grid size-11 place-items-center rounded-full border border-white/15 bg-black/35 text-[var(--home-accent-gold-light)] backdrop-blur-md">
-                      <Icon size={20} aria-hidden="true" />
-                    </span>
-                    <span className="absolute right-5 top-5 text-xs font-bold tracking-[.14em] text-white/70">0{branchIndex + 1}</span>
                   </div>
+                  <span className="text-xs font-black tracking-[.18em] text-white/70">0{branchIndex + 1}</span>
+                </div>
 
-                  <div className="p-6 sm:p-7">
-                    <p data-cms-section="services" data-cms-field={`text.ecosystemPage.branch.${branchIndex}.label`} className="home-eyebrow">
-                      {text(`ecosystemPage.branch.${branchIndex}.label`, branch.label)}
-                    </p>
-                    <h3 data-cms-section="services" data-cms-field={`text.ecosystemPage.branch.${branchIndex}.name`} className="mt-3 text-3xl font-black tracking-[-.04em] text-white">
-                      {text(`ecosystemPage.branch.${branchIndex}.name`, branch.name)}
-                    </h3>
-                    <p data-cms-section="services" data-cms-field={`text.ecosystemPage.branch.${branchIndex}.description`} className="mt-4 min-h-24 text-sm leading-7 text-[var(--home-text-secondary)]">
-                      {text(`ecosystemPage.branch.${branchIndex}.description`, branch.description)}
-                    </p>
-                    <ul className="mt-6 border-t border-white/10 pt-3">
-                      {branch.services.map((service, serviceIndex) => (
-                        <li key={service} className="flex items-center justify-between gap-3 border-b border-white/[.07] py-3 text-sm text-[var(--home-text-primary)] last:border-b-0">
-                          <span data-cms-section="services" data-cms-field={`text.ecosystemPage.branch.${branchIndex}.service.${serviceIndex}`}>
-                            {text(`ecosystemPage.branch.${branchIndex}.service.${serviceIndex}`, service)}
-                          </span>
-                          <i aria-hidden="true" className="size-1 shrink-0 bg-[var(--home-accent-gold)]" />
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                </article>
-              );
-            })}
-          </div>
+                <div className="absolute inset-x-0 bottom-0 p-5 sm:p-7">
+                  <p data-cms-section="services" data-cms-field={`text.ecosystemPage.branch.${branchIndex}.label`} className="home-eyebrow uppercase">
+                    {text(`ecosystemPage.branch.${branchIndex}.label`, branch.label)}
+                  </p>
+                  <h2 data-cms-section="services" data-cms-field={`text.ecosystemPage.branch.${branchIndex}.name`} className="home-editorial-title mt-3 text-[clamp(2.5rem,12vw,4.5rem)] uppercase leading-none">
+                    {text(`ecosystemPage.branch.${branchIndex}.name`, branch.name)}
+                  </h2>
+                  <p data-cms-section="services" data-cms-field={`text.ecosystemPage.branch.${branchIndex}.description`} className="mt-4 line-clamp-2 max-w-sm text-sm leading-6 text-white/70">
+                    {text(`ecosystemPage.branch.${branchIndex}.description`, branch.description)}
+                  </p>
+                  <ul className="mt-6 flex flex-wrap gap-2">
+                    {branch.services.map((service, serviceIndex) => (
+                      <li key={service} data-cms-section="services" data-cms-field={`text.ecosystemPage.branch.${branchIndex}.service.${serviceIndex}`} className="rounded-full border border-white/15 bg-black/25 px-3 py-1.5 text-[10px] font-bold uppercase tracking-[.1em] text-white/85 backdrop-blur-md">
+                        {text(`ecosystemPage.branch.${branchIndex}.service.${serviceIndex}`, service)}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </article>
+            );
+          })}
         </div>
       </section>
 
-      <section className="border-t border-white/10 bg-[var(--home-background-secondary)] px-5 py-16 sm:px-8 sm:py-20 lg:px-10">
-        <div className="mx-auto flex max-w-7xl flex-col gap-8 lg:flex-row lg:items-center lg:justify-between">
-          <div>
-            <p data-cms-section="services" data-cms-field="text.ecosystemPage.ctaEyebrow" className="home-eyebrow">
-              {text("ecosystemPage.ctaEyebrow", "START YOUR STORY")}
-            </p>
-            <h2 data-cms-section="services" data-cms-field="text.ecosystemPage.ctaTitle" className="home-editorial-title mt-4 max-w-[16ch] text-3xl leading-tight sm:text-5xl">
-              {text("ecosystemPage.ctaTitle", "Bạn đang cần hình ảnh, một concept hay một khóa học?")}
-            </h2>
-          </div>
+      <section className="border-t border-white/10 px-5 py-16 sm:px-8 sm:py-20 lg:px-10">
+        <div className="mx-auto flex max-w-7xl flex-col gap-7 sm:flex-row sm:items-center sm:justify-between">
+          <h2 data-cms-section="services" data-cms-field="text.ecosystemPage.ctaTitle" className="home-editorial-title max-w-[12ch] text-3xl uppercase leading-tight sm:text-5xl">
+            {text("ecosystemPage.ctaTitle", "Chọn lĩnh vực. Bắt đầu dự án.")}
+          </h2>
           <Link href="/bang-gia" className="home-button-primary shrink-0 px-7">
-            Nhận tư vấn phù hợp <ArrowRight size={17} aria-hidden="true" />
+            Tư vấn <ArrowRight size={17} aria-hidden="true" />
           </Link>
         </div>
       </section>

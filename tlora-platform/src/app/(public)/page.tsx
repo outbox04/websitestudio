@@ -8,6 +8,7 @@ import { HeroBannerSlideshow } from "@/components/public/hero-banner-slideshow";
 import { HomeStickyCta } from "@/components/public/home-sticky-cta";
 import { MobileCarousel } from "@/components/public/mobile-carousel";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { tlEcosystemBranches, tlLogoPlaceholder } from "@/lib/tl-ecosystem";
 import { tloraPublicCacheTags } from "@/lib/tlora-public-cache";
 import { buildTloraPageMetadata } from "@/lib/tlora-metadata";
 import { listPublishedTloraConceptAlbums } from "@/repositories/tlora/concept-albums-repository";
@@ -296,6 +297,43 @@ export default async function HomePage() {
                 {whyCards.map(([title, description], index) => <article key={title}><span className="home-eyebrow">0{index + 1}</span><h3 data-cms-section="about" data-cms-field={`text.value.${index}.title`} className="mt-3 text-lg font-bold">{cmsText(publishedAbout, `value.${index}.title`, title)}</h3><p data-cms-section="about" data-cms-field={`text.value.${index}.description`} className="mt-2 text-sm leading-6 text-[var(--home-text-muted)]">{cmsText(publishedAbout, `value.${index}.description`, description)}</p></article>)}
               </div>
             </div>
+          </div>
+        </section>
+
+        <div aria-hidden="true" className="home-section-divider" />
+        <section hidden={publishedSections.services?.isEnabled === false} id="he-sinh-thai-tl" className="bg-[var(--home-background-secondary)] px-5 py-20 sm:px-8 sm:py-28 lg:px-10 lg:py-32">
+          <div className="mx-auto max-w-7xl">
+            <div data-reveal className="flex items-end justify-between gap-6 border-b border-white/10 pb-6">
+              <div>
+                <p data-cms-section="services" data-cms-field="text.ecosystemHome.eyebrow" className="home-eyebrow uppercase">{cmsText(publishedServices, "ecosystemHome.eyebrow", "TL CREATIVE GROUP")}</p>
+                <h2 data-cms-section="services" data-cms-field="text.ecosystemHome.title" className="home-editorial-title mt-3 text-[clamp(2.6rem,10vw,5.5rem)] uppercase leading-none">{cmsText(publishedServices, "ecosystemHome.title", "Hệ sinh thái TL")}</h2>
+              </div>
+              <Link href="/dich-vu" aria-label="Khám phá hệ sinh thái TL" className="grid size-12 shrink-0 place-items-center rounded-full border border-white/15 text-[var(--home-accent-gold)] transition hover:border-[var(--home-accent-gold)] hover:bg-[var(--home-accent-gold)] hover:text-black">
+                <ArrowUpRight size={19} aria-hidden="true" />
+              </Link>
+            </div>
+
+            <MobileCarousel label="Hệ sinh thái TL" className="mt-4 lg:mt-10 lg:grid-cols-3 lg:gap-5">
+              {tlEcosystemBranches.map((branch, branchIndex) => {
+                const branchImage = cmsImage(publishedServices, `ecosystemPage.branch.${branchIndex}.image`, branch.image);
+                const branchLogo = cmsImage(publishedServices, `ecosystemPage.branch.${branchIndex}.logo`, tlLogoPlaceholder);
+                return (
+                  <Link key={branch.name} href="/dich-vu" className="tl-ecosystem-home-card group relative aspect-[4/5] overflow-hidden rounded-xl border border-white/10 bg-[var(--home-background-elevated)]">
+                    <Image data-cms-section="services" data-cms-field={`images.ecosystemPage.branch.${branchIndex}.image`} data-cms-image-url={branchImage} src={branchImage} alt={branch.name} fill sizes="(min-width: 1024px) 31vw, 82vw" quality={72} className="tl-ecosystem-panel-image object-cover" style={{ objectPosition: branch.imagePosition }} />
+                    <div className="absolute inset-0 bg-linear-to-t from-[#07080a] via-[#07080a]/12 to-[#07080a]/25" />
+                    <div className="tl-ecosystem-shine absolute inset-0" aria-hidden="true" />
+                    <div className="tl-ecosystem-logo absolute left-5 top-5 h-12 w-32 overflow-hidden rounded-md border border-white/15 bg-black/35 p-2 backdrop-blur-xl">
+                      <Image data-cms-section="services" data-cms-field={`images.ecosystemPage.branch.${branchIndex}.logo`} data-cms-image-url={branchLogo} src={branchLogo} alt={`Logo ${branch.name}`} fill sizes="128px" className="object-contain p-2" />
+                    </div>
+                    <div className="absolute inset-x-0 bottom-0 p-5">
+                      <span className="text-xs font-black tracking-[.16em] text-[var(--home-accent-gold)]">0{branchIndex + 1}</span>
+                      <h3 data-cms-section="services" data-cms-field={`text.ecosystemPage.branch.${branchIndex}.name`} className="home-editorial-title mt-2 text-3xl uppercase leading-none">{cmsText(publishedServices, `ecosystemPage.branch.${branchIndex}.name`, branch.name)}</h3>
+                      <p data-cms-section="services" data-cms-field={`text.ecosystemPage.branch.${branchIndex}.label`} className="mt-3 text-[10px] font-bold uppercase tracking-[.14em] text-white/60">{cmsText(publishedServices, `ecosystemPage.branch.${branchIndex}.label`, branch.label)}</p>
+                    </div>
+                  </Link>
+                );
+              })}
+            </MobileCarousel>
           </div>
         </section>
 
