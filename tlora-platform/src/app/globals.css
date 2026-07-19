@@ -180,8 +180,8 @@ button[disabled],
 .home-marquee-track { animation: home-marquee 28s linear infinite; width: max-content; will-change: transform; }
 
 @keyframes home-marquee {
-  from { transform: translateX(0); }
-  to { transform: translateX(-50%); }
+  from { transform: translateX(-50%); }
+  to { transform: translateX(0); }
 }
 
 .home-swipe-hint {
@@ -454,7 +454,8 @@ body:has([role="dialog"]) .home-sticky-cta { display: none; }
   }
 
   .home-hero-slide { animation: none !important; transform: none !important; }
-  .home-editorial-title.home-shine { animation: none !important; background-image: none !important; -webkit-text-fill-color: var(--home-text-primary) !important; }
+  .home-editorial-title.home-shine,
+  .tlora-text-title { animation: none !important; background-image: none !important; -webkit-text-fill-color: var(--home-text-primary) !important; }
   .home-button-primary { box-shadow: none !important; }
   .home-scroll-progress { display: none; }
 }
