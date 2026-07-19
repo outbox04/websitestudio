@@ -189,8 +189,8 @@ export function TlEcosystemExperience({ eyebrow, title, branches, initialIndex =
                   <div data-cms-image-host className="tl-ecosystem-orbit-frame relative overflow-hidden rounded-xl border border-white/15 bg-[#101115]/86 px-5 pb-5 pt-4 backdrop-blur-xl sm:px-6 sm:pb-6">
                     <div className="tl-ecosystem-frame-light absolute inset-0" aria-hidden="true" />
                     <div className="relative flex items-start justify-between gap-4">
-                      <div data-ecosystem-card-logo className="tl-ecosystem-logo relative h-12 w-28 overflow-hidden rounded-md border border-white/15 bg-black/35 backdrop-blur-md transition-opacity sm:h-14 sm:w-32">
-                        <Image data-cms-section="services" data-cms-field={`images.ecosystemPage.branch.${index}.logo`} data-cms-image-url={logoOverrides[index] || branch.logo} src={logoOverrides[index] || branch.logo} alt={`Logo ${branch.name}`} fill sizes="128px" className="object-contain p-2" />
+                      <div data-ecosystem-card-logo className="tl-ecosystem-logo relative h-16 w-44 overflow-visible transition-opacity sm:h-[72px] sm:w-52">
+                        <Image data-cms-section="services" data-cms-field={`images.ecosystemPage.branch.${index}.logo`} data-cms-image-url={logoOverrides[index] || branch.logo} src={logoOverrides[index] || branch.logo} alt={`Logo ${branch.name}`} fill sizes="208px" className="scale-[1.12] object-contain object-left" />
                       </div>
                       <span className={`grid size-8 shrink-0 place-items-center rounded-full border transition ${selected ? "border-[#dfbb63] bg-[#dfbb63] text-black" : "border-white/20 text-white/65"}`}><ArrowRight size={14} /></span>
                     </div>
@@ -227,8 +227,8 @@ export function TlEcosystemExperience({ eyebrow, title, branches, initialIndex =
               <div className="order-1 lg:order-2">
                 <p className="home-eyebrow">GIỚI THIỆU</p>
                 <h2 data-cms-section="services" data-cms-field={`text.ecosystemPage.branch.${selectedIndex}.introTitle`} className="home-editorial-title mt-4 max-w-[10ch] text-[clamp(2.7rem,9vw,6rem)] uppercase leading-[.92]">{active.introTitle}</h2>
-                <div ref={introLogoRef} data-cms-image-host className="tl-ecosystem-intro-logo relative mt-7 h-16 w-40 overflow-hidden rounded-lg border border-white/15 bg-black/30 backdrop-blur-xl sm:h-20 sm:w-48">
-                  <Image data-cms-section="services" data-cms-field={`images.ecosystemPage.branch.${selectedIndex}.logo`} data-cms-image-url={logoOverrides[selectedIndex] || active.logo} src={logoOverrides[selectedIndex] || active.logo} alt={`Logo ${active.name}`} fill sizes="192px" className="object-contain p-3" />
+                <div ref={introLogoRef} data-cms-image-host className="tl-ecosystem-intro-logo relative mt-7 h-20 w-56 overflow-visible sm:h-24 sm:w-72">
+                  <Image data-cms-section="services" data-cms-field={`images.ecosystemPage.branch.${selectedIndex}.logo`} data-cms-image-url={logoOverrides[selectedIndex] || active.logo} src={logoOverrides[selectedIndex] || active.logo} alt={`Logo ${active.name}`} fill sizes="288px" className="scale-[1.12] object-contain object-left" />
                 </div>
                 <p data-cms-section="services" data-cms-field={`text.ecosystemPage.branch.${selectedIndex}.description`} className="mt-7 max-w-xl text-base leading-8 text-white/68 sm:text-lg">{active.description}</p>
                 <p data-cms-section="services" data-cms-field={`text.ecosystemPage.branch.${selectedIndex}.introText`} className="mt-4 max-w-xl text-sm leading-7 text-white/48 sm:text-base">{active.introText}</p>
