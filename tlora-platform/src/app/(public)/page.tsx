@@ -232,7 +232,8 @@ export default async function HomePage() {
       <HomeCinematic />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }} />
       <div id="top" className="home-luxury">
-        <section hidden={publishedSections.hero?.isEnabled === false} id="home-hero" data-cms-section-root="hero" className="relative flex min-h-svh items-end overflow-hidden px-5 pb-10 pt-28 sm:px-8 sm:pb-14 lg:px-10 lg:pb-16">
+        <div className="home-hero-stage relative">
+        <section hidden={publishedSections.hero?.isEnabled === false} id="home-hero" data-cms-section-root="hero" className="relative flex min-h-svh items-end overflow-hidden px-5 pb-[10rem] pt-28 sm:px-8 lg:px-10 lg:pb-16">
           <HeroBannerSlideshow initialSlides={heroSlides} fallbackImage={heroFallbackImage} imagePosition={heroImagePosition} />
           <div className="pointer-events-none absolute inset-0 bg-linear-to-b from-[#08090b]/58 via-transparent to-[#08090b]/92" />
           <div className="pointer-events-none absolute inset-0 bg-linear-to-r from-[#08090b]/78 via-[#08090b]/22 to-transparent lg:via-transparent" />
@@ -257,7 +258,7 @@ export default async function HomePage() {
           </div>
         </section>
 
-        <div className="w-full overflow-hidden border-y border-white/10 bg-[var(--home-background-secondary)] py-4" aria-label="Phong cách TLORA">
+        <div className="home-marquee-band w-full overflow-hidden border-y border-white/10 bg-[var(--home-background-secondary)] py-4" aria-label="Phong cách TLORA">
           <div className="home-marquee-track flex items-center text-sm font-semibold uppercase tracking-[.2em] text-[var(--home-text-secondary)]">
             {[0, 1].map((copy) => (
               <div key={copy} aria-hidden={copy === 1} className="flex shrink-0 items-center">
@@ -277,6 +278,7 @@ export default async function HomePage() {
               </div>
             ))}
           </div>
+        </div>
         </div>
 
         <div aria-hidden="true" className="home-section-divider" />

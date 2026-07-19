@@ -296,6 +296,14 @@ button[disabled],
 
 @media (max-width: 1023px) {
   [data-cms-image-badge] { top: 76px !important; }
+
+  .home-marquee-band {
+    bottom: calc(70px + max(6px, env(safe-area-inset-bottom)));
+    left: 0;
+    position: absolute;
+    right: 0;
+    z-index: 40;
+  }
 }
 
 @keyframes concept-card {
