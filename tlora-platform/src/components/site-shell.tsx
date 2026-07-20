@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowRight, BadgeDollarSign, Camera, Home, Images, Newspaper, Phone, ShoppingBag } from "lucide-react";
+import { ArrowRight, BadgeDollarSign, Camera, Images, Newspaper, Orbit, Phone, ShoppingBag } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -49,7 +49,7 @@ function zaloUrl(value: string) {
 }
 
 function navIcon(href: string) {
-  if (href === "/") return Home;
+  if (href.includes("dich-vu")) return Orbit;
   if (href.includes("bang-gia")) return BadgeDollarSign;
   if (href.includes("thue-trang-phuc")) return ShoppingBag;
   if (href.includes("album")) return Images;
@@ -61,6 +61,13 @@ export function SiteHeader({ navItems = defaultNav, contact, rentalEnabled = tru
   const pathname = usePathname();
   const [pastHero, setPastHero] = useState(false);
   const isHome = pathname === "/";
+  const mobileNavPaths = ["/dich-vu", "/bang-gia", "/thue-trang-phuc", "/album-concept", "/tin-tuc"];
+  const mobileNavItems = mobileNavPaths.flatMap((href) => {
+    if (href === "/thue-trang-phuc" && !rentalEnabled) return [];
+    const item = navItems.find((candidate) => candidate.href === href) ?? defaultNav.find((candidate) => candidate.href === href);
+    if (!item) return [];
+    return [{ ...item, label: href === "/dich-vu" ? "Hệ sinh thái" : item.label }];
+  });
 
   useEffect(() => {
     if (!isHome) return;
@@ -93,10 +100,10 @@ export function SiteHeader({ navItems = defaultNav, contact, rentalEnabled = tru
     </header>
     <ContactDock contact={contact} />
     <nav id="mobile-site-navigation" className="fixed inset-x-2 bottom-2 z-[60] grid grid-cols-5 overflow-hidden rounded-2xl border border-white/10 bg-[#f8f5ee]/95 px-1 pt-1.5 text-[#51493f] shadow-[0_18px_60px_rgba(0,0,0,.45)] backdrop-blur-xl lg:hidden" style={{ paddingBottom: "max(6px, env(safe-area-inset-bottom))" }} aria-label="Điều hướng mobile">
-      {navItems.filter((item) => !item.href.includes("ai-concept")).slice(0, 5).map((item) => {
+      {mobileNavItems.map((item) => {
         const Icon = navIcon(item.href);
         const active = pathname === item.href;
-        return <Link key={item.href} href={item.href} data-cms-preview-navigation className={`flex min-h-14 min-w-0 flex-col items-center justify-center gap-1 rounded-xl px-1 text-center text-[10px] font-semibold transition ${active ? "bg-[#d8b766]/18 text-[#9b731b]" : "hover:bg-black/5"}`}><Icon size={19} strokeWidth={active ? 2.4 : 1.8} aria-hidden="true" /><span className="w-full truncate">{item.label}</span></Link>;
+        return <Link key={item.href} href={item.href} data-cms-preview-navigation className={`flex min-h-[68px] min-w-0 flex-col items-center justify-center gap-1 rounded-xl px-0.5 text-center text-[10px] font-semibold transition ${active ? "bg-[#d8b766]/18 text-[#9b731b]" : "hover:bg-black/5"}`}><Icon size={19} strokeWidth={active ? 2.4 : 1.8} aria-hidden="true" /><span className="flex min-h-[2.3em] w-full items-center justify-center whitespace-normal break-words leading-[1.15]">{item.label}</span></Link>;
       })}
     </nav>
     </>

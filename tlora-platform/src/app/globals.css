@@ -601,10 +601,9 @@ section[data-scroll-locked="true"] .tl-ecosystem-orbit-card[data-position="cente
   position: fixed;
   z-index: 100;
   overflow: visible;
-  transform-origin: left top;
   filter: drop-shadow(0 18px 26px rgba(0, 0, 0, .58));
   pointer-events: none;
-  will-change: transform, opacity, filter;
+  will-change: left, top, width, height;
 }
 
 .tl-ecosystem-logo-flight img {
@@ -612,6 +611,8 @@ section[data-scroll-locked="true"] .tl-ecosystem-orbit-card[data-position="cente
   height: 100%;
   object-fit: contain;
   object-position: left center;
+  transform: scale(1.12);
+  transform-origin: left center;
 }
 
 .tl-ecosystem-intro-logo {

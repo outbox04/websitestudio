@@ -36,8 +36,12 @@ export function TlEcosystemExperience({ eyebrow, title, branches, initialIndex =
   const pointerStartX = useRef<number | null>(null);
   const touchStartY = useRef<number | null>(null);
   const didSwipe = useRef(false);
-  const logoIsInIntro = useRef(false);
-  const reverseLogoFrame = useRef(0);
+  const logoFlightRef = useRef<HTMLDivElement | null>(null);
+  const logoFlightFrame = useRef(0);
+  const logoFlightStart = useRef(0);
+  const logoFlightEnd = useRef(0);
+  const logoFlightSource = useRef<HTMLElement | null>(null);
+  const logoFlightTarget = useRef<HTMLElement | null>(null);
   const active = branches[selectedIndex] ?? branches[0];
 
   useEffect(() => {
@@ -138,74 +142,75 @@ export function TlEcosystemExperience({ eyebrow, title, branches, initialIndex =
     return bannerRef.current?.querySelector<HTMLElement>("[data-position='center'] [data-ecosystem-card-logo]") ?? null;
   }, []);
 
-  const flyLogo = useCallback((index: number, sourceLogo: HTMLElement, targetLogo: HTMLElement, reverse = false) => {
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  const removeLogoFlight = useCallback(() => {
+    logoFlightRef.current?.remove();
+    logoFlightRef.current = null;
+    logoFlightSource.current?.style.removeProperty("opacity");
+    logoFlightTarget.current?.style.removeProperty("opacity");
+    logoFlightSource.current = null;
+    logoFlightTarget.current = null;
+  }, []);
 
+  const updateLogoFlight = useCallback(() => {
+    const flyer = logoFlightRef.current;
+    const sourceLogo = logoFlightSource.current;
+    const targetLogo = logoFlightTarget.current;
+    if (!flyer || !sourceLogo || !targetLogo) return;
+
+    const distance = Math.max(1, logoFlightEnd.current - logoFlightStart.current);
+    const progress = Math.min(1, Math.max(0, (window.scrollY - logoFlightStart.current) / distance));
     const sourceRect = sourceLogo.getBoundingClientRect();
     const targetRect = targetLogo.getBoundingClientRect();
-    const contentRect = contentRef.current?.getBoundingClientRect();
-    const targetTop = !reverse && contentRect ? targetRect.top - contentRect.top + 72 : targetRect.top;
-    const deltaX = targetRect.left - sourceRect.left;
-    const deltaY = targetTop - sourceRect.top;
-    const scaleX = targetRect.width / sourceRect.width;
-    const scaleY = targetRect.height / sourceRect.height;
-    const flyer = document.createElement("div");
-    const flyerImage = document.createElement("img");
+    const interpolate = (start: number, end: number) => start + (end - start) * progress;
 
-    flyer.className = "tl-ecosystem-logo-flight";
     Object.assign(flyer.style, {
-      left: `${sourceRect.left}px`,
-      top: `${sourceRect.top}px`,
-      width: `${sourceRect.width}px`,
-      height: `${sourceRect.height}px`,
+      display: progress <= 0.001 || progress >= 0.999 ? "none" : "block",
+      left: `${interpolate(sourceRect.left, targetRect.left)}px`,
+      top: `${interpolate(sourceRect.top, targetRect.top)}px`,
+      width: `${interpolate(sourceRect.width, targetRect.width)}px`,
+      height: `${interpolate(sourceRect.height, targetRect.height)}px`,
     });
-    const sourceImage = sourceLogo.querySelector<HTMLImageElement>("img");
-    flyerImage.src = sourceImage?.dataset.cmsImageUrl || sourceImage?.currentSrc || sourceImage?.src || logoOverrides[index] || branches[index].logo;
-    flyerImage.alt = "";
-    flyer.appendChild(flyerImage);
-    document.body.appendChild(flyer);
-    sourceLogo.style.opacity = "0";
-    targetLogo.style.opacity = "0";
 
-    const animation = flyer.animate([
-      { offset: 0, transform: "translate3d(0,0,0) scale(1)", opacity: 1, filter: "blur(0)" },
-      { offset: .42, transform: `translate3d(${deltaX * .42}px,${deltaY * .3}px,0) scale(${reverse ? 1.08 : .82})`, opacity: 1, filter: "blur(0)" },
-      { offset: .78, transform: `translate3d(${deltaX * .78}px,${deltaY * .72}px,0) scale(${(scaleX + (reverse ? 1.08 : .82)) / 2},${(scaleY + (reverse ? 1.08 : .82)) / 2})`, opacity: .96, filter: "blur(.3px)" },
-      { offset: 1, transform: `translate3d(${deltaX}px,${deltaY}px,0) scale(${scaleX},${scaleY})`, opacity: 1, filter: "blur(0)" },
-    ], { duration: 1050, easing: "cubic-bezier(.22,.8,.2,1)", fill: "forwards" });
+    sourceLogo.style.opacity = progress <= 0.001 ? "1" : "0";
+    targetLogo.style.opacity = progress >= 0.999 ? "1" : "0";
 
-    animation.finished.finally(() => {
-      flyer.remove();
-      sourceLogo.style.opacity = "";
-      targetLogo.style.opacity = "";
-      targetLogo.animate([
-        { opacity: 0, transform: "translateY(-8px) scale(.94)" },
-        { opacity: 1, transform: "translateY(0) scale(1)" },
-      ], { duration: 480, easing: "cubic-bezier(.22,.8,.2,1)" });
-    });
-  }, [branches, logoOverrides]);
+    if (progress <= 0.001 && window.scrollY <= logoFlightStart.current + 1) {
+      setScrollUnlocked(false);
+      removeLogoFlight();
+    }
+  }, [removeLogoFlight]);
 
   function flyLogoToIntroduction(index: number, sourceLogo: HTMLElement) {
     const targetLogo = introLogoRef.current;
     if (!targetLogo) return;
-    logoIsInIntro.current = true;
-    flyLogo(index, sourceLogo, targetLogo);
-  }
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
 
-  const flyLogoBackToCard = useCallback(() => {
-    const sourceLogo = introLogoRef.current;
-    const targetLogo = selectedCardLogo();
-    if (!sourceLogo || !targetLogo) return;
-    logoIsInIntro.current = false;
-    setScrollUnlocked(false);
-    flyLogo(selectedIndex, sourceLogo, targetLogo, true);
-  }, [flyLogo, selectedCardLogo, selectedIndex]);
+    removeLogoFlight();
+    const flyer = document.createElement("div");
+    const flyerImage = document.createElement("img");
+    const sourceImage = sourceLogo.querySelector<HTMLImageElement>("img");
+    const contentTop = (contentRef.current?.getBoundingClientRect().top ?? 0) + window.scrollY;
+
+    flyer.className = "tl-ecosystem-logo-flight";
+    flyerImage.src = sourceImage?.dataset.cmsImageUrl || sourceImage?.currentSrc || sourceImage?.src || logoOverrides[index] || branches[index].logo;
+    flyerImage.alt = "";
+    flyer.appendChild(flyerImage);
+    document.body.appendChild(flyer);
+
+    logoFlightRef.current = flyer;
+    logoFlightSource.current = sourceLogo;
+    logoFlightTarget.current = targetLogo;
+    logoFlightStart.current = window.scrollY;
+    logoFlightEnd.current = Math.max(window.scrollY + 1, contentTop - 64);
+    updateLogoFlight();
+  }
 
   function openBranch(index: number, sourceLogo?: HTMLElement | null) {
     if (didSwipe.current) return;
     setScrollUnlocked(true);
     setSelectedIndex(index);
-    if (sourceLogo) flyLogoToIntroduction(index, sourceLogo);
+    const logo = sourceLogo ?? selectedCardLogo();
+    if (logo) flyLogoToIntroduction(index, logo);
     window.requestAnimationFrame(() => {
       contentRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
     });
@@ -238,21 +243,23 @@ export function TlEcosystemExperience({ eyebrow, title, branches, initialIndex =
   }
 
   useEffect(() => {
-    const onScroll = () => {
-      if (!logoIsInIntro.current || reverseLogoFrame.current) return;
-      reverseLogoFrame.current = window.requestAnimationFrame(() => {
-        reverseLogoFrame.current = 0;
-        const contentTop = contentRef.current?.getBoundingClientRect().top ?? 0;
-        if (contentTop > window.innerHeight * 0.18) flyLogoBackToCard();
+    const scheduleLogoFlight = () => {
+      if (!logoFlightRef.current || logoFlightFrame.current) return;
+      logoFlightFrame.current = window.requestAnimationFrame(() => {
+        logoFlightFrame.current = 0;
+        updateLogoFlight();
       });
     };
 
-    window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("scroll", scheduleLogoFlight, { passive: true });
+    window.addEventListener("resize", scheduleLogoFlight);
     return () => {
-      if (reverseLogoFrame.current) cancelAnimationFrame(reverseLogoFrame.current);
-      window.removeEventListener("scroll", onScroll);
+      if (logoFlightFrame.current) cancelAnimationFrame(logoFlightFrame.current);
+      window.removeEventListener("scroll", scheduleLogoFlight);
+      window.removeEventListener("resize", scheduleLogoFlight);
+      removeLogoFlight();
     };
-  }, [selectedIndex, flyLogoBackToCard]);
+  }, [removeLogoFlight, updateLogoFlight]);
 
   return (
     <>
