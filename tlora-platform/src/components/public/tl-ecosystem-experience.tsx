@@ -3,7 +3,7 @@
 import { ArrowDown, ArrowLeft, ArrowRight, ChevronLeft, ChevronRight, Sparkles } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useRef, useState, type MouseEvent, type PointerEvent } from "react";
+import { useCallback, useEffect, useRef, useState, type MouseEvent, type PointerEvent } from "react";
 
 export type TlEcosystemBranch = {
   name: string;
@@ -28,12 +28,16 @@ type Props = {
 
 export function TlEcosystemExperience({ eyebrow, title, branches, initialIndex = 0 }: Props) {
   const [selectedIndex, setSelectedIndex] = useState(initialIndex);
+  const [scrollUnlocked, setScrollUnlocked] = useState(false);
   const [logoOverrides, setLogoOverrides] = useState<Record<number, string>>({});
   const bannerRef = useRef<HTMLElement>(null);
   const contentRef = useRef<HTMLElement>(null);
   const introLogoRef = useRef<HTMLDivElement>(null);
   const pointerStartX = useRef<number | null>(null);
+  const touchStartY = useRef<number | null>(null);
   const didSwipe = useRef(false);
+  const logoIsInIntro = useRef(false);
+  const reverseLogoFrame = useRef(0);
   const active = branches[selectedIndex] ?? branches[0];
 
   useEffect(() => {
@@ -87,17 +91,62 @@ export function TlEcosystemExperience({ eyebrow, title, branches, initialIndex =
     };
   }, [branches.length, initialIndex]);
 
-  function flyLogoToIntroduction(index: number, sourceLogo: HTMLElement) {
-    const targetLogo = introLogoRef.current;
+  useEffect(() => {
+    const hero = bannerRef.current;
     const content = contentRef.current;
-    if (!targetLogo || !content || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    if (!hero || !content) return;
+
+    const isInsideHeroGate = () => {
+      const rect = hero.getBoundingClientRect();
+      return rect.top < window.innerHeight * 0.35 && rect.bottom > window.innerHeight * 0.45;
+    };
+
+    const blockUntilCardClick = (event: WheelEvent | TouchEvent | KeyboardEvent) => {
+      if (scrollUnlocked || !isInsideHeroGate()) return;
+
+      let wantsDown = false;
+      if (event instanceof WheelEvent) wantsDown = event.deltaY > 0;
+      else if (event instanceof TouchEvent && event.type === "touchmove" && touchStartY.current !== null) {
+        wantsDown = touchStartY.current - event.touches[0].clientY > 8;
+      } else if (event instanceof KeyboardEvent) {
+        wantsDown = ["ArrowDown", "PageDown", "Space", "End"].includes(event.code);
+      }
+
+      if (!wantsDown) return;
+      event.preventDefault();
+      hero.dataset.scrollLocked = "true";
+      window.setTimeout(() => { delete hero.dataset.scrollLocked; }, 520);
+    };
+
+    const onTouchStart = (event: TouchEvent) => {
+      touchStartY.current = event.touches[0]?.clientY ?? null;
+    };
+
+    window.addEventListener("wheel", blockUntilCardClick, { passive: false });
+    window.addEventListener("keydown", blockUntilCardClick);
+    window.addEventListener("touchstart", onTouchStart, { passive: true });
+    window.addEventListener("touchmove", blockUntilCardClick, { passive: false });
+    return () => {
+      window.removeEventListener("wheel", blockUntilCardClick);
+      window.removeEventListener("keydown", blockUntilCardClick);
+      window.removeEventListener("touchstart", onTouchStart);
+      window.removeEventListener("touchmove", blockUntilCardClick);
+    };
+  }, [scrollUnlocked]);
+
+  const selectedCardLogo = useCallback(() => {
+    return bannerRef.current?.querySelector<HTMLElement>("[data-position='center'] [data-ecosystem-card-logo]") ?? null;
+  }, []);
+
+  const flyLogo = useCallback((index: number, sourceLogo: HTMLElement, targetLogo: HTMLElement, reverse = false) => {
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
 
     const sourceRect = sourceLogo.getBoundingClientRect();
     const targetRect = targetLogo.getBoundingClientRect();
-    const contentRect = content.getBoundingClientRect();
-    const finalTop = targetRect.top - contentRect.top + 72;
+    const contentRect = contentRef.current?.getBoundingClientRect();
+    const targetTop = !reverse && contentRect ? targetRect.top - contentRect.top + 72 : targetRect.top;
     const deltaX = targetRect.left - sourceRect.left;
-    const deltaY = finalTop - sourceRect.top;
+    const deltaY = targetTop - sourceRect.top;
     const scaleX = targetRect.width / sourceRect.width;
     const scaleY = targetRect.height / sourceRect.height;
     const flyer = document.createElement("div");
@@ -120,8 +169,8 @@ export function TlEcosystemExperience({ eyebrow, title, branches, initialIndex =
 
     const animation = flyer.animate([
       { offset: 0, transform: "translate3d(0,0,0) scale(1)", opacity: 1, filter: "blur(0)" },
-      { offset: .42, transform: `translate3d(${deltaX * .42}px,${deltaY * .3}px,0) scale(.82)`, opacity: 1, filter: "blur(0)" },
-      { offset: .78, transform: `translate3d(${deltaX * .78}px,${deltaY * .72}px,0) scale(${(scaleX + .82) / 2},${(scaleY + .82) / 2})`, opacity: .96, filter: "blur(.3px)" },
+      { offset: .42, transform: `translate3d(${deltaX * .42}px,${deltaY * .3}px,0) scale(${reverse ? 1.08 : .82})`, opacity: 1, filter: "blur(0)" },
+      { offset: .78, transform: `translate3d(${deltaX * .78}px,${deltaY * .72}px,0) scale(${(scaleX + (reverse ? 1.08 : .82)) / 2},${(scaleY + (reverse ? 1.08 : .82)) / 2})`, opacity: .96, filter: "blur(.3px)" },
       { offset: 1, transform: `translate3d(${deltaX}px,${deltaY}px,0) scale(${scaleX},${scaleY})`, opacity: 1, filter: "blur(0)" },
     ], { duration: 1050, easing: "cubic-bezier(.22,.8,.2,1)", fill: "forwards" });
 
@@ -134,10 +183,27 @@ export function TlEcosystemExperience({ eyebrow, title, branches, initialIndex =
         { opacity: 1, transform: "translateY(0) scale(1)" },
       ], { duration: 480, easing: "cubic-bezier(.22,.8,.2,1)" });
     });
+  }, [branches, logoOverrides]);
+
+  function flyLogoToIntroduction(index: number, sourceLogo: HTMLElement) {
+    const targetLogo = introLogoRef.current;
+    if (!targetLogo) return;
+    logoIsInIntro.current = true;
+    flyLogo(index, sourceLogo, targetLogo);
   }
+
+  const flyLogoBackToCard = useCallback(() => {
+    const sourceLogo = introLogoRef.current;
+    const targetLogo = selectedCardLogo();
+    if (!sourceLogo || !targetLogo) return;
+    logoIsInIntro.current = false;
+    setScrollUnlocked(false);
+    flyLogo(selectedIndex, sourceLogo, targetLogo, true);
+  }, [flyLogo, selectedCardLogo, selectedIndex]);
 
   function openBranch(index: number, sourceLogo?: HTMLElement | null) {
     if (didSwipe.current) return;
+    setScrollUnlocked(true);
     setSelectedIndex(index);
     if (sourceLogo) flyLogoToIntroduction(index, sourceLogo);
     window.requestAnimationFrame(() => {
@@ -171,6 +237,23 @@ export function TlEcosystemExperience({ eyebrow, title, branches, initialIndex =
     window.setTimeout(() => { didSwipe.current = false; }, 0);
   }
 
+  useEffect(() => {
+    const onScroll = () => {
+      if (!logoIsInIntro.current || reverseLogoFrame.current) return;
+      reverseLogoFrame.current = window.requestAnimationFrame(() => {
+        reverseLogoFrame.current = 0;
+        const contentTop = contentRef.current?.getBoundingClientRect().top ?? 0;
+        if (contentTop > window.innerHeight * 0.18) flyLogoBackToCard();
+      });
+    };
+
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => {
+      if (reverseLogoFrame.current) cancelAnimationFrame(reverseLogoFrame.current);
+      window.removeEventListener("scroll", onScroll);
+    };
+  }, [selectedIndex, flyLogoBackToCard]);
+
   return (
     <>
       <section ref={bannerRef} className="relative flex min-h-[92svh] scroll-mt-20 items-start overflow-hidden px-5 pb-8 pt-12 sm:min-h-[94svh] sm:px-8 sm:pt-16 lg:px-10 lg:pt-20">
@@ -196,7 +279,7 @@ export function TlEcosystemExperience({ eyebrow, title, branches, initialIndex =
             {title}
           </h1>
           <div className="mt-5 flex items-center justify-between gap-5 border-t border-white/20 pt-4 sm:mt-7">
-            <p className="text-[10px] font-bold uppercase tracking-[.18em] text-white/60 sm:text-xs">Vuốt để chọn · Lĩnh vực ở giữa là chủ thể</p>
+            <p className="text-[10px] font-bold uppercase tracking-[.18em] text-white/60 sm:text-xs">Vuốt để chọn · Click khung giữa để mở câu chuyện</p>
             <ArrowDown size={17} className="shrink-0 text-[var(--home-accent-gold-light)]" aria-hidden="true" />
           </div>
 
