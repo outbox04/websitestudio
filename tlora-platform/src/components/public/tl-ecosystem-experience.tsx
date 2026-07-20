@@ -162,13 +162,20 @@ export function TlEcosystemExperience({ eyebrow, title, branches, initialIndex =
     const sourceRect = sourceLogo.getBoundingClientRect();
     const targetRect = targetLogo.getBoundingClientRect();
     const interpolate = (start: number, end: number) => start + (end - start) * progress;
+    const remaining = 1 - progress;
+    const arcDepth = Math.min(128, window.innerHeight * 0.14);
+    const controlTop = Math.max(sourceRect.top, targetRect.top) + arcDepth;
+    const flightTop = remaining * remaining * sourceRect.top
+      + 2 * remaining * progress * controlTop
+      + progress * progress * targetRect.top;
+    const midFlightScale = 1 + Math.sin(Math.PI * progress) * 0.1;
 
     Object.assign(flyer.style, {
       display: progress <= 0.001 || progress >= 0.999 ? "none" : "block",
       left: `${interpolate(sourceRect.left, targetRect.left)}px`,
-      top: `${interpolate(sourceRect.top, targetRect.top)}px`,
-      width: `${interpolate(sourceRect.width, targetRect.width)}px`,
-      height: `${interpolate(sourceRect.height, targetRect.height)}px`,
+      top: `${flightTop}px`,
+      width: `${interpolate(sourceRect.width, targetRect.width) * midFlightScale}px`,
+      height: `${interpolate(sourceRect.height, targetRect.height) * midFlightScale}px`,
     });
 
     sourceLogo.style.opacity = progress <= 0.001 ? "1" : "0";
@@ -323,8 +330,8 @@ export function TlEcosystemExperience({ eyebrow, title, branches, initialIndex =
                   <div data-cms-image-host className="tl-ecosystem-orbit-frame relative overflow-hidden rounded-xl border border-white/15 bg-[#101115]/86 px-5 pb-5 pt-4 backdrop-blur-xl sm:px-6 sm:pb-6">
                     <div className="tl-ecosystem-frame-light absolute inset-0" aria-hidden="true" />
                     <div className="relative flex items-start justify-between gap-4">
-                      <div data-ecosystem-card-logo className="tl-ecosystem-logo relative h-16 w-44 overflow-visible transition-opacity sm:h-[72px] sm:w-52">
-                        <Image data-cms-section="services" data-cms-field={`images.ecosystemPage.branch.${index}.logo`} data-cms-image-url={logoOverrides[index] || branch.logo} src={logoOverrides[index] || branch.logo} alt={`Logo ${branch.name}`} fill sizes="208px" className="scale-[1.12] object-contain object-left" />
+                      <div data-ecosystem-card-logo className="tl-ecosystem-logo relative h-20 min-w-0 flex-1 overflow-visible transition-opacity sm:h-24">
+                        <Image data-cms-section="services" data-cms-field={`images.ecosystemPage.branch.${index}.logo`} data-cms-image-url={logoOverrides[index] || branch.logo} src={logoOverrides[index] || branch.logo} alt={`Logo ${branch.name}`} fill sizes="(min-width: 640px) 240px, 210px" className="scale-[1.18] object-contain object-left" />
                       </div>
                       <span className={`grid size-8 shrink-0 place-items-center rounded-full border transition ${selected ? "border-[#dfbb63] bg-[#dfbb63] text-black" : "border-white/20 text-white/65"}`}><ArrowRight size={14} /></span>
                     </div>
@@ -361,8 +368,8 @@ export function TlEcosystemExperience({ eyebrow, title, branches, initialIndex =
               <div className="order-1 lg:order-2">
                 <p className="home-eyebrow">GIỚI THIỆU</p>
                 <h2 data-cms-section="services" data-cms-field={`text.ecosystemPage.branch.${selectedIndex}.introTitle`} className="home-editorial-title mt-4 max-w-[10ch] text-[clamp(2.7rem,9vw,6rem)] uppercase leading-[.92]">{active.introTitle}</h2>
-                <div ref={introLogoRef} data-cms-image-host className="tl-ecosystem-intro-logo relative mt-7 h-20 w-56 overflow-visible sm:h-24 sm:w-72">
-                  <Image data-cms-section="services" data-cms-field={`images.ecosystemPage.branch.${selectedIndex}.logo`} data-cms-image-url={logoOverrides[selectedIndex] || active.logo} src={logoOverrides[selectedIndex] || active.logo} alt={`Logo ${active.name}`} fill sizes="288px" className="scale-[1.12] object-contain object-left" />
+                <div ref={introLogoRef} data-cms-image-host className="tl-ecosystem-intro-logo relative mt-7 h-24 w-64 overflow-visible sm:h-28 sm:w-80">
+                  <Image data-cms-section="services" data-cms-field={`images.ecosystemPage.branch.${selectedIndex}.logo`} data-cms-image-url={logoOverrides[selectedIndex] || active.logo} src={logoOverrides[selectedIndex] || active.logo} alt={`Logo ${active.name}`} fill sizes="(min-width: 640px) 320px, 256px" className="scale-[1.18] object-contain object-left" />
                 </div>
                 <p data-cms-section="services" data-cms-field={`text.ecosystemPage.branch.${selectedIndex}.description`} className="mt-7 max-w-xl text-base leading-8 text-white/68 sm:text-lg">{active.description}</p>
                 <p data-cms-section="services" data-cms-field={`text.ecosystemPage.branch.${selectedIndex}.introText`} className="mt-4 max-w-xl text-sm leading-7 text-white/48 sm:text-base">{active.introText}</p>

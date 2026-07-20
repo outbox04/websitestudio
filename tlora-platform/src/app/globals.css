@@ -536,7 +536,7 @@ body:has([role="dialog"]) .home-sticky-cta { display: none; }
 
 .tl-ecosystem-orbit-card {
   left: 50%;
-  width: min(72vw, 360px);
+  width: min(82vw, 380px);
   transform-style: preserve-3d;
   transition:
     transform .72s var(--motion-editorial),
@@ -611,7 +611,7 @@ section[data-scroll-locked="true"] .tl-ecosystem-orbit-card[data-position="cente
   height: 100%;
   object-fit: contain;
   object-position: left center;
-  transform: scale(1.12);
+  transform: scale(1.18);
   transform-origin: left center;
 }
 
