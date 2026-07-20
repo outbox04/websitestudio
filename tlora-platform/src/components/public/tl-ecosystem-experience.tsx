@@ -48,6 +48,45 @@ export function TlEcosystemExperience({ eyebrow, title, branches, initialIndex =
     return () => window.removeEventListener("tlora:cms-image-change", handleCmsImageChange);
   }, []);
 
+  useEffect(() => {
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+
+    const hero = bannerRef.current;
+    if (!hero) return;
+
+    const layers = Array.from(hero.querySelectorAll<HTMLElement>("[data-parallax-layer]"));
+    if (!layers.length) return;
+
+    let frame = 0;
+    const updateParallax = () => {
+      const viewportHeight = window.innerHeight;
+      const rect = hero.getBoundingClientRect();
+      const progress = Math.min(1, Math.max(0, (viewportHeight - rect.top) / (viewportHeight + rect.height)));
+      const offset = (progress - 0.5) * 2;
+
+      layers.forEach((layer) => {
+        const depth = Number(layer.dataset.parallaxDepth ?? 0.16);
+        const y = offset * depth * 110;
+        const scale = 1 + Math.abs(offset) * depth * 0.025;
+        layer.style.transform = `translate3d(0, ${y}px, 0) scale(${scale})`;
+      });
+    };
+
+    updateParallax();
+    const onScroll = () => {
+      if (frame) cancelAnimationFrame(frame);
+      frame = window.requestAnimationFrame(updateParallax);
+    };
+
+    window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("resize", onScroll);
+    return () => {
+      if (frame) cancelAnimationFrame(frame);
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", onScroll);
+    };
+  }, [branches.length, initialIndex]);
+
   function flyLogoToIntroduction(index: number, sourceLogo: HTMLElement) {
     const targetLogo = introLogoRef.current;
     const content = contentRef.current;
@@ -137,13 +176,18 @@ export function TlEcosystemExperience({ eyebrow, title, branches, initialIndex =
       <section ref={bannerRef} className="relative flex min-h-[92svh] scroll-mt-20 items-start overflow-hidden px-5 pb-8 pt-12 sm:min-h-[94svh] sm:px-8 sm:pt-16 lg:px-10 lg:pt-20">
         <div className="absolute inset-0" aria-hidden="true">
           {branches.map((branch, index) => (
-            <div key={branch.name} className={`absolute inset-0 transition-[opacity,transform] duration-1000 ease-out ${selectedIndex === index ? "scale-100 opacity-100" : "scale-105 opacity-0"}`}>
+            <div
+              key={branch.name}
+              data-parallax-layer
+              data-parallax-depth={0.1 + index * 0.025}
+              className={`tl-ecosystem-hero-layer absolute inset-0 transition-[opacity,transform] duration-1000 ease-out ${selectedIndex === index ? "scale-100 opacity-100" : "scale-105 opacity-0"}`}
+            >
               <Image src={branch.image} alt="" fill priority={index === initialIndex} sizes="100vw" className="tl-ecosystem-hero-image object-cover" style={{ objectPosition: branch.imagePosition, animationDelay: `${index * -2.5}s` }} />
             </div>
           ))}
         </div>
-        <div className="absolute inset-0 bg-[#07080a]/60" />
-        <div className="absolute inset-0 bg-linear-to-t from-[#07080a] via-[#07080a]/22 to-[#07080a]/48" />
+        <div data-parallax-layer data-parallax-depth="0.04" className="absolute inset-0 bg-[#07080a]/60" />
+        <div data-parallax-layer data-parallax-depth="0.06" className="absolute inset-0 bg-linear-to-t from-[#07080a] via-[#07080a]/22 to-[#07080a]/48" />
         <div aria-hidden="true" className="tl-ecosystem-scan absolute inset-0" />
 
         <div className="relative mx-auto w-full max-w-7xl">

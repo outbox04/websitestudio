@@ -473,6 +473,10 @@ body:has([role="dialog"]) .home-sticky-cta { display: none; }
   to { background-position: 0% 50%; }
 }
 
+.tl-ecosystem-hero-layer {
+  will-change: transform;
+}
+
 .tl-ecosystem-hero-image {
   animation: tl-ecosystem-breathe 13s ease-in-out infinite alternate;
   filter: saturate(.72) contrast(1.05);

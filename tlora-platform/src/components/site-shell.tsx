@@ -130,7 +130,6 @@ function EcosystemFooterLinks({ home = false }: { home?: boolean }) {
 
 export function SiteFooter({ contact }: { contact?: SiteContact }) {
   const pathname = usePathname();
-  const isHome = pathname === "/";
   const isDangKy = pathname === "/dang-ky" || pathname === "/dang-ky-studio";
   const isMinimalFooter = pathname === "/dang-ky" || pathname === "/dang-ky-studio" || pathname === "/dang-nhap";
 
@@ -152,66 +151,22 @@ export function SiteFooter({ contact }: { contact?: SiteContact }) {
     );
   }
 
-  if (isHome) {
-    return (
-      <footer className="border-t border-white/10 bg-[#08090b] text-[#aaa297]">
-        <div className="mx-auto grid max-w-7xl gap-10 px-5 py-16 sm:px-8 md:grid-cols-2 lg:grid-cols-[1.2fr_.75fr_.75fr_1fr] lg:px-10 lg:py-20">
-          <div>
-            <BrandLogo className="h-16 w-[170px]" />
-            <p className="mt-5 max-w-md text-sm leading-7">{contact?.description || "Nơi cá tính trở thành nghệ thuật, với album khách hàng, chọn ảnh trực tuyến và quy trình retouch rõ ràng."}</p>
-          </div>
-          <div className="text-sm leading-7">
-            <p className="home-eyebrow">Liên hệ</p>
-            <p className="mt-4 text-[#f5f1e8]">{contact?.email || "hello@tlorastudio.vn"}</p>
-            <p className="text-[#f5f1e8]">{contact?.phone || "0901 234 567"}</p>
-            {contact?.address && <p className="mt-2">{contact.address}</p>}
-          </div>
-          <EcosystemFooterLinks home />
-          <div>
-            <p className="home-eyebrow mb-3">Vị trí studio</p>
-            <div className="overflow-hidden rounded-xl border border-white/10">
-              <iframe
-                src={contact?.googleMapsEmbed || "https://www.google.com/maps/embed?pb=!1m14!1m12!1m3!1d233.61668559396074!2d106.31679097323517!3d20.470656370154337!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!5e0!3m2!1svi!2s!4v1784346049212!5m2!1svi!2s"}
-                width="100%"
-                height="180"
-                style={{ border: 0 }}
-                allowFullScreen
-                loading="lazy"
-                referrerPolicy="strict-origin-when-cross-origin"
-                title="Bản đồ TLORA Studio"
-              />
-            </div>
-          </div>
-        </div>
-        <div className="mx-auto flex max-w-7xl flex-col gap-4 border-t border-white/10 px-5 py-5 text-xs sm:flex-row sm:items-center sm:justify-between sm:px-8 lg:px-10">
-          <p>© {new Date().getFullYear()} {contact?.siteName || "TLORA Studio"}. Bảo lưu mọi quyền.</p>
-          <nav className="flex flex-wrap gap-x-5 gap-y-2" aria-label="Liên kết pháp lý">
-            <Link href="/chinh-sach-bao-mat" className="transition hover:text-[#f3d88e]">Chính sách bảo mật</Link>
-            <Link href="/dieu-khoan-dich-vu" className="transition hover:text-[#f3d88e]">Điều khoản dịch vụ</Link>
-          </nav>
-        </div>
-      </footer>
-    );
-  }
-
   return (
-    <footer className="border-t border-white/10 bg-[#07080a]">
-      <div className="mx-auto grid max-w-7xl gap-8 px-4 py-10 sm:px-6 md:grid-cols-2 lg:grid-cols-[1.2fr_.75fr_.75fr_1fr] lg:px-8">
+    <footer className="border-t border-white/10 bg-[#08090b] text-[#aaa297]">
+      <div className="mx-auto grid max-w-7xl gap-10 px-5 py-16 sm:px-8 md:grid-cols-2 lg:grid-cols-[1.2fr_.75fr_.75fr_1fr] lg:px-10 lg:py-20">
         <div>
-          <p className="font-heading text-lg font-bold text-white">{contact?.siteName || "TLORA Studio"}</p>
-          <p className="mt-3 max-w-md text-sm leading-6 text-zinc-400">
-            {contact?.description || "Nơi cá tính trở thành nghệ thuật, với album khách hàng, chọn ảnh trực tuyến và quy trình retouch rõ ràng."}
-          </p>
+          <BrandLogo className="h-16 w-[170px]" />
+          <p className="mt-5 max-w-md text-sm leading-7">{contact?.description || "Nơi cá tính trở thành nghệ thuật, với album khách hàng, chọn ảnh trực tuyến và quy trình retouch rõ ràng."}</p>
         </div>
-        <div className="text-sm text-zinc-400">
-          <p className="font-semibold text-white">Liên hệ</p>
-          <p className="mt-3">{contact?.email || "hello@tlorastudio.vn"}</p>
-          <p>{contact?.phone || "0901 234 567"}</p>
-          {contact?.address && <p>{contact.address}</p>}
+        <div className="text-sm leading-7">
+          <p className="home-eyebrow">Liên hệ</p>
+          <p className="mt-4 text-[#f5f1e8]">{contact?.email || "hello@tlorastudio.vn"}</p>
+          <p className="text-[#f5f1e8]">{contact?.phone || "0901 234 567"}</p>
+          {contact?.address && <p className="mt-2">{contact.address}</p>}
         </div>
-        <EcosystemFooterLinks />
+        <EcosystemFooterLinks home />
         <div>
-          <p className="mb-3 font-semibold text-white">Vị trí studio</p>
+          <p className="home-eyebrow mb-3">Vị trí studio</p>
           <div className="overflow-hidden rounded-xl border border-white/10">
             <iframe
               src={contact?.googleMapsEmbed || "https://www.google.com/maps/embed?pb=!1m14!1m12!1m3!1d233.61668559396074!2d106.31679097323517!3d20.470656370154337!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!5e0!3m2!1svi!2s!4v1784346049212!5m2!1svi!2s"}
@@ -226,15 +181,11 @@ export function SiteFooter({ contact }: { contact?: SiteContact }) {
           </div>
         </div>
       </div>
-      <div className="mx-auto flex max-w-7xl flex-col gap-3 border-t border-white/10 px-4 py-5 text-sm text-zinc-500 sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:px-8">
+      <div className="mx-auto flex max-w-7xl flex-col gap-4 border-t border-white/10 px-5 py-5 text-xs sm:flex-row sm:items-center sm:justify-between sm:px-8 lg:px-10">
         <p>© {new Date().getFullYear()} {contact?.siteName || "TLORA Studio"}. Bảo lưu mọi quyền.</p>
         <nav className="flex flex-wrap gap-x-5 gap-y-2" aria-label="Liên kết pháp lý">
-          <Link href="/chinh-sach-bao-mat" className="transition hover:text-[#f3d88e]">
-            Chính sách bảo mật
-          </Link>
-          <Link href="/dieu-khoan-dich-vu" className="transition hover:text-[#f3d88e]">
-            Điều khoản dịch vụ
-          </Link>
+          <Link href="/chinh-sach-bao-mat" className="transition hover:text-[#f3d88e]">Chính sách bảo mật</Link>
+          <Link href="/dieu-khoan-dich-vu" className="transition hover:text-[#f3d88e]">Điều khoản dịch vụ</Link>
         </nav>
       </div>
     </footer>
