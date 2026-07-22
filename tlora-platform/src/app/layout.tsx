@@ -1,26 +1,14 @@
 import type { Metadata, Viewport } from "next";
-import { Inter, Cormorant_Garamond, Montserrat } from "next/font/google";
+import localFont from "next/font/local";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import "./globals.css";
 
-const inter = Inter({
-  subsets: ["latin", "vietnamese"],
+const inter = localFont({
+  src: "./fonts/Inter-VariableFont_opsz,wght.ttf",
   variable: "--font-body",
   display: "swap",
-});
-
-const cormorant = Cormorant_Garamond({
-  subsets: ["latin", "vietnamese"],
-  weight: ["400", "500", "600", "700"],
-  variable: "--font-cormorant",
-  display: "swap",
-});
-
-const montserrat = Montserrat({
-  subsets: ["latin", "vietnamese"],
-  weight: ["300", "400", "500", "600"],
-  variable: "--font-montserrat",
-  display: "swap",
+  fallback: ["Arial", "sans-serif"],
+  weight: "100 900",
 });
 
 export const metadata: Metadata = {
@@ -59,7 +47,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="vi" className={`h-full scroll-smooth ${inter.variable} ${cormorant.variable} ${montserrat.variable}`}>
+    <html lang="vi" className={`h-full scroll-smooth ${inter.variable}`}>
       <body className="min-h-full bg-[#07080a] text-[#f8f5ee] antialiased">
         {children}
         <SpeedInsights />

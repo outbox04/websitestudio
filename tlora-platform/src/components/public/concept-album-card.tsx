@@ -10,13 +10,12 @@ type ConceptAlbumCardProps = {
   album: TloraConceptAlbum;
   order: number;
   priority?: boolean;
-  onOpen?: () => void;
 };
 
-export function ConceptAlbumCard({ album, order, priority = false, onOpen }: ConceptAlbumCardProps) {
+export function ConceptAlbumCard({ album, order, priority = false }: ConceptAlbumCardProps) {
   const [imageError, setImageError] = useState(false);
   const available = album.status === "published";
-  const detailHref = `/album-concept?album=${encodeURIComponent(album.slug)}`;
+  const detailHref = `/album-concept/${encodeURIComponent(album.slug)}`;
   const category = album.categoryName?.trim() || "Album Concept";
   const description = album.excerpt.trim();
 
@@ -53,11 +52,7 @@ export function ConceptAlbumCard({ album, order, priority = false, onOpen }: Con
 
   return (
     <article className="group/card relative aspect-video overflow-hidden rounded-[20px] border border-[var(--album-border)] bg-[var(--surface)] shadow-[0_20px_60px_rgba(0,0,0,.3)] opacity-100 transition-[transform,border-color] duration-500 ease-out [animation:concept-card_.55s_ease-out_forwards] hover:-translate-y-1 hover:border-[var(--brand-gold)]" style={{ animationDelay: `${((order - 1) % 15) * 55}ms` }}>
-      {onOpen ? (
-        <button type="button" onClick={onOpen} disabled={!available} className="relative block size-full overflow-hidden text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--brand-gold)] disabled:cursor-not-allowed disabled:opacity-60" aria-label={`Xem album ${album.title}`}>{content}</button>
-      ) : (
-        <Link href={detailHref} aria-label={`Xem album ${album.title}`} className="relative block size-full overflow-hidden focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--brand-gold)]">{content}</Link>
-      )}
+      <Link href={available ? detailHref : "/album-concept"} aria-disabled={!available} aria-label={`Xem album ${album.title}`} className={`relative block size-full overflow-hidden focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--brand-gold)] ${available ? "" : "pointer-events-none opacity-60"}`}>{content}</Link>
     </article>
   );
 }

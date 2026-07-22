@@ -1,7 +1,7 @@
 @import "tailwindcss";
 
 :root {
-  --font-body: Arial, Helvetica, sans-serif;
+  --font-body: Inter, Arial, Helvetica, sans-serif;
   --background: #07080a;
   --foreground: #f8f5ee;
   --brand-gold: #d8b766;
@@ -61,6 +61,7 @@ h2,
 h3,
 .font-heading {
   font-family: var(--font-heading), var(--font-body), sans-serif;
+  letter-spacing: 0;
 }
 
 button,
@@ -117,6 +118,22 @@ button[disabled],
 .news-article ul, .news-article ol { margin: 0 0 1em 1.5em; }
 .news-article a { color: #e6c193; text-decoration: underline; }
 .news-article img { max-width: 100%; height: auto; border-radius: 1rem; margin: 1.25rem 0; }
+
+.quote-field {
+  background: #07080a;
+  border: 1px solid rgb(255 255 255 / 10%);
+  border-radius: 8px;
+  color: #f8f5ee;
+  display: block;
+  font-weight: 400;
+  margin-top: 8px;
+  min-height: 48px;
+  outline: none;
+  padding-inline: 12px;
+  width: 100%;
+}
+
+.quote-field:focus { border-color: #d8b766; box-shadow: 0 0 0 2px rgb(216 183 102 / 14%); }
 
 ::selection {
   background: color-mix(in srgb, var(--brand-gold) 55%, transparent);

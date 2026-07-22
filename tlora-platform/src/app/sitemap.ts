@@ -1,4 +1,5 @@
 import type { MetadataRoute } from "next";
+import { listPublishedTloraConceptAlbums } from "@/repositories/tlora/concept-albums-repository";
 import { RENTAL_ENABLED } from "@/lib/rental/config";
 
 const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL || "https://tlora.net").replace(/\/$/, "");
@@ -24,10 +25,22 @@ const pages: Array<{
   { path: "/dieu-khoan-dich-vu", changeFrequency: "yearly", priority: 0.3 },
 ];
 
-export default function sitemap(): MetadataRoute.Sitemap {
-  return pages.map((page) => ({
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+  let albumPages: MetadataRoute.Sitemap = [];
+  try {
+    const albums = await listPublishedTloraConceptAlbums();
+    albumPages = albums.map((album) => ({
+      url: `${siteUrl}/album-concept/${album.slug}`,
+      lastModified: album.updatedAt,
+      changeFrequency: "monthly",
+      priority: 0.7,
+    }));
+  } catch {
+    // Keep the static sitemap available while the CMS is temporarily unavailable.
+  }
+  return [...pages.map((page) => ({
     url: `${siteUrl}${page.path}`,
     changeFrequency: page.changeFrequency,
     priority: page.priority,
-  }));
+  })), ...albumPages];
 }
