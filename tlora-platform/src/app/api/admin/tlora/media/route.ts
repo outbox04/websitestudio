@@ -40,6 +40,8 @@ export async function POST(request: Request) {
     });
     if (uploadError) throw uploadError;
     const { data: publicData } = admin.storage.from("tlora-cms-media").getPublicUrl(storagePath);
+    const registerAsset = form.get("registerAsset") !== "false";
+    if (!registerAsset) return NextResponse.json({ publicUrl: publicData.publicUrl }, { status: 201 });
     try {
       const media = await createTloraMedia({
         studioId: context.studio.id,

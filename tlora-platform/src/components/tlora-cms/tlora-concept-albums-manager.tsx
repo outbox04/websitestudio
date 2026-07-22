@@ -56,7 +56,7 @@ export function TloraConceptAlbumsManager({
   }
 
   async function save() {
-    const parsed = conceptAlbumSchema.safeParse({ ...form, tags: parseTags(form.tags) });
+    const parsed = conceptAlbumSchema.safeParse({ ...form, images: form.images.filter((url) => url !== form.coverImageUrl), tags: parseTags(form.tags) });
     if (!parsed.success) return setMessage(parsed.error.issues[0]?.message || "Album chưa hợp lệ.");
     setBusy(true);
     const response = await fetch("/api/admin/tlora/concept-albums", {
@@ -81,18 +81,18 @@ export function TloraConceptAlbumsManager({
   }
 
   function applyPickedImage(url: string) {
-    if (picker === "cover") setForm((current) => ({ ...current, coverImageUrl: url }));
-    if (picker === "content") setForm((current) => ({ ...current, images: current.images.includes(url) ? current.images : [...current.images, url].slice(0, 60) }));
+    if (picker === "cover") setForm((current) => ({ ...current, coverImageUrl: url, images: current.images.filter((image) => image !== url) }));
+    if (picker === "content") setForm((current) => url === current.coverImageUrl || current.images.includes(url) ? current : ({ ...current, images: [...current.images, url].slice(0, 60) }));
     setPicker(null);
   }
 
   function applyPickedImages(urls: string[]) {
-    setForm((current) => ({ ...current, images: [...new Set([...current.images, ...urls])].slice(0, 60) }));
+    setForm((current) => ({ ...current, images: [...new Set([...current.images, ...urls.filter((url) => url !== current.coverImageUrl)])].slice(0, 60) }));
     setPicker(null);
   }
 
   async function applyCroppedCover(coverImageUrl: string) {
-    const nextForm = { ...form, coverImageUrl };
+    const nextForm = { ...form, coverImageUrl, images: form.images.filter((url) => url !== coverImageUrl) };
     setForm(nextForm);
     if (!nextForm.id) {
       setMessage("Đã căn ảnh bìa. Hãy lưu album để đồng bộ ra website.");
@@ -134,7 +134,7 @@ export function TloraConceptAlbumsManager({
         <div className="mt-6 grid gap-6 lg:grid-cols-2">
           <div>
             <div className="flex items-center justify-between gap-3"><div><p className="text-sm font-bold">Ảnh bìa</p><p className="mt-1 text-xs text-zinc-500">Khung chuẩn 16:9. Kéo ảnh và thu phóng để giữ đúng vùng quan trọng.</p></div><button type="button" onClick={() => setPicker("cover")} className="inline-flex min-h-10 shrink-0 items-center gap-2 rounded-md border border-zinc-300 px-3 text-xs font-bold"><ImagePlus size={15} /> {form.coverImageUrl ? "Thay ảnh" : "Chọn hoặc Upload"}</button></div>
-            {form.coverImageUrl ? <TloraImageCropper key={`album-cover:${form.coverImageUrl}`} imageUrl={form.coverImageUrl} filePrefix={`album-cover-${form.slug || "concept"}`} altText={form.title || "Ảnh bìa album"} variant="light" outputWidth={1200} outputHeight={675} saveLabel={form.id ? "Lưu và đồng bộ ảnh bìa 16:9" : "Lưu ảnh bìa 16:9"} onApplied={applyCroppedCover} onUploaded={(asset) => setMedia((current) => [asset, ...current])} /> : <button type="button" onClick={() => setPicker("cover")} className="mt-3 grid aspect-video w-full place-items-center rounded-lg border border-dashed border-zinc-300 bg-zinc-100 text-sm font-bold text-zinc-500"><span><ImagePlus className="mx-auto mb-2" />Chọn ảnh bìa từ thư viện hoặc tải lên</span></button>}
+            {form.coverImageUrl ? <TloraImageCropper key={`album-cover:${form.coverImageUrl}`} imageUrl={form.coverImageUrl} filePrefix={`album-cover-${form.slug || "concept"}`} altText={form.title || "Ảnh bìa album"} variant="light" outputWidth={1200} outputHeight={675} saveLabel={form.id ? "Lưu và đồng bộ ảnh bìa 16:9" : "Lưu ảnh bìa 16:9"} registerInLibrary={false} onApplied={applyCroppedCover} /> : <button type="button" onClick={() => setPicker("cover")} className="mt-3 grid aspect-video w-full place-items-center rounded-lg border border-dashed border-zinc-300 bg-zinc-100 text-sm font-bold text-zinc-500"><span><ImagePlus className="mx-auto mb-2" />Chọn ảnh bìa từ thư viện hoặc tải lên</span></button>}
           </div>
 
           <div>
@@ -159,7 +159,7 @@ export function TloraConceptAlbumsManager({
 
       <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"><select value={pageSize} onChange={(event) => { setPageSize(Number(event.target.value)); setPage(1); }} className="min-h-10 rounded-md border bg-white px-3">{[10, 20, 50, 100].map((size) => <option key={size}>{size}</option>)}</select><div className="flex flex-wrap gap-1"><button disabled={page === 1} onClick={() => setPage((value) => value - 1)} className="size-9 rounded border bg-white disabled:opacity-30">&lt;</button>{Array.from({ length: pages }, (_, index) => index + 1).map((value) => <button key={value} onClick={() => setPage(value)} className={`size-9 rounded border ${page === value ? "bg-zinc-950 text-white" : "bg-white"}`}>{value}</button>)}<button disabled={page >= pages} onClick={() => setPage((value) => value + 1)} className="size-9 rounded border bg-white disabled:opacity-30">&gt;</button></div></div>
 
-      {picker && <TloraImagePicker target={{ sectionKey: "concept-album", field: picker, currentUrl: picker === "cover" ? form.coverImageUrl : "" }} assets={media} multiple={picker === "content"} onClose={() => setPicker(null)} onApply={applyPickedImage} onApplyMany={applyPickedImages} onUploaded={(asset) => setMedia((current) => [asset, ...current])} />}
+      {picker && <TloraImagePicker target={{ sectionKey: "concept-album", field: picker, currentUrl: picker === "cover" ? form.coverImageUrl : "" }} assets={picker === "content" ? media.filter((asset) => asset.publicUrl !== form.coverImageUrl) : media} multiple={picker === "content"} onClose={() => setPicker(null)} onApply={applyPickedImage} onApplyMany={applyPickedImages} onUploaded={(asset) => setMedia((current) => [asset, ...current])} />}
     </main>
   );
 }

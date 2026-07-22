@@ -10,6 +10,7 @@ export function TloraImageCropper({
   altText,
   onApplied,
   onUploaded,
+  registerInLibrary = true,
   outputWidth = 1200,
   outputHeight = 675,
   variant = "dark",
@@ -20,7 +21,8 @@ export function TloraImageCropper({
   filePrefix: string;
   altText: string;
   onApplied: (url: string) => void | Promise<void>;
-  onUploaded: (asset: TloraCmsMediaAsset) => void;
+  onUploaded?: (asset: TloraCmsMediaAsset) => void;
+  registerInLibrary?: boolean;
   outputWidth?: number;
   outputHeight?: number;
   variant?: "dark" | "light";
@@ -115,12 +117,14 @@ export function TloraImageCropper({
       form.set("altText", altText || filePrefix);
       form.set("width", String(outputWidth));
       form.set("height", String(outputHeight));
+      form.set("registerAsset", String(registerInLibrary));
       const upload = await fetch("/api/admin/tlora/media", { method: "POST", body: form });
-      const result = await upload.json() as { media?: TloraCmsMediaAsset; error?: string };
-      if (!upload.ok || !result.media?.publicUrl) throw new Error(result.error || "Không thể lưu ảnh đã căn.");
-      onUploaded(result.media);
-      await onApplied(result.media.publicUrl);
-      setMessage(`Đã tạo ảnh ${outputWidth}×${outputHeight}px và lưu vào thư viện.`);
+      const result = await upload.json() as { media?: TloraCmsMediaAsset; publicUrl?: string; error?: string };
+      const publicUrl = result.media?.publicUrl || result.publicUrl;
+      if (!upload.ok || !publicUrl) throw new Error(result.error || "Không thể lưu ảnh đã căn.");
+      if (result.media) onUploaded?.(result.media);
+      await onApplied(publicUrl);
+      setMessage(`Đã tạo ảnh ${outputWidth}×${outputHeight}px${registerInLibrary ? " và lưu vào thư viện" : ""}.`);
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Không thể tạo ảnh đã căn.");
     } finally {
