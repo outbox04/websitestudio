@@ -9,6 +9,11 @@ type PreviewMessage = {
   sections: PreviewSection[];
 };
 
+type PreviewSelectEcosystemMessage = {
+  type: "tlora:cms-preview-select-ecosystem";
+  index: number;
+};
+
 function isPreviewMessage(value: unknown): value is PreviewMessage {
   if (!value || typeof value !== "object") return false;
   const message = value as Partial<PreviewMessage>;
@@ -263,7 +268,13 @@ function applySection(section: PreviewSection) {
 
 export function startTloraPublicPreviewBridge() {
   function handleMessage(event: MessageEvent<unknown>) {
-    if (event.origin !== window.location.origin || !isPreviewMessage(event.data)) return;
+    if (event.origin !== window.location.origin) return;
+    const ecosystemMessage = event.data as Partial<PreviewSelectEcosystemMessage> | null;
+    if (ecosystemMessage?.type === "tlora:cms-preview-select-ecosystem" && Number.isInteger(ecosystemMessage.index)) {
+      window.dispatchEvent(new CustomEvent("tlora:cms-select-ecosystem", { detail: { index: ecosystemMessage.index } }));
+      return;
+    }
+    if (!isPreviewMessage(event.data)) return;
     lockPreviewInteractions();
     event.data.sections.forEach(applySection);
     requestAnimationFrame(sendPageContent);

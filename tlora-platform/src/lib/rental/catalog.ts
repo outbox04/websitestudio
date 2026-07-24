@@ -20,9 +20,9 @@ export type RentalProduct = {
 
 export const rentalStatusMeta: Record<RentalStatus, { label: string; dot: string }> = {
   available: { label: "Có sẵn", dot: "#34d399" },
-  reserved: { label: "Đã được đặt", dot: "#facc15" },
-  cleaning: { label: "Đang giặt", dot: "#60a5fa" },
-  rented: { label: "Đang cho thuê", dot: "#f87171" },
+  reserved: { label: "Không có sẵn", dot: "#71717a" },
+  cleaning: { label: "Không có sẵn", dot: "#71717a" },
+  rented: { label: "Không có sẵn", dot: "#71717a" },
 };
 
 export const rentalCategories: RentalCategory[] = ["Concept", "Fashion", "Wedding", "Hanbok", "Vintage", "Cổ Trang"];

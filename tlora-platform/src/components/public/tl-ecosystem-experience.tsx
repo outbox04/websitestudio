@@ -151,6 +151,18 @@ export function TlEcosystemExperience({ eyebrow, title, branches, initialIndex =
     logoFlightTarget.current = null;
   }, []);
 
+  useEffect(() => {
+    function selectForCms(event: Event) {
+      const index = (event as CustomEvent<{ index?: number }>).detail?.index;
+      if (typeof index !== "number" || index < 0 || index >= branches.length) return;
+      setScrollUnlocked(true);
+      setSelectedIndex(index);
+      window.requestAnimationFrame(() => contentRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }));
+    }
+    window.addEventListener("tlora:cms-select-ecosystem", selectForCms);
+    return () => window.removeEventListener("tlora:cms-select-ecosystem", selectForCms);
+  }, [branches.length]);
+
   const updateLogoFlight = useCallback(() => {
     const flyer = logoFlightRef.current;
     const sourceLogo = logoFlightSource.current;

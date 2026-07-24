@@ -35,3 +35,16 @@ create index if not exists rental_orders_order_code_idx on public.rental_orders(
 create index if not exists rental_orders_status_idx on public.rental_orders(status);
 alter table public.rental_orders enable row level security;
 alter table public.rental_order_edits enable row level security;
+
+-- Staff-managed availability per product and size. Public clients only receive
+-- the simplified boolean state through the rental availability API.
+create table if not exists public.rental_inventory (
+  product_id text not null,
+  size text not null,
+  is_available boolean not null default true,
+  updated_by uuid references auth.users(id) on delete set null,
+  updated_at timestamptz not null default now(),
+  primary key (product_id, size)
+);
+create index if not exists rental_inventory_updated_at_idx on public.rental_inventory(updated_at desc);
+alter table public.rental_inventory enable row level security;

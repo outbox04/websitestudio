@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowLeft, Eye, ImagePlus, Laptop, Loader2, Save, Send, Share2, Smartphone, Tablet, X } from "lucide-react";
+import { ArrowLeft, ArrowRight, Eye, GripVertical, ImagePlus, Laptop, Loader2, Save, Send, Share2, Smartphone, Tablet, X } from "lucide-react";
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { TloraImagePicker, type ImageTarget } from "@/components/tlora-cms/tlora-image-picker";
@@ -65,6 +65,7 @@ export function TloraCmsEditor({
   const [busy, setBusy] = useState("");
   const [message, setMessage] = useState("");
   const previewRef = useRef<HTMLIFrameElement>(null);
+  const draggedHeroSlide = useRef<number | null>(null);
   const previewContentRef = useRef<Record<string, PreviewContent>>({});
   const currentPage = resolvePreviewPage(initialPages, previewPath);
   const heroSection = sections.find((section) => section.sectionKey === "hero");
@@ -182,6 +183,25 @@ export function TloraCmsEditor({
     }));
   }
 
+  function moveHeroSlide(from: number, to: number) {
+    if (from === to) return;
+    setSections((current) => current.map((section) => {
+      if (section.sectionKey !== "hero") return section;
+      const nextSlides = [...sectionHeroSlides(section)];
+      const [slide] = nextSlides.splice(from, 1);
+      if (!slide) return section;
+      nextSlides.splice(to, 0, slide);
+      return { ...section, draftContent: { ...section.draftContent, image: nextSlides[0] || "", slides: nextSlides } };
+    }));
+  }
+
+  function selectEcosystemBranch(index: number) {
+    previewRef.current?.contentWindow?.postMessage({
+      type: "tlora:cms-preview-select-ecosystem",
+      index,
+    }, window.location.origin);
+  }
+
   async function persistDraft() {
     const sectionPayloads = sections.map((section) => updateSectionSchema.parse({
       sectionId: section.id,
@@ -281,8 +301,28 @@ export function TloraCmsEditor({
         <aside className="border-r border-[#2a2722] bg-[#101115] p-4">
           {currentPage?.pageKey === "home" && heroSection && <div className="mb-6 border-b border-white/10 pb-6">
             <div className="flex items-center justify-between gap-3"><div><p className="text-xs font-bold uppercase tracking-[.14em] text-[#d8b766]">Banner trang chủ</p><p className="mt-2 text-xs leading-5 text-[#8c8174]">Tự chuyển ảnh sau mỗi 2 giây. Có thể thêm không giới hạn.</p></div><button type="button" onClick={() => setImageTarget({ sectionKey: "hero", field: "__hero_slide_add", currentUrl: "" })} className="grid size-10 shrink-0 place-items-center rounded-md border border-white/15 text-[#cbc0b0] hover:border-[#d8b766] hover:text-white" aria-label="Thêm ảnh banner"><ImagePlus size={17} /></button></div>
-            {heroSlides.length ? <div className="mt-4 grid grid-cols-3 gap-2">{heroSlides.map((url, index) => <div key={`${url}-${index}`} className="relative aspect-video overflow-hidden rounded-md border border-white/10 bg-cover bg-center" style={{ backgroundImage: `url(${url})` }}><span className="absolute bottom-1 left-1 rounded bg-black/70 px-1.5 py-0.5 text-[9px] font-bold text-white">{index + 1}</span><button type="button" onClick={() => removeHeroSlide(index)} className="absolute right-1 top-1 grid size-6 place-items-center rounded-full bg-black/75 text-white hover:bg-red-600" aria-label={`Xóa ảnh banner ${index + 1}`}><X size={12} /></button></div>)}</div> : <button type="button" onClick={() => setImageTarget({ sectionKey: "hero", field: "__hero_slide_add", currentUrl: "" })} className="mt-4 inline-flex min-h-20 w-full items-center justify-center gap-2 rounded-md border border-dashed border-white/15 text-xs font-bold text-[#8c8174]"><ImagePlus size={16} /> Thêm ảnh banner</button>}
+            {heroSlides.length ? <div className="mt-4 grid grid-cols-3 gap-2">{heroSlides.map((url, index) => <div
+              key={`${url}-${index}`}
+              draggable
+              onDragStart={() => { draggedHeroSlide.current = index; }}
+              onDragOver={(event) => event.preventDefault()}
+              onDrop={() => {
+                if (draggedHeroSlide.current !== null) moveHeroSlide(draggedHeroSlide.current, index);
+                draggedHeroSlide.current = null;
+              }}
+              onDragEnd={() => { draggedHeroSlide.current = null; }}
+              className="group relative aspect-video cursor-grab overflow-hidden rounded-md border border-white/10 bg-cover bg-center active:cursor-grabbing"
+              style={{ backgroundImage: `url(${url})` }}
+            ><span className="absolute left-1 top-1 grid size-6 place-items-center rounded bg-black/70 text-white" title="Kéo để đổi thứ tự"><GripVertical size={12} /></span><span className="absolute bottom-1 left-1 rounded bg-black/70 px-1.5 py-0.5 text-[9px] font-bold text-white">{index + 1}</span><button type="button" onClick={() => removeHeroSlide(index)} className="absolute right-1 top-1 grid size-6 place-items-center rounded-full bg-black/75 text-white hover:bg-red-600" aria-label={`Xóa ảnh banner ${index + 1}`}><X size={12} /></button><div className="absolute inset-x-7 bottom-1 hidden justify-center gap-1 group-hover:flex"><button type="button" disabled={index === 0} onClick={() => moveHeroSlide(index, index - 1)} className="grid size-6 place-items-center rounded bg-black/75 disabled:opacity-30" aria-label="Chuyển ảnh sang trái"><ArrowLeft size={11} /></button><button type="button" disabled={index === heroSlides.length - 1} onClick={() => moveHeroSlide(index, index + 1)} className="grid size-6 place-items-center rounded bg-black/75 disabled:opacity-30" aria-label="Chuyển ảnh sang phải"><ArrowRight size={11} /></button></div></div>)}</div> : <button type="button" onClick={() => setImageTarget({ sectionKey: "hero", field: "__hero_slide_add", currentUrl: "" })} className="mt-4 inline-flex min-h-20 w-full items-center justify-center gap-2 rounded-md border border-dashed border-white/15 text-xs font-bold text-[#8c8174]"><ImagePlus size={16} /> Thêm ảnh banner</button>}
+            <p className="mt-2 text-[11px] leading-5 text-[#8c8174]">Kéo thả ảnh hoặc dùng mũi tên để thay đổi thứ tự hiển thị.</p>
             <button type="button" onClick={() => setImageTarget({ sectionKey: "hero", field: "__hero_slide_add", currentUrl: "" })} className="mt-3 inline-flex min-h-10 w-full items-center justify-center gap-2 rounded-md border border-white/15 text-xs font-bold text-[#cbc0b0] hover:border-[#d8b766] hover:text-white"><ImagePlus size={15} /> Thêm ảnh ({heroSlides.length})</button>
+          </div>}
+          {currentPage?.pageKey === "services" && <div className="mb-6 border-b border-white/10 pb-6">
+            <p className="text-xs font-bold uppercase tracking-[.14em] text-[#d8b766]">Chọn lĩnh vực để sửa</p>
+            <p className="mt-2 text-xs leading-5 text-[#8c8174]">Mở thẳng nội dung từng lĩnh vực trong Live Preview, không cần click vào khung hình.</p>
+            <div className="mt-3 grid gap-2">
+              {["TLORA Studio", "TL Production", "TL Academy"].map((label, index) => <button key={label} type="button" onClick={() => selectEcosystemBranch(index)} className="flex min-h-10 items-center justify-between rounded-md border border-white/10 px-3 text-left text-xs font-bold text-[#cbc0b0] hover:border-[#d8b766] hover:text-white">{label}<ArrowRight size={14} /></button>)}
+            </div>
           </div>}
           <div className="flex items-center gap-2 px-2 text-xs font-bold uppercase tracking-[.14em] text-[#d8b766]">
             <Share2 size={15} /> OG Meta Tag
@@ -310,7 +350,7 @@ export function TloraCmsEditor({
           </div>
 
           <p className="mt-5 rounded-md border border-[#d8b766]/20 bg-[#d8b766]/[.06] p-3 text-xs leading-5 text-[#cbc0b0]">
-            Nhấp trực tiếp vào chữ trong Live Preview để sửa. Nhấp đúp ảnh hoặc nút CTA để đổi URL.
+            Nhấp trực tiếp vào chữ trong Live Preview để sửa; dùng nút vàng “Thay ảnh” để đổi hình. Các khối thu gọn được tự mở trong bản nháp.
           </p>
         </aside>
 

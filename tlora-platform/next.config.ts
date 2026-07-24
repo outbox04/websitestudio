@@ -36,6 +36,13 @@ const nextConfig: NextConfig = {
   async headers() {
     return [{ source: "/:path*", headers: securityHeaders }];
   },
+  async redirects() {
+    return [{
+      source: "/thue-trang-phuc",
+      destination: "/thue-trang-phuc/san-pham",
+      permanent: false,
+    }];
+  },
   images: {
     qualities: [70, 75],
     remotePatterns: [
