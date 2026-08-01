@@ -443,15 +443,17 @@ function PhotoGrid({
 
   return (
     <div className="mt-3 columns-1 gap-3 sm:columns-2 lg:columns-3 2xl:columns-4">
-      {photos.map((photo, index) => {
+      {photos.map((photo) => {
         const selected = selectedIds.has(photo.id);
         const canDownload = photo.kind === "raw" ? canDownloadRaw : canDownloadEdited;
         const downloadHref = photoDownloadHref(photo.id);
         return (
           <article key={photo.id} className="group relative mb-3 break-inside-avoid overflow-hidden rounded-lg border border-white/10 bg-white/[0.04]">
-            <button onClick={() => onPreview(photo)} className={`relative block w-full bg-zinc-900 ${index % 5 === 1 ? "aspect-[4/5]" : index % 5 === 3 ? "aspect-[3/4]" : "aspect-[4/3]"}`}>
+            <button onClick={() => onPreview(photo)} className={`relative block w-full bg-zinc-900 ${photo.thumbnail_url ? "" : "aspect-[4/3]"}`}>
               {photo.thumbnail_url ? (
-                <Image src={photo.thumbnail_url} alt={photo.file_name} fill sizes="(min-width: 1536px) 22vw, (min-width: 1024px) 30vw, (min-width: 640px) 48vw, 100vw" className="object-cover transition duration-500 group-hover:scale-105" unoptimized />
+                // Google Drive does not provide dimensions here, so the browser must use the image's natural ratio.
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={photo.thumbnail_url} alt={photo.file_name} loading="lazy" decoding="async" className="block h-auto w-full" />
               ) : (
                 <EmptyImage />
               )}
