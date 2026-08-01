@@ -32,7 +32,7 @@ export function customerDoneUrlFromOrigin(origin: string, slug: string) {
   return `${customerUrlFromOrigin(origin, slug)}/done`;
 }
 
-export function getGalleryUrls(customerSlug: string, studioSlug: string | null, requestOrigin?: string, shareToken?: string | null) {
+export function getGalleryUrls(customerSlug: string, studioSlug: string | null, requestOrigin?: string) {
   const rootDomain = process.env.ROOT_DOMAIN || "tlgroup.site";
   let origin = "";
 
@@ -45,10 +45,9 @@ export function getGalleryUrls(customerSlug: string, studioSlug: string | null, 
     origin = process.env.NEXT_PUBLIC_SITE_URL || `https://${rootDomain}`;
   }
 
-  const token = shareToken ? `?token=${encodeURIComponent(shareToken)}` : "";
   const customerUrl = `${origin.replace(/\/$/, "")}/${customerSlug}`;
   return {
-    customerUrl: `${customerUrl}${token}`,
-    customerDoneUrl: `${customerUrl}/done${token}`
+    customerUrl,
+    customerDoneUrl: `${customerUrl}/done`
   };
 }

@@ -8,17 +8,14 @@ export const dynamic = "force-dynamic";
 
 export async function generateMetadata({
   params,
-  searchParams,
 }: {
   params: Promise<{ customerSlug: string }>;
-  searchParams: Promise<{ token?: string }>;
 }): Promise<Metadata> {
   const { customerSlug } = await params;
-  const { token = "" } = await searchParams;
 
   try {
     const { query } = await scopedGalleryQuery(await headers(), customerSlug);
-    const { data } = await query.select("customer_name").eq("share_token", token).maybeSingle();
+    const { data } = await query.select("customer_name").maybeSingle();
 
     const title = data?.customer_name ? `${data.customer_name} - TLORA Studio Gallery` : "TLORA Studio Gallery";
     const description = data?.customer_name ? `Album ảnh cá nhân dành riêng cho ${data.customer_name} tại TLORA Studio.` : "Cổng xem và chọn ảnh trực tuyến của khách hàng tại TLORA Studio.";
@@ -51,14 +48,11 @@ export async function generateMetadata({
 
 export default async function CustomerGalleryPage({
   params,
-  searchParams,
 }: {
   params: Promise<{ customerSlug: string }>;
-  searchParams: Promise<{ token?: string }>;
 }) {
   const { customerSlug } = await params;
-  const { token = "" } = await searchParams;
-  const { gallery, rawPhotos, editedPhotos } = await getCustomerGalleryPageData(customerSlug, token, await headers());
+  const { gallery, rawPhotos, editedPhotos } = await getCustomerGalleryPageData(customerSlug, await headers());
 
-  return <CustomerGalleryView gallery={gallery} rawPhotos={rawPhotos} editedPhotos={editedPhotos} shareToken={token} />;
+  return <CustomerGalleryView gallery={gallery} rawPhotos={rawPhotos} editedPhotos={editedPhotos} />;
 }

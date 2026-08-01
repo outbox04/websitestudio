@@ -66,7 +66,6 @@ export async function loadTloraCustomerGalleryAdminData(): Promise<{
         gallery.customer_name_slug,
         joinedStudio?.studio_type === "tenant" ? joinedStudio.slug : null,
         siteUrl,
-        gallery.share_token,
       );
     }
 

@@ -2,18 +2,15 @@ import { randomUUID } from "crypto";
 import { NextResponse } from "next/server";
 import { SePayPgClient } from "sepay-pg-node";
 import { scopedGalleryQuery } from "@/lib/customer-gallery-scope";
-import { galleryTokenFromUrl } from "@/lib/gallery-access";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 export const runtime = "nodejs";
 
 export async function GET(request: Request, { params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const token = galleryTokenFromUrl(request.url);
   const { query } = await scopedGalleryQuery(request.headers, slug);
   const { data, error } = await query
     .select("payment_status,total_cost_vnd,deposit_paid_vnd,raw_download_enabled,edited_download_enabled")
-    .eq("share_token", token)
     .maybeSingle();
 
   if (error || !data) {
@@ -28,7 +25,6 @@ export async function GET(request: Request, { params }: { params: Promise<{ slug
 
 export async function POST(request: Request, { params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const token = galleryTokenFromUrl(request.url);
 
   if (!process.env.SEPAY_MERCHANT_ID || !process.env.SEPAY_SECRET_KEY) {
     return NextResponse.json({ error: "Chưa cấu hình SePay." }, { status: 503 });
@@ -37,7 +33,6 @@ export async function POST(request: Request, { params }: { params: Promise<{ slu
   const { query } = await scopedGalleryQuery(request.headers, slug);
   const { data: gallery, error } = await query
     .select("id,customer_name,total_cost_vnd,deposit_paid_vnd")
-    .eq("share_token", token)
     .maybeSingle();
 
   const amount = Math.max((gallery?.total_cost_vnd || 0) - (gallery?.deposit_paid_vnd || 0), 0);

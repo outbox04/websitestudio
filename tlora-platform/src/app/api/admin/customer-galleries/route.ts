@@ -123,7 +123,7 @@ export async function GET(request: Request) {
       galleries: ((data || []) as AdminCustomerGalleryRow[]).map((gallery) => {
         const origin = publicOrigin(request);
         const galleryStudioSlug = joinedStudioSlug(gallery.studios);
-        const urls = getGalleryUrls(gallery.customer_name_slug, galleryStudioSlug, origin, gallery.share_token);
+        const urls = getGalleryUrls(gallery.customer_name_slug, galleryStudioSlug, origin);
         return {
           ...gallery,
           customerUrl: urls.customerUrl,
@@ -182,7 +182,7 @@ export async function POST(request: Request) {
     if (existingGallery) {
       return NextResponse.json({
         gallery: existingGallery,
-        ...getGalleryUrls(slug, studioSlug, origin, existingGallery.share_token),
+        ...getGalleryUrls(slug, studioSlug, origin),
         reused: true,
       });
     }
@@ -245,7 +245,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({
       gallery: data,
-      ...getGalleryUrls(slug, studioSlug, origin, data.share_token),
+      ...getGalleryUrls(slug, studioSlug, origin),
       reused: false,
     });
   } catch (error) {

@@ -3,7 +3,6 @@ import { Readable } from "node:stream";
 import { studioIdForHeaders } from "@/lib/customer-gallery-scope";
 import { getDriveClient } from "@/lib/google-drive";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { galleryTokenFromUrl } from "@/lib/gallery-access";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -18,12 +17,10 @@ export async function GET(request: Request, { params }: { params: Promise<{ phot
   const { studioId } = await studioIdForHeaders(request.headers);
   let query = supabase
     .from("customer_gallery_photos")
-    .select("drive_file_id,file_name,kind,customer_galleries!inner(raw_download_enabled,edited_download_enabled,studio_id,share_token)")
+    .select("drive_file_id,file_name,kind,customer_galleries!inner(raw_download_enabled,edited_download_enabled,studio_id)")
     .eq("id", photoId);
 
-  query = query
-    .eq("customer_galleries.studio_id", studioId)
-    .eq("customer_galleries.share_token", galleryTokenFromUrl(request.url));
+  query = query.eq("customer_galleries.studio_id", studioId);
   const { data: photo, error } = await query.maybeSingle();
 
   if (error) {

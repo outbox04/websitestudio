@@ -4,7 +4,6 @@ import { listDriveImages, listPublicDriveImages } from "@/lib/google-drive";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { checkAuthContext } from "@/lib/studio-admin";
 import { getStudioDriveClient, getStudioDriveConnection } from "@/lib/studio-google-drive";
-import { galleryTokenFromUrl } from "@/lib/gallery-access";
 
 export const runtime = "nodejs";
 
@@ -22,8 +21,6 @@ export async function POST(request: Request, { params }: { params: Promise<{ slu
 
   if (context && scoped.studioId === context.studioId) {
     query = query.eq("studio_id", context.studioId);
-  } else if (!canUseStudioConnection) {
-    query = query.eq("share_token", galleryTokenFromUrl(request.url));
   } else if (canUseStudioConnection && !isPlatformAdmin) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
@@ -105,8 +102,6 @@ async function upsertSyncedPhotos(
     })),
   ];
 
-  if (rows.length === 0) return { newRawCount: 0, newEditedCount: 0 };
-
   const { data: existingRows, error: existingError } = await supabase
     .from("customer_gallery_photos")
     .select("drive_file_id")
@@ -118,11 +113,22 @@ async function upsertSyncedPhotos(
   const newRawCount = rawPhotos.filter((photo) => !existingIds.has(photo.id)).length;
   const newEditedCount = editedPhotos.filter((photo) => !existingIds.has(photo.id)).length;
 
-  const { error } = await supabase
+  if (rows.length > 0) {
+    const { error } = await supabase
+      .from("customer_gallery_photos")
+      .upsert(rows, { onConflict: "gallery_id,drive_file_id" });
+
+    if (error) throw error;
+  }
+
+  const { data: photos, error: photosError } = await supabase
     .from("customer_gallery_photos")
-    .upsert(rows, { onConflict: "gallery_id,drive_file_id" });
+    .select("*")
+    .eq("gallery_id", galleryId)
+    .not("drive_file_id", "like", "mock-%")
+    .order("file_name", { ascending: true });
 
-  if (error) throw error;
+  if (photosError) throw photosError;
 
-  return { newRawCount, newEditedCount };
+  return { newRawCount, newEditedCount, photos: photos || [] };
 }
