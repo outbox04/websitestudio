@@ -31,6 +31,35 @@ type CustomerGalleryPhotoRow = {
   updated_at: string;
 };
 
+const PHOTO_READ_BATCH_SIZE = 1000;
+
+async function loadAllStudioGalleryPhotos(
+  supabase: ReturnType<typeof createAdminClient>,
+  studioId: string,
+) {
+  const photos: CustomerGalleryPhotoRow[] = [];
+  let from = 0;
+
+  while (true) {
+    const { data, error } = await supabase
+      .from("customer_gallery_photos")
+      .select("id,gallery_id,file_name,preview_url,download_url,kind,selected,edit_note,updated_at,customer_galleries!inner(studio_id)")
+      .eq("customer_galleries.studio_id", studioId)
+      .order("updated_at", { ascending: false })
+      .order("id", { ascending: true })
+      .range(from, from + PHOTO_READ_BATCH_SIZE - 1);
+
+    if (error) throw error;
+
+    const page = (data || []) as CustomerGalleryPhotoRow[];
+    photos.push(...page);
+    if (page.length < PHOTO_READ_BATCH_SIZE) break;
+    from += PHOTO_READ_BATCH_SIZE;
+  }
+
+  return photos;
+}
+
 export async function loadTloraCustomerGalleryAdminData(): Promise<{
   galleries: AdminGallery[];
   editRequests: AdminEditRequest[];
@@ -40,24 +69,19 @@ export async function loadTloraCustomerGalleryAdminData(): Promise<{
     const supabase = createAdminClient();
     const studioId = await requireTloraStudioId();
     const siteUrl = publicOriginFromHeaders(await headers());
-    const [{ data: galleryData, error: galleryError }, { data: photoData, error: photoError }] = await Promise.all([
+    const [{ data: galleryData, error: galleryError }, photoData] = await Promise.all([
       supabase
         .from("customer_galleries")
         .select("id,customer_name,customer_name_slug,shoot_date,raw_drive_folder_url,edited_drive_folder_url,raw_download_enabled,edited_download_enabled,share_token,studios(slug,studio_type)")
         .eq("studio_id", studioId)
         .order("created_at", { ascending: false }),
-      supabase
-        .from("customer_gallery_photos")
-        .select("id,gallery_id,file_name,preview_url,download_url,kind,selected,edit_note,updated_at,customer_galleries!inner(studio_id)")
-        .eq("customer_galleries.studio_id", studioId)
-        .order("updated_at", { ascending: false }),
+      loadAllStudioGalleryPhotos(supabase, studioId),
     ]);
 
     if (galleryError) throw galleryError;
-    if (photoError) throw photoError;
 
     const galleriesRows = (galleryData || []) as unknown as CustomerGalleryRow[];
-    const photosRows = (photoData || []) as CustomerGalleryPhotoRow[];
+    const photosRows = photoData;
     const galleryById = new Map(galleriesRows.map((gallery) => [gallery.id, gallery]));
 
     function galleryUrls(gallery: CustomerGalleryRow) {

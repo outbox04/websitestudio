@@ -30,6 +30,36 @@ type SelectedPhotoRow = {
   file_name: string;
 };
 
+const PHOTO_READ_BATCH_SIZE = 1000;
+
+async function loadAllSelectedStudioPhotos(
+  supabase: ReturnType<typeof createAdminClient>,
+  studioId: string,
+) {
+  const photos: SelectedPhotoRow[] = [];
+  let from = 0;
+
+  while (true) {
+    const { data, error } = await supabase
+      .from("customer_gallery_photos")
+      .select("gallery_id,file_name,customer_galleries!inner(studio_id)")
+      .eq("selected", true)
+      .eq("kind", "raw")
+      .eq("customer_galleries.studio_id", studioId)
+      .order("file_name", { ascending: true })
+      .range(from, from + PHOTO_READ_BATCH_SIZE - 1);
+
+    if (error) throw error;
+
+    const page = (data || []) as SelectedPhotoRow[];
+    photos.push(...page);
+    if (page.length < PHOTO_READ_BATCH_SIZE) break;
+    from += PHOTO_READ_BATCH_SIZE;
+  }
+
+  return photos;
+}
+
 type CustomerGalleryInsert = {
   customer_name: string;
   customer_name_slug: string;
@@ -88,32 +118,20 @@ export async function GET(request: Request) {
       )
       .order("created_at", { ascending: false });
 
-    let photosQuery = supabase
-      .from("customer_gallery_photos")
-      .select("gallery_id,file_name,customer_galleries!inner(studio_id)")
-      .eq("selected", true)
-      .eq("kind", "raw")
-      .order("file_name", { ascending: true });
-
     galleriesQuery = galleriesQuery.eq("studio_id", targetStudioId);
-    photosQuery = photosQuery.eq("customer_galleries.studio_id", targetStudioId);
 
-    const [{ data, error }, { data: selectedPhotosData, error: selectedPhotosError }] = await Promise.all([
+    const [{ data, error }, selectedPhotosData] = await Promise.all([
       galleriesQuery,
-      photosQuery,
+      loadAllSelectedStudioPhotos(supabase, targetStudioId),
     ]);
 
     if (error) {
       throw error;
     }
 
-    if (selectedPhotosError) {
-      throw selectedPhotosError;
-    }
-
     const selectedFilesByGalleryId = new Map<string, string[]>();
 
-    for (const photo of (selectedPhotosData || []) as SelectedPhotoRow[]) {
+    for (const photo of selectedPhotosData) {
       const existing = selectedFilesByGalleryId.get(photo.gallery_id) || [];
       existing.push(photo.file_name);
       selectedFilesByGalleryId.set(photo.gallery_id, existing);

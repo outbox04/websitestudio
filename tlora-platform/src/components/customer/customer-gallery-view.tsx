@@ -101,7 +101,12 @@ export function CustomerGalleryView({
   }, []);
 
   const selectedPhotos = useMemo(() => photos.filter((photo) => photo.selected), [photos]);
-  const notedPhotos = useMemo(() => photos.filter((photo) => Boolean(photo.edit_note?.trim())), [photos]);
+  // Keep this definition in sync with the CMS edit-request list: a selected
+  // photo needs editing even when the customer did not add a note.
+  const notedPhotos = useMemo(
+    () => photos.filter((photo) => photo.selected || Boolean(photo.edit_note?.trim())),
+    [photos],
+  );
   const visiblePhotos = useMemo(() => {
     const rawSource = tab === "selected" ? selectedPhotos : tab === "noted" ? notedPhotos : photos;
     const source = tab === "edited" ? completedPhotos : rawSource;
