@@ -1,7 +1,6 @@
 import { createSlug } from "@/lib/slug";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { errorMessage, isAuthorized, json, options, unauthorized } from "@/lib/tlora-api";
-import { requireTloraStudioId } from "@/lib/tlora-studio";
+import { authenticateTloraRequest, errorMessage, json, options, unauthorized } from "@/lib/tlora-api";
 
 export const runtime = "nodejs";
 
@@ -18,18 +17,16 @@ export function OPTIONS() {
 }
 
 export async function POST(request: Request) {
-  if (!isAuthorized(request)) {
-    return unauthorized();
-  }
-
   const payload = (await request.json()) as TloraEditedUploadPayload;
   const albumName = payload.albumName?.trim();
 
   try {
+    const auth = await authenticateTloraRequest(request);
+    if (!auth) return unauthorized();
     let gallery = null;
     if (albumName) {
       const supabase = createAdminClient();
-      const studioId = await requireTloraStudioId();
+      const studioId = auth.studioId;
       const slug = createSlug(albumName);
       const { data, error } = await supabase
         .from("customer_galleries")

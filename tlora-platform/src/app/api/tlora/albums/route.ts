@@ -1,8 +1,7 @@
 import { createCustomerDriveFolders } from "@/lib/google-drive";
 import { createSlug } from "@/lib/slug";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { errorMessage, isAuthorized, json, options, publicOrigin, unauthorized } from "@/lib/tlora-api";
-import { requireTloraStudioId } from "@/lib/tlora-studio";
+import { authenticateTloraRequest, errorMessage, json, options, publicOrigin, unauthorized } from "@/lib/tlora-api";
 
 export const runtime = "nodejs";
 
@@ -28,13 +27,11 @@ export function OPTIONS() {
 }
 
 export async function GET(request: Request) {
-  if (!isAuthorized(request)) {
-    return unauthorized();
-  }
-
   try {
+    const auth = await authenticateTloraRequest(request);
+    if (!auth) return unauthorized();
     const supabase = createAdminClient();
-    const studioId = await requireTloraStudioId();
+    const studioId = auth.studioId;
     const origin = publicOrigin(request);
     const { data, error } = await supabase
       .from("customer_galleries")
@@ -69,10 +66,6 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
-  if (!isAuthorized(request)) {
-    return unauthorized();
-  }
-
   const payload = (await request.json()) as TloraAlbumPayload;
   const albumName = payload.albumName?.trim() || payload.customerName?.trim();
   if (!albumName) {
@@ -85,8 +78,10 @@ export async function POST(request: Request) {
   }
 
   try {
+    const auth = await authenticateTloraRequest(request);
+    if (!auth) return unauthorized();
     const supabase = createAdminClient();
-    const studioId = await requireTloraStudioId();
+    const studioId = auth.studioId;
     const origin = publicOrigin(request);
 
     const { data: existing, error: existingError } = await supabase

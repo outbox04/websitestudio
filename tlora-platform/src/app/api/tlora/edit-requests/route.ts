@@ -1,7 +1,6 @@
 import { createSlug } from "@/lib/slug";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { errorMessage, isAuthorized, json, options, unauthorized } from "@/lib/tlora-api";
-import { requireTloraStudioId } from "@/lib/tlora-studio";
+import { authenticateTloraRequest, errorMessage, json, options, unauthorized } from "@/lib/tlora-api";
 
 export const runtime = "nodejs";
 
@@ -32,10 +31,6 @@ export function OPTIONS() {
 }
 
 export async function GET(request: Request) {
-  if (!isAuthorized(request)) {
-    return unauthorized();
-  }
-
   const { searchParams } = new URL(request.url);
   const albumName = searchParams.get("albumName")?.trim();
   if (!albumName) {
@@ -43,8 +38,10 @@ export async function GET(request: Request) {
   }
 
   try {
+    const auth = await authenticateTloraRequest(request);
+    if (!auth) return unauthorized();
     const supabase = createAdminClient();
-    const studioId = await requireTloraStudioId();
+    const studioId = auth.studioId;
     const slug = createSlug(albumName);
     const { data: gallery, error: galleryError } = await supabase
       .from("customer_galleries")
@@ -81,23 +78,25 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
-  if (!isAuthorized(request)) {
-    return unauthorized();
+  try {
+    const auth = await authenticateTloraRequest(request);
+    if (!auth) return unauthorized();
+    const payload = (await request.json()) as TloraEditRequestPayload;
+    return json({
+      ok: true,
+      received: {
+        albumName: payload.albumName,
+        customerName: payload.customerName,
+        requested: payload.requested || 0,
+        matched: payload.matched || 0,
+        missing: payload.missing || 0,
+        outputDir: payload.outputDir,
+        doneFile: payload.doneFile,
+        copiedFiles: payload.copiedFiles || [],
+        missingFiles: payload.missingFiles || [],
+      },
+    });
+  } catch (error) {
+    return json({ error: errorMessage(error) }, { status: 500 });
   }
-
-  const payload = (await request.json()) as TloraEditRequestPayload;
-  return json({
-    ok: true,
-    received: {
-      albumName: payload.albumName,
-      customerName: payload.customerName,
-      requested: payload.requested || 0,
-      matched: payload.matched || 0,
-      missing: payload.missing || 0,
-      outputDir: payload.outputDir,
-      doneFile: payload.doneFile,
-      copiedFiles: payload.copiedFiles || [],
-      missingFiles: payload.missingFiles || [],
-    },
-  });
 }

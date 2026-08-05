@@ -1,8 +1,7 @@
 import { createSlug } from "@/lib/slug";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { errorMessage, isAuthorized, json, options, unauthorized } from "@/lib/tlora-api";
+import { authenticateTloraRequest, errorMessage, json, options, unauthorized } from "@/lib/tlora-api";
 import { uploadDriveImage } from "@/lib/google-drive";
-import { requireTloraStudioId } from "@/lib/tlora-studio";
 import { inspectImageBuffer } from "@/lib/image-upload";
 
 export const runtime = "nodejs";
@@ -22,11 +21,9 @@ export function OPTIONS() {
 }
 
 export async function POST(request: Request) {
-  if (!isAuthorized(request)) {
-    return unauthorized();
-  }
-
   try {
+    const auth = await authenticateTloraRequest(request);
+    if (!auth) return unauthorized();
     const formData = await request.formData();
     const albumName = String(formData.get("albumName") || "").trim();
     const customerName = String(formData.get("customerName") || "").trim();
@@ -49,7 +46,7 @@ export async function POST(request: Request) {
     }
 
     const supabase = createAdminClient();
-    const studioId = await requireTloraStudioId();
+    const studioId = auth.studioId;
     const lookupNames = uniqueValues([albumName, customerName, customerNameFromAlbumName(albumName)]);
     const lookupSlugs = uniqueValues(lookupNames.map(createSlug));
     const { data: galleryBySlug, error: galleryBySlugError } = await supabase
