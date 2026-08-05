@@ -50,6 +50,13 @@ type GalleryPhoto = {
 
 type Tab = "all" | "selected" | "noted" | "edited";
 
+function mergePhotos(current: GalleryPhoto[], incoming: GalleryPhoto[]) {
+  if (incoming.length === 0) return current;
+  const byId = new Map(current.map((photo) => [photo.id, photo]));
+  incoming.forEach((photo) => byId.set(photo.id, photo));
+  return [...byId.values()].sort((a, b) => a.file_name.localeCompare(b.file_name, "vi", { numeric: true }));
+}
+
 const tabs: Array<{ value: Tab; label: string; icon: typeof ImageIcon }> = [
   { value: "all", label: "Tất cả", icon: ImageIcon },
   { value: "selected", label: "Đã chọn", icon: MessageSquare },
@@ -81,6 +88,7 @@ export function CustomerGalleryView({
   const [slideshowPaused, setSlideshowPaused] = useState(false);
   const [syncing, setSyncing] = useState(false);
   const [query, setQuery] = useState("");
+  const [visibleLimit, setVisibleLimit] = useState(120);
   const saveTimers = useRef<Record<string, number>>({});
   const autoSyncStarted = useRef(false);
   const syncInFlight = useRef(false);
@@ -102,6 +110,7 @@ export function CustomerGalleryView({
     return source.filter((photo) => photo.file_name.toLowerCase().includes(normalizedQuery));
   }, [completedPhotos, notedPhotos, photos, query, selectedPhotos, tab]);
   const previewPhotos = useMemo(() => (visiblePhotos.length > 0 ? visiblePhotos : tab === "edited" ? completedPhotos : photos), [completedPhotos, photos, tab, visiblePhotos]);
+  const displayedPhotos = useMemo(() => visiblePhotos.slice(0, visibleLimit), [visibleLimit, visiblePhotos]);
   const previewIndex = preview ? previewPhotos.findIndex((photo) => photo.id === preview.id) : -1;
   const cover = gallery.cover_url || photos[0]?.thumbnail_url || completedPhotos[0]?.thumbnail_url;
   const shootDate = new Date(gallery.shoot_date).toLocaleDateString("vi-VN");
@@ -231,11 +240,11 @@ export function CustomerGalleryView({
     setSyncing(true);
     try {
       const response = await fetch(`/api/customer-galleries/${gallery.customer_name_slug}/sync`, { method: "POST" });
-      const payload = await response.json().catch(() => ({})) as { photos?: GalleryPhoto[]; error?: string };
+      const payload = await response.json().catch(() => ({})) as { newPhotos?: GalleryPhoto[]; error?: string };
       if (response.ok) {
-        if (payload.photos) {
-          setPhotos(payload.photos.filter((photo) => photo.kind === "raw"));
-          setCompletedPhotos(payload.photos.filter((photo) => photo.kind === "edited"));
+        if (payload.newPhotos) {
+          setPhotos((current) => mergePhotos(current, payload.newPhotos!.filter((photo) => photo.kind === "raw")));
+          setCompletedPhotos((current) => mergePhotos(current, payload.newPhotos!.filter((photo) => photo.kind === "edited")));
         }
         return;
       }
@@ -321,7 +330,10 @@ export function CustomerGalleryView({
                 return (
                   <button
                     key={item.value}
-                    onClick={() => setTab(item.value)}
+                    onClick={() => {
+                      setTab(item.value);
+                      setVisibleLimit(120);
+                    }}
                     className={`inline-flex min-h-10 items-center gap-2 rounded-md px-4 text-sm font-medium transition ${
                       tab === item.value ? "bg-[#d8b766]/20 text-[#f3d88e]" : "text-zinc-400 hover:bg-white/5 hover:text-white"
                     }`}
@@ -336,7 +348,15 @@ export function CustomerGalleryView({
               {downloadAction && <DownloadButton {...downloadAction} />}
               <label className="flex min-h-11 items-center gap-2 rounded-full border border-white/10 bg-black/20 px-4 text-sm text-zinc-400">
                 <Search size={17} />
-                <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Tìm kiếm" className="w-full bg-transparent text-white outline-none placeholder:text-zinc-500 sm:w-44" />
+                <input
+                  value={query}
+                  onChange={(event) => {
+                    setQuery(event.target.value);
+                    setVisibleLimit(120);
+                  }}
+                  placeholder="Tìm kiếm"
+                  className="w-full bg-transparent text-white outline-none placeholder:text-zinc-500 sm:w-44"
+                />
               </label>
               <button onClick={() => syncPhotos()} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-full border border-white/10 bg-black/20 px-4 text-sm font-semibold text-zinc-200">
                 {syncing ? <Loader2 className="animate-spin" size={16} /> : <RefreshCw size={16} />}
@@ -347,13 +367,23 @@ export function CustomerGalleryView({
         </section>
 
         <PhotoGrid
-          photos={visiblePhotos}
+          photos={displayedPhotos}
           selectedIds={new Set(selectedPhotos.map((photo) => photo.id))}
           canDownloadRaw={galleryAccess.rawDownloadEnabled}
           canDownloadEdited={galleryAccess.editedDownloadEnabled}
           onPreview={setPreview}
           onToggle={toggleSelected}
         />
+        {displayedPhotos.length < visiblePhotos.length && (
+          <div className="mt-6 flex justify-center">
+            <button
+              onClick={() => setVisibleLimit((current) => current + 120)}
+              className="inline-flex min-h-11 items-center justify-center rounded-md border border-white/15 bg-white/[0.06] px-6 text-sm font-semibold text-white transition hover:border-[#d8b766]/60 hover:text-[#f3d88e]"
+            >
+              Xem thêm {Math.min(120, visiblePhotos.length - displayedPhotos.length)} ảnh
+            </button>
+          </div>
+        )}
       </main>
 
       {preview && (
@@ -448,7 +478,11 @@ function PhotoGrid({
         const canDownload = photo.kind === "raw" ? canDownloadRaw : canDownloadEdited;
         const downloadHref = photoDownloadHref(photo.id);
         return (
-          <article key={photo.id} className="group relative mb-3 break-inside-avoid overflow-hidden rounded-lg border border-white/10 bg-white/[0.04]">
+          <article
+            key={photo.id}
+            className="group relative mb-3 break-inside-avoid overflow-hidden rounded-lg border border-white/10 bg-white/[0.04]"
+            style={{ contentVisibility: "auto", containIntrinsicSize: "360px" }}
+          >
             <button onClick={() => onPreview(photo)} className={`relative block w-full bg-zinc-900 ${photo.thumbnail_url ? "" : "aspect-[4/3]"}`}>
               {photo.thumbnail_url ? (
                 // Google Drive does not provide dimensions here, so the browser must use the image's natural ratio.

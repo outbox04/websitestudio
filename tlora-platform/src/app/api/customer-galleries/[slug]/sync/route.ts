@@ -4,6 +4,7 @@ import { listDriveImages, listPublicDriveImages } from "@/lib/google-drive";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { checkAuthContext } from "@/lib/studio-admin";
 import { getStudioDriveClient, getStudioDriveConnection } from "@/lib/studio-google-drive";
+import { getAllGalleryDriveFileIds } from "@/lib/customer-gallery-photos";
 
 export const runtime = "nodejs";
 
@@ -102,33 +103,21 @@ async function upsertSyncedPhotos(
     })),
   ];
 
-  const { data: existingRows, error: existingError } = await supabase
-    .from("customer_gallery_photos")
-    .select("drive_file_id")
-    .eq("gallery_id", galleryId);
-
-  if (existingError) throw existingError;
-
-  const existingIds = new Set((existingRows || []).map((photo) => photo.drive_file_id));
+  const existingIds = new Set(await getAllGalleryDriveFileIds(supabase, galleryId));
   const newRawCount = rawPhotos.filter((photo) => !existingIds.has(photo.id)).length;
   const newEditedCount = editedPhotos.filter((photo) => !existingIds.has(photo.id)).length;
+  const newIds = new Set(rows.filter((photo) => !existingIds.has(photo.drive_file_id)).map((photo) => photo.drive_file_id));
+  const newPhotos = [];
 
-  if (rows.length > 0) {
-    const { error } = await supabase
+  for (let index = 0; index < rows.length; index += 500) {
+    const { data, error } = await supabase
       .from("customer_gallery_photos")
-      .upsert(rows, { onConflict: "gallery_id,drive_file_id" });
+      .upsert(rows.slice(index, index + 500), { onConflict: "gallery_id,drive_file_id" })
+      .select("*");
 
     if (error) throw error;
+    newPhotos.push(...(data || []).filter((photo) => newIds.has(photo.drive_file_id)));
   }
 
-  const { data: photos, error: photosError } = await supabase
-    .from("customer_gallery_photos")
-    .select("*")
-    .eq("gallery_id", galleryId)
-    .not("drive_file_id", "like", "mock-%")
-    .order("file_name", { ascending: true });
-
-  if (photosError) throw photosError;
-
-  return { newRawCount, newEditedCount, photos: photos || [] };
+  return { newRawCount, newEditedCount, newPhotos };
 }

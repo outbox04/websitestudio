@@ -129,16 +129,25 @@ export async function createCustomerDriveFoldersInStudioDrive(drive: drive_v3.Dr
 }
 
 export async function listDriveImages(folderId: string, drive: drive_v3.Drive = getDriveClient()): Promise<DrivePhoto[]> {
-  const response = await drive.files.list({
-    supportsAllDrives: true,
-    includeItemsFromAllDrives: true,
-    q: `'${folderId}' in parents and mimeType contains 'image/' and trashed=false`,
-    fields: "files(id,name,thumbnailLink,webViewLink,webContentLink,mimeType)",
-    pageSize: 1000,
-    orderBy: "name_natural",
-  });
+  const files: drive_v3.Schema$File[] = [];
+  let pageToken: string | undefined;
 
-  return response.data.files?.map((file) => ({
+  do {
+    const response = await drive.files.list({
+      supportsAllDrives: true,
+      includeItemsFromAllDrives: true,
+      q: `'${folderId}' in parents and mimeType contains 'image/' and trashed=false`,
+      fields: "nextPageToken,files(id,name,thumbnailLink,webViewLink,webContentLink,mimeType)",
+      pageSize: 1000,
+      pageToken,
+      orderBy: "name_natural",
+    });
+
+    files.push(...(response.data.files || []));
+    pageToken = response.data.nextPageToken || undefined;
+  } while (pageToken);
+
+  return files.map((file) => ({
     id: file.id || "",
     name: file.name || "Untitled",
     thumbnailLink: file.id ? driveImageUrl(file.id, 900) : file.thumbnailLink || undefined,
@@ -146,7 +155,7 @@ export async function listDriveImages(folderId: string, drive: drive_v3.Drive = 
     webViewLink: file.webViewLink || undefined,
     webContentLink: file.webContentLink || undefined,
     mimeType: file.mimeType || "image/jpeg",
-  })) || [];
+  }));
 }
 
 export async function listPublicDriveImages(folderId: string): Promise<DrivePhoto[]> {

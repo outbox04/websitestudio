@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { scopedGalleryQuery } from "@/lib/customer-gallery-scope";
+import { getAllGalleryPhotos } from "@/lib/customer-gallery-photos";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 export async function getCustomerGalleryPageData(customerSlug: string, headers: Headers) {
@@ -16,15 +17,10 @@ export async function getCustomerGalleryPageData(customerSlug: string, headers: 
       notFound();
     }
 
-    const { data: photosData } = await supabase
-      .from("customer_gallery_photos")
-      .select("*")
-      .eq("gallery_id", galleryData.id)
-      .not("drive_file_id", "like", "mock-%")
-      .order("file_name", { ascending: true });
+    const photosData = await getAllGalleryPhotos(supabase, galleryData.id);
 
     gallery = galleryData;
-    photos = photosData || [];
+    photos = photosData;
   } catch {
     notFound();
   }
