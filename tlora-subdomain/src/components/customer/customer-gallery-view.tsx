@@ -386,6 +386,64 @@ function photoDownloadHref(photoId: string, shareToken: string) {
   return `/api/customer-galleries/photos/${photoId}/download?token=${encodeURIComponent(shareToken)}`;
 }
 
+function PhotoDownloadLink({
+  href,
+  fileName,
+  tone = "dark",
+  compact = false,
+}: {
+  href: string;
+  fileName: string;
+  tone?: "dark" | "gold";
+  compact?: boolean;
+}) {
+  const [downloading, setDownloading] = useState(false);
+  const resetTimer = useRef<number | null>(null);
+
+  useEffect(() => () => {
+    if (resetTimer.current) window.clearTimeout(resetTimer.current);
+  }, []);
+
+  function acknowledgeDownload(event: React.MouseEvent<HTMLAnchorElement>) {
+    event.stopPropagation();
+    setDownloading(true);
+    if (resetTimer.current) window.clearTimeout(resetTimer.current);
+    resetTimer.current = window.setTimeout(() => setDownloading(false), 4000);
+  }
+
+  if (compact) {
+    return (
+      <a
+        href={href}
+        download={fileName}
+        onClick={acknowledgeDownload}
+        className={`absolute right-3 top-3 grid size-10 touch-manipulation place-items-center rounded-full text-white backdrop-blur transition duration-100 active:scale-90 ${
+          downloading ? "bg-emerald-500 text-black" : "bg-black/55 hover:bg-[#d8b766] hover:text-black"
+        }`}
+        aria-label={downloading ? "Đang tải ảnh" : "Tải ảnh"}
+        title={downloading ? "Đang tải ảnh" : "Tải ảnh"}
+      >
+        {downloading ? <Loader2 className="animate-spin" size={18} /> : <Download size={18} />}
+      </a>
+    );
+  }
+
+  return (
+    <a
+      href={href}
+      download={fileName}
+      onClick={acknowledgeDownload}
+      aria-live="polite"
+      className={`inline-flex min-h-12 w-full touch-manipulation items-center justify-center gap-2 rounded-md px-4 text-sm font-semibold transition duration-100 active:scale-[0.97] active:brightness-90 ${
+        tone === "gold" ? "bg-[#d8b766] text-black" : "bg-white/10 text-white"
+      }`}
+    >
+      {downloading ? <Loader2 className="animate-spin" size={17} /> : <Download size={17} />}
+      {downloading ? "Đã nhận · Đang tải…" : "Tải ảnh"}
+    </a>
+  );
+}
+
 function StatCard({ icon: Icon, value, label, tone }: { icon: typeof ImageIcon; value: number | string; label: string; tone: "violet" | "rose" | "gold" | "green" }) {
   const tones = {
     violet: "bg-violet-500/15 text-violet-300",
@@ -455,16 +513,7 @@ function PhotoGrid({
               {selected && <Check size={17} />}
             </button>
             {canDownload ? (
-              <a
-                href={downloadHref}
-                download={photo.file_name}
-                className="absolute right-3 top-3 grid size-8 place-items-center rounded-full bg-black/45 text-white backdrop-blur transition hover:bg-[#d8b766] hover:text-black"
-                aria-label="Tải ảnh"
-                title="Tải ảnh"
-                onClick={(event) => event.stopPropagation()}
-              >
-                <Download size={17} />
-              </a>
+              <PhotoDownloadLink href={downloadHref} fileName={photo.file_name} compact />
             ) : (
               <button
                 disabled
@@ -566,18 +615,14 @@ function PreviewModal({
               />
               <p className="text-xs font-medium text-emerald-300">Ghi chú tự động lưu khi khách nhập.</p>
               {canDownload && (
-                <a href={downloadHref} download={photo.file_name} className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-md bg-white/10 px-4 text-sm font-semibold text-white">
-                  <Download size={16} /> Tải ảnh
-                </a>
+                <PhotoDownloadLink href={downloadHref} fileName={photo.file_name} />
               )}
             </div>
           ) : (
             <div className="mt-6 space-y-3">
               <p className="text-sm leading-6 text-zinc-400">Ảnh đã chỉnh sửa từ thư mục file hoàn thiện.</p>
               {canDownload && (
-                <a href={downloadHref} download={photo.file_name} className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-md bg-[#d8b766] px-4 text-sm font-semibold text-black">
-                  <Download size={16} /> Tải ảnh
-                </a>
+                <PhotoDownloadLink href={downloadHref} fileName={photo.file_name} tone="gold" />
               )}
             </div>
           )}
